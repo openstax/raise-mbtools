@@ -1,5 +1,6 @@
 from pathlib import Path
 from lxml import etree, html
+from bs4 import BeautifulSoup
 
 
 class MoodleBackup:
@@ -45,5 +46,17 @@ class MoodleHtmlElement:
         self.parent = parent
         self.etree = html.fromstring(self.parent.text)
 
+    def find_references_containing(self, src_content):
+        matching_elems = self.etree.xpath(
+            f'//*[contains(@src, "{src_content}")]'
+        )
+
+        return [el.get("src") for el in matching_elems]
+
     def tostring(self):
-        return etree.tostring(self.etree, encoding="unicode")
+        # Pass things through bs4 so we can avoid adding closing tags and
+        # closing slashes that lxml may otherwise emit on void elements
+        return BeautifulSoup(
+            etree.tostring(self.etree),
+            "html.parser"
+        ).encode(formatter="html5")
