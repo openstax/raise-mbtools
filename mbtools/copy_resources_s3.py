@@ -6,46 +6,44 @@ import magic
 import boto3
 import botocore
 from pathlib import Path
-from pydantic import BaseModel
-
-
-class MetadataTag(BaseModel):
-    original_filename: str
-    sha1: str
-    s3_key: str
-    mime_type: str
 
 
 def upload_resources(resource_dir, metadata_dir, bucket, s3_dir):
     """Uplaods resources to s3 if they dont already exist there"""
     hash_to_filename_map = new_resource_hashes(resource_dir)
-    hashes_new = hash_to_filename_map.keys()
+    hashes_new = list(hash_to_filename_map.keys())
     hashes_metadata = existing_metadata_hashes(metadata_dir)
     hashes_s3 = existing_s3_hashes(bucket, s3_dir)
     hashes_new = compare_and_remove_hashes(hashes_new, hashes_metadata)
     hashes_new = compare_and_remove_hashes(hashes_new, hashes_s3)
-    add_new_resources_to_s3(bucket, s3_dir, hashes_new, hash_to_filename_map, metadata_dir)
+    add_new_resources_to_s3(bucket, s3_dir, hashes_new, hash_to_filename_map,
+                            metadata_dir
+                            )
 
 
 def existing_metadata_hashes(dir):
     """Gathers the sha1s for existing resources from a local metadata json"""
     hashes = []
-    with open(dir) as f:
-        data = json.load(f)
-        for item in data:
-            hashes.append(item["sha1"])
-    return hashes
+    try:
+        with open(dir) as f:
+            data = json.load(f)
+            for item in data:
+                hashes.append(item["sha1"])
+        return hashes
+    except FileNotFoundError:
+        return FileNotFoundError
 
 
 def existing_s3_hashes(bucket, s3_dir):
     """Gathers the sha1s (filenames) for a given s3 bucket/directory"""
-    s3_client = get_boto_client()
+    s3_client = boto3.client("s3")
     try:
         all_s3_resources = s3_client.list_objects(
             Bucket=bucket,
             Prefix=s3_dir
         )
         sha1_list = []
+        print(all_s3_resources)
         for file_info in all_s3_resources['Contents']:
             # extract the sha1 from the key
             sha1 = file_info['Key'].split('/')[-1].split('.')[0]
@@ -59,39 +57,21 @@ def new_resource_hashes(resource_dir):
     """Generates sha1 hashes for all the resources in a local directory"""
     sha1_map = {}
     buff_size = 8 * 1024 * 1024
-    for filename in os.listdir(resource_dir):
+    try:
+        for filename in os.listdir(resource_dir):
 
-        sha1 = hashlib.sha1()
-        full_path = os.path.join(resource_dir, filename)
-        with open(full_path, 'rb') as f:
-            while True:
-                data = f.read(buff_size)
-                if not data:
-                    break
-                sha1.update(data)
-        sha1_map[sha1.hexdigest()] = full_path
-
-    return sha1_map
-
-
-def get_boto_client():
-    """Gets a client object to access s3 via boto3"""
-    aws_key = os.getenv('AWS_ACCESS_KEY_ID')
-    aws_secret = os.getenv('AWS_SECRET_ACCESS_KEY')
-    aws_session_token = os.getenv('AWS_SESSION_TOKEN')
-    if aws_key is None or aws_secret is None:
-        raise EnvironmentError(
-            'Failed because AWS_ACCESS_KEY_ID and/or AWS_SECRET_ACCESS_KEY '
-            'environment variable missing.')
-
-    session = boto3.session.Session()
-    s3_client = session.client(
-        's3',
-        aws_access_key_id=aws_key,
-        aws_secret_access_key=aws_secret,
-        aws_session_token=aws_session_token)
-
-    return s3_client
+            sha1 = hashlib.sha1()
+            full_path = os.path.join(resource_dir, filename)
+            with open(full_path, 'rb') as f:
+                while True:
+                    data = f.read(buff_size)
+                    if not data:
+                        break
+                    sha1.update(data)
+            sha1_map[sha1.hexdigest()] = full_path
+        return sha1_map
+    except FileNotFoundError:
+        return FileNotFoundError
 
 
 def compare_and_remove_hashes(keys, existing_keys):
@@ -117,7 +97,7 @@ def add_new_resources_to_s3(bucket, s3_dir, hashes, filename_map,
                             ):
     """Add the files specified in filename_map to s3 iff they their
     corresponding sha1 key exists in hashes"""
-    s3_client = get_boto_client()
+    s3_client = boto3.client("s3")
     print(hashes)
     for key in hashes:
         full_keypath = s3_dir + key
@@ -130,6 +110,7 @@ def add_new_resources_to_s3(bucket, s3_dir, hashes, filename_map,
 
 
 def add_metadata(key, filename_map, metadata_dir, mime_type, full_keypath):
+    """"""
     tag = {"mime_type": mime_type,
            "sha1": key,
            "original_filename": os.path.basename(filename_map[key]),
