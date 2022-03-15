@@ -19,20 +19,24 @@ metadata_file = "metadata/tags.json"
 
 metadata_tags = [{"mime_type": "video/mp4",
                   "original_filename": "Example_2.mp4",
-                  "s3_key": "contents/raise/resources/f83a0cabe1fc9bfe35d70947e9c0ed8e5285b76e",
+                  "s3_key": 'contents/raise/resources/f83a0cabe1fc9bfe35d709' +
+                            '47e9c0ed8e5285b76e',
                   "sha1": "f83a0cabe1fc9bfe35d70947e9c0ed8e5285b76e"
                   },
                  {"mime_type": "video/mp4",
                   "sha1": "d3614ca5260104f401a96415b448943725c2feb0",
                   "original_filename": "TwoLines.mp4",
-                  "s3_key": "contents/raise/resources/d3614ca5260104f401a96415b448943725c2feb0"}
+                  "s3_key": "contents/raise/resources/d3614ca5260104f401a964" +
+                  "15b448943725c2feb0"}
                  ]
 
 s3_response = {'Contents':
                [
-                {'Key': 'contents/raise/resources/51ca61528ae211e79e1f9ad0bd53621737312dd5',
+                {'Key': 'contents/raise/resources/51ca61528ae211e79e1f9ad0b' +
+                        'd53621737312dd5',
                  },
-                {'Key': 'contents/raise/resources/5929d87f8eaa15037cbb3166d2947c1e5d168387'
+                {'Key': 'contents/raise/resources/5929d87f8eaa15037cbb3166d' +
+                        '2947c1e5d168387'
                  }
                 ]
                }
@@ -61,83 +65,101 @@ def practice_filesystem(tmp_path):
 
 
 def test_existing_metadata_hashes(practice_filesystem):
-    assert (copy_resources_s3.existing_metadata_hashes(practice_filesystem[metadata_file]) ==
+    assert (copy_resources_s3.existing_metadata_hashes(
+            practice_filesystem[metadata_file]) ==
            [metadata_tags[0]["sha1"], metadata_tags[1]["sha1"]])
     try:
         copy_resources_s3.existing_metadata_hashes("")
-    except FileExistsError:
+        assert False
+    except FileNotFoundError:
         assert True
 
 
 def test_new_resorce_hashes(practice_filesystem):
-    assert(len(copy_resources_s3.new_resource_hashes(practice_filesystem[test_dir])) == 3)
-    assert(copy_resources_s3.new_resource_hashes("") == FileNotFoundError)
-
-
-def test_compare_and_remove_hashes():
-    new_hashes = ['123', '456', '789']
-    existing_hashes = ['123']
-    hashes_for_update = ['456', '789']
-    assert (copy_resources_s3.compare_and_remove_hashes(new_hashes,
-                                                        existing_hashes) ==
-            hashes_for_update)
-    assert (copy_resources_s3.compare_and_remove_hashes([], existing_hashes) ==
-            [])
-
-
-def test_existing_s3_hashes(practice_filesystem, mocker):
-    s3_client = boto3.client('s3')
-    stubber = botocore.stub.Stubber(s3_client)
-
-    s3_dir = 'resources/'
-    bucket_name = 'test-bucket'
-    expected_params = {'Bucket': bucket_name,
-                       'Prefix': s3_dir}
-    stubber.add_response('list_objects', s3_response, expected_params)
-    stubber.activate()
-    mocker.patch("boto3.client", lambda service: s3_client)
-
-    # extract the hash value from the response for comparison
-    h1 = s3_response['Contents'][0]['Key'].split('/')[-1].split('.')[0]
-    h2 = s3_response['Contents'][1]['Key'].split('/')[-1].split('.')[0]
-
-    assert (copy_resources_s3.existing_s3_hashes(bucket=bucket_name, s3_dir=s3_dir) ==
-            [h1, h2])
+    assert(len(copy_resources_s3.new_resource_hashes(
+               practice_filesystem[test_dir])) == 3
+           )
+    try:
+        copy_resources_s3.new_resource_hashes("")
+        assert False
+    except FileNotFoundError:
+        assert True
 
 
 def test_get_mime_type(practice_filesystem):
     assert os.path.exists(practice_filesystem[f1])
-    assert copy_resources_s3.get_mime_type(practice_filesystem[f1]) == "application/json"
+    assert (copy_resources_s3.get_mime_type(practice_filesystem[f1]) ==
+            "application/json")
 
 
-# def test_upload_resources(practice_filesystem, mocker):
-#     s3_client = boto3.client('s3')
-#     stubber = botocore.stub.Stubber(s3_client)
+def test_upload_resources(practice_filesystem, mocker):
+    s3_dir = 'resources'
+    bucket_name = 'test-bucket'
+    sha1_map = copy_resources_s3.new_resource_hashes(
+               practice_filesystem[test_dir])
+    hash_keys = list(sha1_map)
+    s3_client = boto3.client('s3')
+    stubber = botocore.stub.Stubber(s3_client)
 
-#     s3_dir = 'resources/'
-#     bucket_name = 'test-bucket'
-#     expected_params_list = {'Bucket': bucket_name,
-#                        'Prefix': s3_dir}
-#     stubber.add_response('list_objects', s3_response, expected_params_list)
+    full_key1 = s3_dir + "/" + hash_keys[0]
+    full_key2 = s3_dir + "/" + hash_keys[1]
+    full_key3 = s3_dir + "/" + hash_keys[2]
 
-#     expected_params_put1 = {'Filename': ,
-#                             'Bucket': bucket_name,
-#                             'Key':}
-#     expected_params_put2 = {'Filename': ,
-#                             'Bucket': bucket_name,
-#                             'Key':}
+    stubber.add_client_error('head_object',
+                             service_error_meta={'Code': '404'},
+                             expected_params={
+                                 'Bucket': bucket_name,
+                                 'Key': full_key1
+                              }
+                             )
+    stubber.add_response('put_object', {},
+                         expected_params={
+                            'Body': botocore.stub.ANY,
+                            'Bucket': bucket_name,
+                            'Key': full_key1,
+                            'ContentType': 'application/json'
+                          }
+                         )
+    stubber.add_client_error('head_object',
+                             service_error_meta={'Code': '404'},
+                             expected_params={
+                                'Bucket': bucket_name,
+                                'Key': full_key2
+                                }
+                             )
+    stubber.add_response('put_object', {},
+                         expected_params={
+                            'Body': botocore.stub.ANY,
+                            'Bucket': bucket_name,
+                            'Key': full_key2,
+                            'ContentType': 'application/json'
+                            }
+                         )
+    stubber.add_client_error('head_object',
+                             service_error_meta={'Code': '404'},
+                             expected_params={
+                                'Bucket': bucket_name,
+                                'Key': full_key3
+                                }
+                             )
+    stubber.add_response('put_object', {},
+                         expected_params={
+                            'Body': botocore.stub.ANY,
+                            'Bucket': bucket_name,
+                            'Key': full_key3,
+                            'ContentType': 'application/json'
+                            }
+                         )
+    stubber.activate()
+    mocker.patch("boto3.client", lambda service: s3_client)
 
-#     stubber.add_response('put_object', {}, )
-#     stubber.activate()
-#     mocker.patch("boto3.client", lambda service: s3_client)
+    resource_dir = practice_filesystem[test_dir]
+    metadata_dir = practice_filesystem[metadata_file]
+    copy_resources_s3.upload_resources(resource_dir=resource_dir,
+                                       metadata_file=metadata_dir,
+                                       bucket=bucket_name,
+                                       s3_dir=s3_dir)
 
-#     resource_dir = practice_filesystem[test_dir]
-#     metadata_dir = practice_filesystem[metadata_file]
-#     copy_resources_s3.upload_resources(resource_dir=resource_dir,
-#                                        metadata_dir=metadata_dir,
-#                                        bucket=bucket_name,
-#                                        s3_dir=s3_dir)
-
-#     with open(practice_filesystem[metadata_file], 'r') as f:
-#         data = json.load(f)
-#     print(data)
+    with open(practice_filesystem[metadata_file], 'r') as f:
+        data = json.load(f)
+    assert len(data) == 5

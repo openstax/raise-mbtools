@@ -3,4 +3,3 @@ __pycache__
 .coverage
 build
 .vscode
-test_content
