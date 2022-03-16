@@ -2,26 +2,26 @@ import hashlib
 import json
 import os
 import io
-import sys
 import magic
 import boto3
+import argparse
 import botocore
 from pathlib import Path
 
 
 def upload_resources(resource_dir, metadata_file, bucket, s3_dir):
-    """Uplaods resources to s3 if they dont already exist there"""
+    """Uploads resources to s3 if they dont already exist there"""
 
     hash_to_filename_map = new_resource_hashes(resource_dir)
     hashes_new = list(hash_to_filename_map.keys())
 
     hashes_metadata = existing_metadata_hashes(metadata_file)
-    hashes_to_update = list(filter(lambda h: h not in hashes_metadata,
-                                   hashes_new)
-                            )
-    add_new_resources_to_s3(bucket, s3_dir, hashes_to_update,
-                            hash_to_filename_map, metadata_file
-                            )
+    hashes_to_update = list(
+        filter(lambda h: h not in hashes_metadata, hashes_new)
+    )
+    add_new_resources_to_s3(
+        bucket, s3_dir, hashes_to_update, hash_to_filename_map, metadata_file
+    )
 
 
 def existing_metadata_hashes(dir):
@@ -68,15 +68,16 @@ def add_new_resources_to_s3(bucket, s3_dir, hashes, hash2filename_map,
     corresponding sha1 key exists in hashes"""
 
     s3_client = boto3.client("s3")
-    hashkey2mimes_map = {}
-    hashkey2filenames_map = {}
-    hashkey2keypath_map = {}
+    new_metadata = []
     for hash_key in hashes:
         full_keypath = s3_dir + '/' + hash_key
 
         try:
             s3_client.head_object(Bucket=bucket,
                                   Key=full_keypath)
+            filename = os.path.basename(hash2filename_map[hash_key])
+            print(f"File {filename} with sha {hash_key} already exists in S3!")
+
         except botocore.exceptions.ClientError:
             mime_type = get_mime_type(hash2filename_map[hash_key])
             s3_client.upload_file(hash2filename_map[hash_key],
@@ -86,46 +87,53 @@ def add_new_resources_to_s3(bucket, s3_dir, hashes, hash2filename_map,
                                     "ContentType": mime_type
                                     }
                                   )
-            hashkey2mimes_map[hash_key] = mime_type
-            hashkey2keypath_map[hash_key] = full_keypath
-            hashkey2filenames_map[hash_key] = os.path.basename(
-                                              hash2filename_map[hash_key]
-                                              )
+            new_metadata.append({
+                "mime_type": mime_type,
+                "sha1": hash_key,
+                "original_filename": os.path.basename(
+                    hash2filename_map[hash_key]
+                ),
+                "s3_key": full_keypath
+            })
 
-    add_metadata(hashkey2mimes_map,
-                 hashkey2filenames_map,
-                 hashkey2keypath_map,
-                 metadata_file)
-    print("SUCCESS")
-    print("Uploaded " + str(len(hashkey2mimes_map.keys())) + " files to " +
+    add_metadata(new_metadata, metadata_file)
+    print("Uploaded " + str(len(new_metadata)) + " files to " +
           bucket)
 
 
-def add_metadata(new_tag_mimes, new_tag_filenames, new_tag_keypath,
-                 metadata_file
-                 ):
+def add_metadata(new_metadata, metadata_file):
     """Append metadata tags to a metadata_file"""
 
     with open(metadata_file) as f:
         data = json.load(f)
-        for key in new_tag_mimes:
-            tag = {"mime_type": new_tag_mimes[key],
-                   "sha1": key,
-                   "original_filename": new_tag_filenames[key],
-                   "s3_key": new_tag_keypath[key]
-                   }
+        for tag in new_metadata:
             data.append(tag)
     with open(metadata_file, 'w') as f:
         json.dump(data, f)
 
 
 def main():
-    new_resource_dir = Path(sys.argv[1]).resolve(strict=True)
-    metadata_file = Path(sys.argv[2]).resolve(strict=True)
-    bucket = sys.argv[3]
-    s3_dir = sys.argv[4]
+    parser = argparse.ArgumentParser(description='Upload Resources to S3')
+    parser.add_argument('new_resource_path', type=str,
+                        help='relative path to files')
+    parser.add_argument('metadata_file', type=str,
+                        help='relative path to metadata file')
+    parser.add_argument('bucket_name', type=str,
+                        help='bucket name')
+    parser.add_argument('s3_prefix', type=str,
+                        help='prefix for s3 files')
+    args = parser.parse_args()
 
-    upload_resources(new_resource_dir, metadata_file, bucket, s3_dir)
+    new_resource_dir = Path(args.new_resource_path).resolve(strict=True)
+
+    metadata_file = Path(args.metadata_file)
+
+    if not metadata_file.exists():
+        metadata_file.parent.mkdir(parents=True, exist_ok=True)
+        metadata_file.write_text("[]")
+
+    upload_resources(new_resource_dir, args.metadata_file, args.bucket_name,
+                     args.s3_prefix)
 
 
 if __name__ == "__main__":
