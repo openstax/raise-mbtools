@@ -64,15 +64,3 @@ def find_moodle_media_references(activity):
         )
 
     return media_references
-
-
-def main():
-    activities = parse_backup_activities("../.vscode/wisewire-raise-thin-slice-patch1-20220207")
-    media_references = []
-    for activity in activities:
-        media_references += find_external_media_references(activity)
-
-    print(media_references)
-
-if __name__ == "__main__":
-    main()
