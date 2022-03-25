@@ -90,7 +90,7 @@ class MoodleActivity:
         question_objs = \
             MoodleQuestionBank(self.mbz_path).questions_by_id(ids)
         for question in question_objs:
-            elements.extend(question.get_all_html_elements())
+            elements.extend(question.get_all_lxml_elements())
         return elements
 
 
@@ -99,7 +99,7 @@ class MoodleQuestion:
         self.etree = question_elm
         self.id = id
 
-    def get_all_html_elements(self):
+    def get_all_lxml_elements(self):
         html_elements = []
         question_texts = self.etree.xpath(
                 f"//question[@id={self.id}]/questiontext")
@@ -110,6 +110,18 @@ class MoodleQuestion:
         for answer_html in answer_texts:
             html_elements.append(answer_html)
         return html_elements
+
+    def get_all_moodle_elements(self):
+        moodle_elements = []
+        question_texts = self.etree.xpath(
+                f"//question[@id={self.id}]/questiontext")
+        for question_html in question_texts:
+            moodle_elements.append(MoodleHtmlElement(question_html))
+        answer_texts = self.etree.xpath(
+                f"//question[@id={self.id}]/answers/answer/answertext")
+        for answer_html in answer_texts:
+            moodle_elements.append(MoodleHtmlElement(answer_html))
+        return moodle_elements
 
 
 class MoodleHtmlElement:
@@ -131,3 +143,10 @@ class MoodleHtmlElement:
             etree.tostring(self.etree),
             "html.parser"
         ).encode(formatter="html5")
+
+    def get_attribute_names(self):
+        attributes = []
+        soup = BeautifulSoup(etree.tostring(self.etree))
+        for tag in soup.find_all():
+            attributes.extend(list(tag.attrs))
+        return attributes

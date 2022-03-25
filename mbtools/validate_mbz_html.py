@@ -1,17 +1,49 @@
 import argparse
 from pathlib import Path
+from . import utils
+
+STYLE_VIOLATION = "Uses In-Line Styles"
 
 
 def validate_mbz(mbz_path, output_file):
-    # Get html
-        # Check for style attributes
-        # Check for <script> elements
-        # Check for <iframe> elements
-    # Get external files
-        # Check for sources not prefixed by s3 or k12.openstax
-    # Get moodle files
-        # Check for references to moodle uploads
+    # Get html for both content and question_bank
+    html_elements = utils.parse_backup_for_moodle_html_elements(mbz_path)
+    html_elements.extend(
+        utils.parse_question_bank_for_moodle_html_elements(mbz_path))
 
+    violations = {}
+    violations.update(find_style_violations(html_elements))
+    violations.update(find_script_violations(html_elements))
+    violations.update(find_iframe_violations(html_elements))
+
+    violations.update(find_external_source_violations(html_elements))
+    violations.update(find_moodle_source_violations(html_elements))
+
+    return violations
+
+
+def find_style_violations(html_elements):
+    violations = {}
+    for elem in html_elements:
+        attributes = elem.get_attribute_names()
+        if "style" in attributes:
+            violations[elem.tostring()] = STYLE_VIOLATION
+    return violations
+
+
+def find_script_violations(html_elements):
+    pass
+
+
+def find_iframe_violations(html_elements):
+    pass
+
+
+def find_external_source_violations(html_elements):
+    pass
+
+
+def find_moodle_source_violations(html_elements):
     pass
 
 
@@ -33,5 +65,5 @@ def main():
     validate_mbz(mbz_path, output_file)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
