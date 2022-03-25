@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 class MoodleBackup:
     def __init__(self, mbz_path):
         self.mbz_path = Path(mbz_path)
-        self.backup_xml_path = self.mbz_path / "moodle_backup.xml"
-        self.etree = etree.parse(str(self.backup_xml_path))
+        backup_xml_path = self.mbz_path / "moodle_backup.xml"
+        self.etree = etree.parse(str(backup_xml_path))
 
     def activities(self):
         activity_elems = self.etree.xpath("//contents/activities/activity")
@@ -26,34 +26,28 @@ class MoodleQuestionBank:
     def __init__(self, mbz_path):
         self.mbz_path = Path(mbz_path)
         self.questionbank_path = self.mbz_path / "questions.xml"
-        self.question_etree = etree.parse(str(self.questionbank_path))
+        self.etree = etree.parse(str(self.questionbank_path))
 
-    def questions(self):
-        question_elms = self.question_etree.xpath(
-            "//question_categories/question_category/questions/question"
-            )
-        question_objects = []
-        for question_elm in question_elms:
-            id = question_elm.attrib['id']
-            question_objects.append(
-                MoodleQuestion(question_elm, id)
-                )
-        return question_objects
-
-    def questions_by_id(self, ids):
-        question_elms = self.question_etree.xpath(
-            "//question_categories/question_category/questions/question"
-            )
-        question_objects = []
-        for question_elm in question_elms:
-            id = question_elm.attrib['id']
-            if id in ids:
-                question_objects.append(
-                    MoodleQuestion(question_elm, id)
-                    )
-        if len(question_objects) == 0:
-            raise(NotFoundErr)
-        return question_objects
+    def questions(self, ids=None):
+        questions = []
+        if ids is None:
+            query = \
+                '//question_categories/question_category/questions/question'
+            all_elems = self.etree.xpath(query)
+            for elem in all_elems:
+                questions.append(MoodleQuestion(elem, elem.attrib['id']))
+        else:
+            for id in ids:
+                query = '//question_categories/question_category/questions/'\
+                        f'question[@id={id}]'
+                elems = self.etree.xpath(query)
+                if len(elems) == 0:
+                    raise(NotFoundErr)
+                else:
+                    questions.append(MoodleQuestion(elems[0], id))
+            if len(questions) != len(ids):
+                raise(NotFoundErr)
+        return questions
 
 
 class MoodleActivity:
@@ -70,28 +64,28 @@ class MoodleActivity:
         if self.activity_type == "lesson":
             xpath_query = "//pages/page/contents"
             elements = self.etree.xpath(xpath_query)
+            xpath_query = "//pages/page/answers/answer_text"
+            elements.extend(self.etree.xpath(xpath_query))
+            return [MoodleHtmlElement(el) for el in elements]
         elif self.activity_type == "page":
             xpath_query = "//page/content"
             elements = self.etree.xpath(xpath_query)
+            return [MoodleHtmlElement(el) for el in elements]
         elif self.activity_type == "quiz":
             xpath_query = \
                 "//quiz/question_instances/question_instance/questionid"
             ids = []
-            for question in self.etree.findall(xpath_query):
+            for question in self.etree.xpath(xpath_query):
                 ids.append(question.text)
-            elements.extend(self._get_questions_from_bank(ids))
+
+            question_objs = \
+                MoodleQuestionBank(self.mbz_path).questions(ids)
+            elements = []
+            for question in question_objs:
+                elements.extend(question.html_elements())
+            return elements
         else:
             return []
-
-        return [MoodleHtmlElement(el) for el in elements]
-
-    def _get_questions_from_bank(self, ids):
-        elements = []
-        question_objs = \
-            MoodleQuestionBank(self.mbz_path).questions_by_id(ids)
-        for question in question_objs:
-            elements.extend(question.get_all_html_elements())
-        return elements
 
 
 class MoodleQuestion:
@@ -99,17 +93,19 @@ class MoodleQuestion:
         self.etree = question_elm
         self.id = id
 
-    def get_all_html_elements(self):
-        html_elements = []
+    def html_elements(self):
+        elements = []
         question_texts = self.etree.xpath(
                 f"//question[@id={self.id}]/questiontext")
         for question_html in question_texts:
-            html_elements.append(question_html)
+            elements.append(
+                MoodleHtmlElement(question_html))
         answer_texts = self.etree.xpath(
                 f"//question[@id={self.id}]/answers/answer/answertext")
         for answer_html in answer_texts:
-            html_elements.append(answer_html)
-        return html_elements
+            elements.append(
+                MoodleHtmlElement(answer_html))
+        return elements
 
 
 class MoodleHtmlElement:
@@ -130,4 +126,4 @@ class MoodleHtmlElement:
         return BeautifulSoup(
             etree.tostring(self.etree),
             "html.parser"
-        ).encode(formatter="html5")
+        ).encode(formatter="html5").decode('utf-8')
