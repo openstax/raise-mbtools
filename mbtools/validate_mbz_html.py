@@ -10,7 +10,7 @@ def validate_mbz(mbz_path, output_file):
     # Get external files
         # Check for sources not prefixed by s3 or k12.openstax
     # Get moodle files
-        # Check for references to moodle uploads 
+        # Check for references to moodle uploads
 
     pass
 
@@ -29,7 +29,7 @@ def main():
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
         output_file.write_text("[]")
-    
+
     validate_mbz(mbz_path, output_file)
 
 
