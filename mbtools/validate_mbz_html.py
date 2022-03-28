@@ -15,7 +15,6 @@ def validate_mbz(mbz_path, output_file):
     violations.update(find_style_violations(html_elements))
     violations.update(find_script_violations(html_elements))
     violations.update(find_iframe_violations(html_elements))
-
     violations.update(find_external_source_violations(html_elements))
     violations.update(find_moodle_source_violations(html_elements))
 
