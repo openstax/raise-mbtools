@@ -5,28 +5,41 @@ from . import utils
 STYLE_VIOLATION = "Uses In-Line Styles"
 
 
+class Violation:
+
+    def __init__(self, html_string, issue, page_title):
+        self.html = html_string
+        self.issue = issue
+        self.page_title = page_title
+
+    def tostring(self):
+        return f'{self.issue}\n On Page with Title: {self.page_title}'
+
+
 def validate_mbz(mbz_path, output_file):
     # Get html for both content and question_bank
     html_elements = utils.parse_backup_for_moodle_html_elements(mbz_path)
     html_elements.extend(
         utils.parse_question_bank_for_moodle_html_elements(mbz_path))
 
-    violations = {}
-    violations.update(find_style_violations(html_elements))
-    violations.update(find_script_violations(html_elements))
-    violations.update(find_iframe_violations(html_elements))
-    violations.update(find_external_source_violations(html_elements))
-    violations.update(find_moodle_source_violations(html_elements))
+    violations = []
+    violations.extend(find_style_violations(html_elements))
+    violations.extend(find_script_violations(html_elements))
+    violations.extend(find_iframe_violations(html_elements))
+    violations.extend(find_external_source_violations(html_elements))
+    violations.extend(find_moodle_source_violations(html_elements))
 
     return violations
 
 
 def find_style_violations(html_elements):
-    violations = {}
+    violations = []
     for elem in html_elements:
         attributes = elem.get_attribute_names()
         if "style" in attributes:
-            violations[elem.tostring()] = STYLE_VIOLATION
+            violations.append(Violation(elem.tostring(),
+                                        STYLE_VIOLATION,
+                                        elem.use_location()))
     return violations
 
 

@@ -99,33 +99,21 @@ class MoodleQuestion:
         self.etree = question_elm
         self.id = id
 
-    def get_all_lxml_elements(self):
-        html_elements = []
-        question_texts = self.etree.xpath(
-                f"//question[@id={self.id}]/questiontext")
-        for question_html in question_texts:
-            html_elements.append(question_html)
-        answer_texts = self.etree.xpath(
-                f"//question[@id={self.id}]/answers/answer/answertext")
-        for answer_html in answer_texts:
-            html_elements.append(answer_html)
-        return html_elements
-
     def get_all_moodle_elements(self):
         moodle_elements = []
         question_texts = self.etree.xpath(
                 f"//question[@id={self.id}]/questiontext")
         for question_html in question_texts:
-            moodle_elements.append(MoodleHtmlElement(question_html))
+            moodle_elements.append(MoodleHtmlElement(question_html, self.use_location))
         answer_texts = self.etree.xpath(
                 f"//question[@id={self.id}]/answers/answer/answertext")
         for answer_html in answer_texts:
-            moodle_elements.append(MoodleHtmlElement(answer_html))
+            moodle_elements.append(MoodleHtmlElement(answer_html, self.use_location))
         return moodle_elements
 
 
 class MoodleHtmlElement:
-    def __init__(self, parent):
+    def __init__(self, parent, use_location):
         self.parent = parent
         self.etree = html.fromstring(self.parent.text)
 
@@ -150,3 +138,6 @@ class MoodleHtmlElement:
         for tag in soup.find_all():
             attributes.extend(list(tag.attrs))
         return attributes
+
+    def use_location(self):
+        return self.use_location
