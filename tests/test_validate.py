@@ -89,14 +89,17 @@ def mbz_path(tmp_path):
             <activities>
                 <activity>
                     <modulename>lesson</modulename>
+                    <title>First Lesson: 1.1</title>
                     <directory>activities/lesson_1</directory>
                 </activity>
                 <activity>
                     <modulename>page</modulename>
+                    <title>Second Lesson: 2.1</title>
                     <directory>activities/page_2</directory>
                 </activity>
                 <activity>
                     <modulename>quiz</modulename>
+                    <title>Third Lesson: 3.1</title>
                     <directory>activities/quiz_3</directory>
                 </activity>
             </activities>

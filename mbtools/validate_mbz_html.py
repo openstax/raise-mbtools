@@ -39,7 +39,7 @@ def find_style_violations(html_elements):
         if "style" in attributes:
             violations.append(Violation(elem.tostring(),
                                         STYLE_VIOLATION,
-                                        elem.use_location()))
+                                        elem.use_location))
     return violations
 
 
