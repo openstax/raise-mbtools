@@ -254,3 +254,22 @@ def test_upload_resources_no_existing_metadata_file(practice_filesystem,
     assert len(data) == 3
     for item in metadata_updates:
         assert item in data
+
+
+def test_add_metadata_indent(tmp_path):
+    metadata_file = tmp_path / "media.json"
+    metadata_file.write_text("[]")
+
+    copy_resources_s3.add_metadata(
+        [{"foo": 1, "bar": 2}],
+        str(metadata_file)
+    )
+
+    text = metadata_file.read_text()
+
+    assert text == """[
+  {
+    "foo": 1,
+    "bar": 2
+  }
+]"""

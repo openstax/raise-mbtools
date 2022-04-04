@@ -109,7 +109,7 @@ def add_metadata(new_metadata, metadata_file):
         for tag in new_metadata:
             data.append(tag)
     with open(metadata_file, 'w') as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=2)
 
 
 def main():
