@@ -1,5 +1,5 @@
 from pathlib import Path
-from functools import cache
+from functools import lru_cache
 import argparse
 import csv
 import requests
@@ -39,7 +39,7 @@ def get_base_url(code_version):
     return f"https://openstax.org/apps/archive/{code_version}"
 
 
-@cache
+@lru_cache
 def get_book_json(base_url, book_uuid, book_version):
     """Get the book JSON
 
