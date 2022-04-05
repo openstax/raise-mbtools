@@ -252,8 +252,7 @@ def mbz_path(tmp_path):
 
 
 def test_validate_all(mbz_path):
-    output_file = mbz_path / "output.txt"
-    violations = validate_mbz_html.validate_mbz(mbz_path, output_file)
+    violations = validate_mbz_html.validate_mbz(mbz_path)
     violation_names = [x.issue for x in violations]
     assert set([validate_mbz_html.STYLE_VIOLATION,
                 validate_mbz_html.STYLE_VIOLATION,
