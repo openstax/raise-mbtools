@@ -2,32 +2,36 @@ import argparse
 from pathlib import Path
 from . import utils
 
-STYLE_VIOLATION = "Uses In-Line Styles"
+STYLE_VIOLATION = "ERROR: Uses In-Line Styles"
+SOURCE_VIOLATION = "ERROR: Uses External Resource with Invalid Prefix"
+MOODLE_VIOLATION = "ERROR: References Uploaded Files in Moodle DB"
+SCRIPT_VIOLATION = "ERROR: Uses In-Line Script Element"
+IFRAME_VIOLATION = "ERROR: Uses In-Line iFrame Element"
+
+VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
+                  "https://k12.openstax.org/contents/raise"]
 
 
 class Violation:
 
-    def __init__(self, html_string, issue, page_title):
+    def __init__(self, html_string, issue, location, details=None):
         self.html = html_string
         self.issue = issue
-        self.page_title = page_title
+        self.location = location
+        self.details = details
 
     def tostring(self):
-        return f'{self.issue}\n On Page with Title: {self.page_title}'
+        return f'{self.issue}\n At Location: {self.location}'
 
 
 def validate_mbz(mbz_path, output_file):
     # Get html for both content and question_bank
-    html_elements = utils.parse_backup_for_moodle_html_elements(mbz_path)
-    html_elements.extend(
-        utils.parse_question_bank_for_moodle_html_elements(mbz_path))
+    html_elements = utils.parse_backup_elements(mbz_path)
 
     violations = []
     violations.extend(find_style_violations(html_elements))
-    violations.extend(find_script_violations(html_elements))
-    violations.extend(find_iframe_violations(html_elements))
-    violations.extend(find_external_source_violations(html_elements))
-    violations.extend(find_moodle_source_violations(html_elements))
+    violations.extend(find_source_violations(html_elements))
+    violations.extend(find_tag_violations(html_elements))
 
     return violations
 
@@ -39,24 +43,49 @@ def find_style_violations(html_elements):
         if "style" in attributes:
             violations.append(Violation(elem.tostring(),
                                         STYLE_VIOLATION,
-                                        elem.use_location))
+                                        elem.location))
     return violations
 
 
-def find_script_violations(html_elements):
-    pass
+def find_tag_violations(html_elements):
+    violations = []
+    for elem in html_elements:
+        hits = elem.get_child_elements("script")
+        if len(hits) > 0:
+            for hit in hits:
+                violations.append(Violation(elem.tostring(),
+                                            SCRIPT_VIOLATION,
+                                            elem.location,
+                                            hit))
+        hits = elem.get_child_elements("iframe")
+        if len(hits) > 0:
+            for hit in hits:
+                violations.append(Violation(elem.tostring(),
+                                            IFRAME_VIOLATION,
+                                            elem.location,
+                                            hit))
+    return violations
 
 
-def find_iframe_violations(html_elements):
-    pass
-
-
-def find_external_source_violations(html_elements):
-    pass
-
-
-def find_moodle_source_violations(html_elements):
-    pass
+def find_source_violations(html_elements):
+    violations = []
+    for elem in html_elements:
+        links = elem.get_attribute_values('src')
+        for link in links:
+            if len([prefix for prefix in VALID_PREFIXES if(prefix in link)]) \
+                    > 0:    # check if link contains a valid prefix
+                continue
+            elif "@@PLUGINFILE@@" in link:
+                violations.append(Violation(elem.tostring(),
+                                            MOODLE_VIOLATION,
+                                            elem.location,
+                                            link))
+            else:
+                violations.append(Violation(elem.tostring(),
+                                            SOURCE_VIOLATION,
+                                            elem.location,
+                                            link))
+    return violations
 
 
 def main():

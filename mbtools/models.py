@@ -21,6 +21,20 @@ class MoodleBackup:
                 MoodleActivity(activity_type, activity_path, self.mbz_path))
         return activities
 
+    def elements(self):
+        activity_elems = self.etree.xpath("//contents/activities/activity")
+        activities = []
+        for activity_elem in activity_elems:
+            activity_type = activity_elem.find("modulename").text
+            activity_path = \
+                self.mbz_path / activity_elem.find("directory").text
+            activities.append(
+                MoodleActivity(activity_type, activity_path, self.mbz_path))
+        html = []
+        for activity in activities:
+            html.extend(activity.html_elements())
+        return html
+
 
 class MoodleQuestionBank:
     def __init__(self, mbz_path):
@@ -164,3 +178,19 @@ class MoodleHtmlElement:
         for tag in soup.find_all():
             attributes.extend(list(tag.attrs))
         return attributes
+
+    def get_attribute_values(self, attr):
+        values = []
+        soup = BeautifulSoup(etree.tostring(self.etree))
+        for tag in soup.find_all():
+            if 'src' in tag.attrs:
+                values.append(tag.attrs['src'])
+        return values
+
+    def get_child_elements(self, element_name):
+        elems = []
+        soup = BeautifulSoup(etree.tostring(self.etree))
+        for tag in soup.find_all():
+            if tag.name == element_name:
+                elems.append(str(tag.contents[0]))
+        return elems
