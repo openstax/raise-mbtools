@@ -1,10 +1,11 @@
 import argparse
+import json
 from pathlib import Path
 from . import utils
 
 STYLE_VIOLATION = "ERROR: Uses In-Line Styles"
 SOURCE_VIOLATION = "ERROR: Uses External Resource with Invalid Prefix"
-MOODLE_VIOLATION = "ERROR: References Uploaded Files in Moodle DB"
+MOODLE_VIOLATION = "ERROR: References to Uploaded Files in Moodle DB"
 SCRIPT_VIOLATION = "ERROR: Uses In-Line Script Element"
 IFRAME_VIOLATION = "ERROR: Uses In-Line iFrame Element"
 
@@ -13,7 +14,6 @@ VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
 
 
 class Violation:
-
     def __init__(self, html_string, issue, location, details=None):
         self.html = html_string
         self.issue = issue
@@ -23,9 +23,14 @@ class Violation:
     def tostring(self):
         return f'{self.issue}\n At Location: {self.location}'
 
+    def toDict(self):
+        dict = {"issue": self.issue,
+                "location": self.location}
+        return dict
 
-def validate_mbz(mbz_path, output_file):
-    # Get html for both content and question_bank
+
+def validate_mbz(mbz_path):
+
     html_elements = utils.parse_backup_elements(mbz_path)
 
     violations = []
@@ -103,8 +108,11 @@ def main():
         output_file.parent.mkdir(parents=True, exist_ok=True)
         output_file.write_text("[]")
 
-    validate_mbz(mbz_path, output_file)
+    violations = validate_mbz(mbz_path)
+    with open(output_file, 'w') as f:
+        for violation in violations:
+            json.dump(violation.toDict(), f, indent=4)
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()

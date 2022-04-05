@@ -192,5 +192,8 @@ class MoodleHtmlElement:
         soup = BeautifulSoup(etree.tostring(self.etree))
         for tag in soup.find_all():
             if tag.name == element_name:
-                elems.append(str(tag.contents[0]))
+                if len(tag.contents) == 0:
+                    elems.append("")
+                else:
+                    elems.append(str(tag.contents[0]))
         return elems
