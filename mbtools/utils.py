@@ -3,12 +3,28 @@ from . import models
 
 
 def parse_backup_activities(mbz_dir):
-    """Given a string with path to an extracted moodle backup directory return
+    """
+    Given a string with path to an extracted moodle backup directory return
     model objects for course activities
     """
     mbz_path = Path(mbz_dir).resolve(strict=True)
     moodle_backup = models.MoodleBackup(mbz_path)
     return moodle_backup.activities()
+
+
+def parse_question_bank_for_html(mbz_dir, ids=None):
+    """
+    Given a string with path to a question_bank directory from an extracted
+    moodle backup, return model for a question bank
+    """
+
+    mbz_path = Path(mbz_dir).resolve(strict=True)
+    questions = models.MoodleQuestionBank(mbz_path).questions(ids)
+    html = []
+    for question in questions:
+        for item in question.html_elements():
+            html.append(item)
+    return html
 
 
 def find_external_media_references(activity):
