@@ -1,3 +1,4 @@
+from csv import reader
 import pytest
 import html
 from mbtools import validate_mbz_html
@@ -15,8 +16,10 @@ ANSWER2_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/answer2"
 
 LESSON1_CONTENT1 = (
     '<div>'
+    '<div>'
     f'<img src="{IM_MEDIA_LINK}">'
     '<img src="https://validsite/imagename">'
+    '</div>'
     '</div>'
 )
 LESSON1_CONTENT2 = (
@@ -264,3 +267,14 @@ def test_validate_all(mbz_path):
                 validate_mbz_html.IFRAME_VIOLATION,
                 validate_mbz_html.MOODLE_VIOLATION,
                 validate_mbz_html.MOODLE_VIOLATION]) == set(violation_names)
+
+
+def test_validate_output_file(mbz_path, mocker, tmp_path):
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}", f"{tmp_path}/test_output.csv"]
+    )
+    validate_mbz_html.main()
+    with open(f"{tmp_path}/test_output.csv", 'r') as f:
+        violations = list(reader(f))
+        assert (len(violations) == 11)

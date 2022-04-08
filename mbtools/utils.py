@@ -17,9 +17,11 @@ def parse_backup_elements(mbz_dir):
     Given a string with path to an extracted moodle backup directory return
     model objects for course html elements
     """
-    mbz_path = Path(mbz_dir).resolve(strict=True)
-    moodle_backup = models.MoodleBackup(mbz_path)
-    return moodle_backup.elements()
+    html_elements = []
+    activities = parse_backup_activities(mbz_dir)
+    for activity in activities:
+        html_elements.extend(activity.html_elements())
+    return html_elements
 
 
 def parse_question_bank_for_html(mbz_dir, ids=None):

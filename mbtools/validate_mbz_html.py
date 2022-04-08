@@ -1,5 +1,5 @@
 import argparse
-import json
+from csv import DictWriter
 from pathlib import Path
 from . import utils
 
@@ -8,24 +8,27 @@ SOURCE_VIOLATION = "ERROR: Uses External Resource with Invalid Prefix"
 MOODLE_VIOLATION = "ERROR: References to Uploaded Files in Moodle DB"
 SCRIPT_VIOLATION = "ERROR: Uses In-Line Script Element"
 IFRAME_VIOLATION = "ERROR: Uses In-Line iFrame Element"
+HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
 
 VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
                   "https://k12.openstax.org/contents/raise"]
 
+VALID_IFRAME_PREFIXES = ["https://youtube.com"]
+
+VALID_HREF_PREFIXES = []
+
 
 class Violation:
-    def __init__(self, html_string, issue, location, details=None):
+    def __init__(self, html_string, issue, location, link=None):
         self.html = html_string
         self.issue = issue
         self.location = location
-        self.details = details
-
-    def tostring(self):
-        return f'{self.issue}\n At Location: {self.location}'
+        self.link = link
 
     def toDict(self):
         dict = {"issue": self.issue,
-                "location": self.location}
+                "location": self.location,
+                "link": self.link}
         return dict
 
 
@@ -60,22 +63,34 @@ def find_tag_violations(html_elements):
             for hit in hits:
                 violations.append(Violation(elem.tostring(),
                                             SCRIPT_VIOLATION,
-                                            elem.location,
-                                            hit))
+                                            elem.location))
         hits = elem.get_child_elements("iframe")
         if len(hits) > 0:
             for hit in hits:
-                violations.append(Violation(elem.tostring(),
-                                            IFRAME_VIOLATION,
-                                            elem.location,
-                                            hit))
+                link = elem.get_attribute_values("src")
+                if len([prefix for prefix in VALID_IFRAME_PREFIXES
+                        if(prefix in link[0])]) == 0:
+                    violations.append(Violation(elem.tostring(),
+                                                IFRAME_VIOLATION,
+                                                elem.location,
+                                                link[0]))
+        hits = elem.get_child_elements("a")
+        if len(hits) > 0:
+            links = elem.get_attribute_values("href")
+            if len(links) > 0:
+                if len([prefix for prefix in VALID_HREF_PREFIXES
+                        if(prefix in links[0])]) == 0:
+                    violations.append(Violation(elem.tostring(),
+                                                HREF_VIOLATION,
+                                                elem.location,
+                                                links[0]))
     return violations
 
 
 def find_source_violations(html_elements):
     violations = []
     for elem in html_elements:
-        links = elem.get_attribute_values('src')
+        links = elem.get_attribute_values('src', exception='iframe')
         for link in links:
             if len([prefix for prefix in VALID_PREFIXES if(prefix in link)]) \
                     > 0:    # check if link contains a valid prefix
@@ -110,8 +125,10 @@ def main():
 
     violations = validate_mbz(mbz_path)
     with open(output_file, 'w') as f:
+        w = DictWriter(f, ['issue', 'location', 'link'])
+        w.writeheader()
         for violation in violations:
-            json.dump(violation.toDict(), f, indent=4)
+            w.writerow(violation.toDict())
 
 
 if __name__ == "__main__":
