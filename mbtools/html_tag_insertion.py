@@ -12,21 +12,13 @@ class TagReplacement:
         self.mbz_path = Path(mbz_path)
         self.activities = utils.parse_backup_activities(mbz_path)
         print(self.activities[0].activity_filename)
-        print(self.activities[0].activity_filename)
 
 
         # get activities from Etree
-    def find_content_tags(self):
-        for activity in self.activities:
-            for element in activity.etree.iter():
-                if element.find("content") is not None:
-                    for children in element.getchildren():
-                        print(children.text)
-                        print("----------------------------------------------")
-
-
     def replace_tags(self):
-        pass
+        for activity in self.activities:
+            activity.replace_tags()
+
 
 
 

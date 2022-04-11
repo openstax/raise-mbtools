@@ -2,7 +2,8 @@ from pathlib import Path
 from xml.dom import NotFoundErr
 from lxml import etree, html
 from bs4 import BeautifulSoup
-
+from hashlib import sha256
+from sys import stdout
 
 class MoodleBackup:
     def __init__(self, mbz_path):
@@ -50,6 +51,7 @@ class MoodleQuestionBank:
         return questions
 
 
+
 class MoodleActivity:
     def __init__(self, activity_type, activity_path, mbz_path):
         self.mbz_path = Path(mbz_path)
@@ -58,6 +60,45 @@ class MoodleActivity:
         self.activity_filename = \
             str(self.activity_path / f"{self.activity_type}.xml")
         self.etree = etree.parse(self.activity_filename)
+
+    def replace_tags(self):
+        if self.activity_type == "page":
+            # find and replace all html in content tag.
+            output_html_files = []
+            etree_elements = self.find_etree_elements()
+            # find html elements and check if they have been changed.
+            valid_etree_elements = self.validate_etree_elements(etree_elements)
+            # find check and replace HTML content.
+            output_html_files = self.change_element(valid_etree_elements)
+
+            #self.write_files(output_html_files, output_file_path)
+            pass
+        elif self.activity_type == "lesson":
+            # find and replace all html in contents tag.
+            # find html elements and check if they have been changed.
+            # find check and replace HTML content.
+            pass
+
+    def find_etree_elements(self):
+
+        return self.etree.xpath("//page/content")
+
+    def validate_etree_elements(self, etree_elements):
+        return etree_elements
+
+    def change_element(self, etree_elements):
+        #iterate over elements
+        # get the content of HTML
+        html_file_dict = {}
+        for element in etree_elements:
+            content = element.text
+            content_hash = sha256(content.encode())
+
+            tag =f'<div class="os-raise-content" data-content-id="{content_hash.hexdigest()}"></div>'
+            element.text = tag
+            html_file_dict[content_hash] = content
+        print(etree.tostring(self.etree))
+        return html_file_dict
 
     def html_elements(self):
         elements = []
