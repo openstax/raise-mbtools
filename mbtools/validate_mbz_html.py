@@ -17,6 +17,8 @@ VALID_IFRAME_PREFIXES = ["https://youtube.com"]
 
 VALID_HREF_PREFIXES = []
 
+VALID_STYLES = ['text-align: left;']
+
 
 class Violation:
     def __init__(self, html_string, issue, location, link=None):
@@ -47,11 +49,12 @@ def validate_mbz(mbz_path):
 def find_style_violations(html_elements):
     violations = []
     for elem in html_elements:
-        attributes = elem.get_attribute_names()
-        if "style" in attributes:
-            violations.append(Violation(elem.tostring(),
-                                        STYLE_VIOLATION,
-                                        elem.location))
+        attributes = elem.get_attribute_values("style")
+        for attr in attributes:
+            if attr not in VALID_STYLES:
+                violations.append(Violation(elem.tostring(),
+                                            STYLE_VIOLATION,
+                                            elem.location))
     return violations
 
 

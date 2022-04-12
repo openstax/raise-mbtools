@@ -32,7 +32,7 @@ LESSON1_CONTENT2 = (
     '</div>'
 )
 LESSON_ANSWER1 = (
-    '<p dir="ltr" style="text-align: left;">'
+    '<p dir="ltr" style="text-align: left; color=blue;">'
     '(6, 0)'
     '<br>'
     '</p>'
@@ -45,7 +45,7 @@ LESSON_ANSWER2 = (
     '</p>'
 )
 LESSON_ANSWER3 = (
-    '<p dir="ltr" style="text-align: left;">'
+    '<p dir="ltr" style="text-align: left; color= red;">'
     '(3, 2)'
     '<br>'
     '</p>'
@@ -265,7 +265,6 @@ def test_validate_all(mbz_path):
     violation_names = [x.issue for x in violations]
     assert set([validate_mbz_html.STYLE_VIOLATION,
                 validate_mbz_html.STYLE_VIOLATION,
-                validate_mbz_html.STYLE_VIOLATION,
                 validate_mbz_html.SOURCE_VIOLATION,
                 validate_mbz_html.SOURCE_VIOLATION,
                 validate_mbz_html.SCRIPT_VIOLATION,
@@ -291,9 +290,8 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
             violation_messages.append(row[0])
             if row[2] != '':
                 violation_links.append(row[2])
-        assert (len(violation_messages) == 11)
+        assert (len(violation_messages) == 10)
         assert set([validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
                     validate_mbz_html.STYLE_VIOLATION,
                     validate_mbz_html.SOURCE_VIOLATION,
                     validate_mbz_html.SOURCE_VIOLATION,
