@@ -193,6 +193,8 @@ class MoodleHtmlElement:
 
     def get_attribute_values(self, attr, exception=None):
         values = []
+        if attr in self.etree.attrib.keys():
+            values.extend(self.etree.attrib[attr])
         for elem in self.etree.xpath(".//*"):
             if elem.tag != exception or exception is None:
                 if attr in elem.attrib.keys():

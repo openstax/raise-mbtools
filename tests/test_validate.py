@@ -13,12 +13,16 @@ QUESTION2_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/q2"
 QUESTION3_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/q3"
 ANSWER1_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/answer1"
 ANSWER2_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/answer2"
+ADDITIONAL_MEDIA = "https://wikipedia.com/brazil/image1"
+ADDITIONAL_MEDIA2 = "https://wikipedia.com/brazil/image2"
+ADDITIONAL_MEDIA3 = "https://wikipedia.com/brazil/image3"
+ADDITIONAL_MEDIA4 = "https://wikipedia.com/brazil/image4"
 
 LESSON1_CONTENT1 = (
     '<div>'
     '<div>'
     f'<img src="{IM_MEDIA_LINK}">'
-    '<img src="https://validsite/imagename">'
+    f'<img src="{ADDITIONAL_MEDIA}">'
     '</div>'
     '</div>'
 )
@@ -51,10 +55,10 @@ PAGE2_CONTENT = (
     '<video controls="true">'
     f'<source src="{MOODLE_VIDEO_FILE}">'
     f'<track src="{MOODLE_TRACK_FILE}">'
-    '<track src="https://validsite/video.vtt">'
+    f'<track src="{ADDITIONAL_MEDIA2}">'
     'fallback content'
     '</video>'
-    '<a href="https://validsite/imagename">'
+    f'<a href="{ADDITIONAL_MEDIA3}">'
     '</a>'
     '<script>var variable=0'
     '</script>'
@@ -111,7 +115,7 @@ ANSWER1_CONTENT = (
     '</p>'
     '<img alt="A Picture of Brasilia" height="71" role="image" '
     f'src="{ANSWER1_ILLUSTRATION}" title="answer1" width="101">'
-    '<iframe src="https://sometihing.com">A SINGLE IFRAME'
+    f'<iframe src="{ADDITIONAL_MEDIA4}">A SINGLE IFRAME'
     '</iframe>'
     '</div>'
 )
@@ -282,8 +286,11 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
         violations = csv.reader(f, delimiter=",")
         next(violations)
         violation_messages = []
+        violation_links = []
         for row in violations:
             violation_messages.append(row[0])
+            if row[2] != '':
+                violation_links.append(row[2])
         assert (len(violation_messages) == 11)
         assert set([validate_mbz_html.STYLE_VIOLATION,
                     validate_mbz_html.STYLE_VIOLATION,
@@ -297,3 +304,9 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
                     validate_mbz_html.MOODLE_VIOLATION,
                     validate_mbz_html.HREF_VIOLATION]) == \
                set(violation_messages)
+        assert set([MOODLE_VIDEO_FILE,
+                    MOODLE_TRACK_FILE,
+                    ADDITIONAL_MEDIA,
+                    ADDITIONAL_MEDIA2,
+                    ADDITIONAL_MEDIA3,
+                    ADDITIONAL_MEDIA4]) == set(violation_links)

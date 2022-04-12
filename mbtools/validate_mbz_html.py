@@ -59,11 +59,10 @@ def find_tag_violations(html_elements):
     violations = []
     for elem in html_elements:
         hits = elem.get_child_elements("script")
-        if len(hits) > 0:
-            for hit in hits:
-                violations.append(Violation(elem.tostring(),
-                                            SCRIPT_VIOLATION,
-                                            elem.location))
+        for hit in hits:
+            violations.append(Violation(elem.tostring(),
+                                        SCRIPT_VIOLATION,
+                                        elem.location))
         hits = elem.get_child_elements("iframe")
         for hit in hits:
             link = hit.attrib['src']
@@ -72,17 +71,17 @@ def find_tag_violations(html_elements):
                 violations.append(Violation(elem.tostring(),
                                             IFRAME_VIOLATION,
                                             elem.location,
-                                            link[0]))
+                                            link))
         hits = elem.get_child_elements("a")
-        if len(hits) > 0:
-            links = elem.get_attribute_values("href")
-            if len(links) > 0:
+        for hit in hits:
+            if "href" in hit.attrib.keys():
+                link = hit.attrib["href"]
                 if len([prefix for prefix in VALID_HREF_PREFIXES
-                        if(prefix in links[0])]) == 0:
+                        if(prefix in link)]) == 0:
                     violations.append(Violation(elem.tostring(),
                                                 HREF_VIOLATION,
                                                 elem.location,
-                                                links[0]))
+                                                link))
     return violations
 
 
