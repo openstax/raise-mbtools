@@ -177,6 +177,8 @@ class MoodleHtmlElement:
         return [el.get("src") for el in matching_elems]
 
     def tostring(self):
+        # Pass things through bs4 so we can avoid adding closing tags and
+        # closing slashes that lxml may otherwise emit on void elements
         return BeautifulSoup(
             etree.tostring(self.etree),
             "html.parser"
@@ -191,9 +193,6 @@ class MoodleHtmlElement:
 
     def get_attribute_values(self, attr, exception=None):
         values = []
-        if self.etree.tag != exception or exception is None:
-            if attr in self.etree.attrib.keys():
-                values.append(self.etree.attrib[attr])
         for elem in self.etree.xpath(".//*"):
             if elem.tag != exception or exception is None:
                 if attr in elem.attrib.keys():

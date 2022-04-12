@@ -6,8 +6,8 @@ from . import utils
 STYLE_VIOLATION = "ERROR: Uses In-Line Styles"
 SOURCE_VIOLATION = "ERROR: Uses External Resource with Invalid Prefix"
 MOODLE_VIOLATION = "ERROR: References to Uploaded Files in Moodle DB"
-SCRIPT_VIOLATION = "ERROR: Uses In-Line Script Element"
-IFRAME_VIOLATION = "ERROR: Uses In-Line iFrame Element"
+SCRIPT_VIOLATION = "ERROR: Use of <script> element"
+IFRAME_VIOLATION = "ERROR: Use of <iframe> with unexpected target"
 HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
 
 VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
@@ -65,15 +65,14 @@ def find_tag_violations(html_elements):
                                             SCRIPT_VIOLATION,
                                             elem.location))
         hits = elem.get_child_elements("iframe")
-        if len(hits) > 0:
-            for hit in hits:
-                link = elem.get_attribute_values("src")
-                if len([prefix for prefix in VALID_IFRAME_PREFIXES
-                        if(prefix in link[0])]) == 0:
-                    violations.append(Violation(elem.tostring(),
-                                                IFRAME_VIOLATION,
-                                                elem.location,
-                                                link[0]))
+        for hit in hits:
+            link = hit.attrib['src']
+            if len([prefix for prefix in VALID_IFRAME_PREFIXES
+                    if(prefix in link[0])]) == 0:
+                violations.append(Violation(elem.tostring(),
+                                            IFRAME_VIOLATION,
+                                            elem.location,
+                                            link[0]))
         hits = elem.get_child_elements("a")
         if len(hits) > 0:
             links = elem.get_attribute_values("href")

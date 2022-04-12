@@ -1,4 +1,4 @@
-from csv import reader
+import csv
 import pytest
 import html
 from mbtools import validate_mbz_html
@@ -54,6 +54,8 @@ PAGE2_CONTENT = (
     '<track src="https://validsite/video.vtt">'
     'fallback content'
     '</video>'
+    '<a href="https://validsite/imagename">'
+    '</a>'
     '<script>var variable=0'
     '</script>'
     '</div>'
@@ -109,7 +111,7 @@ ANSWER1_CONTENT = (
     '</p>'
     '<img alt="A Picture of Brasilia" height="71" role="image" '
     f'src="{ANSWER1_ILLUSTRATION}" title="answer1" width="101">'
-    '<iframe>A SINGLE IFRAME'
+    '<iframe src="https://sometihing.com">A SINGLE IFRAME'
     '</iframe>'
     '</div>'
 )
@@ -266,7 +268,8 @@ def test_validate_all(mbz_path):
                 validate_mbz_html.SCRIPT_VIOLATION,
                 validate_mbz_html.IFRAME_VIOLATION,
                 validate_mbz_html.MOODLE_VIOLATION,
-                validate_mbz_html.MOODLE_VIOLATION]) == set(violation_names)
+                validate_mbz_html.MOODLE_VIOLATION,
+                validate_mbz_html.HREF_VIOLATION]) == set(violation_names)
 
 
 def test_validate_output_file(mbz_path, mocker, tmp_path):
@@ -276,5 +279,21 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
     )
     validate_mbz_html.main()
     with open(f"{tmp_path}/test_output.csv", 'r') as f:
-        violations = list(reader(f))
-        assert (len(violations) == 11)
+        violations = csv.reader(f, delimiter=",")
+        next(violations)
+        violation_messages = []
+        for row in violations:
+            violation_messages.append(row[0])
+        assert (len(violation_messages) == 11)
+        assert set([validate_mbz_html.STYLE_VIOLATION,
+                    validate_mbz_html.STYLE_VIOLATION,
+                    validate_mbz_html.STYLE_VIOLATION,
+                    validate_mbz_html.SOURCE_VIOLATION,
+                    validate_mbz_html.SOURCE_VIOLATION,
+                    validate_mbz_html.SCRIPT_VIOLATION,
+                    validate_mbz_html.SCRIPT_VIOLATION,
+                    validate_mbz_html.IFRAME_VIOLATION,
+                    validate_mbz_html.MOODLE_VIOLATION,
+                    validate_mbz_html.MOODLE_VIOLATION,
+                    validate_mbz_html.HREF_VIOLATION]) == \
+               set(violation_messages)
