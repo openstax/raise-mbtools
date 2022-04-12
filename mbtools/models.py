@@ -1,8 +1,10 @@
 from pathlib import Path
 from xml.dom import NotFoundErr
+
+import lxml.html
 from lxml import etree, html
 from bs4 import BeautifulSoup
-from hashlib import sha256
+import uuid
 from sys import stdout
 
 class MoodleBackup:
@@ -61,43 +63,57 @@ class MoodleActivity:
             str(self.activity_path / f"{self.activity_type}.xml")
         self.etree = etree.parse(self.activity_filename)
 
-    def replace_tags(self):
+    def replace_tags(self, output_file_path):
+        output_html_files = {}
         if self.activity_type == "page":
             # find and replace all html in content tag.
-            output_html_files = []
-            etree_elements = self.find_etree_elements()
+            etree_elements = self.find_etree_page_elements()
             # find html elements and check if they have been changed.
             valid_etree_elements = self.validate_etree_elements(etree_elements)
             # find check and replace HTML content.
             output_html_files = self.change_element(valid_etree_elements)
 
-            #self.write_files(output_html_files, output_file_path)
-            pass
         elif self.activity_type == "lesson":
-            # find and replace all html in contents tag.
-            # find html elements and check if they have been changed.
-            # find check and replace HTML content.
-            pass
 
-    def find_etree_elements(self):
+            pass
+        return output_html_files
+    # reason for these two methods is because inconsistant naming for content.
+    def find_etree_lesson_elements(self):
+        return self.etree.xpath("//lesson/contents")
+
+    def find_etree_page_elements(self):
 
         return self.etree.xpath("//page/content")
 
     def validate_etree_elements(self, etree_elements):
-        return etree_elements
+        valid_list = []
+        for element in etree_elements:
+                attrib_dict = element.attrib
+                if element.tag == 'div' and \
+                        "class" in attrib_dict.keys() and \
+                        attrib_dict["class"] == "os-raise-content":
+                    continue
+                else:
+                    valid_list.append(element)
+
+
+
+
+        return valid_list
 
     def change_element(self, etree_elements):
         #iterate over elements
         # get the content of HTML
+
         html_file_dict = {}
         for element in etree_elements:
             content = element.text
-            content_hash = sha256(content.encode())
+            content_uuid = str(uuid.uuid4())
 
-            tag =f'<div class="os-raise-content" data-content-id="{content_hash.hexdigest()}"></div>'
+            tag =f'<div class="os-raise-content" data-content-id="{content_uuid}"></div>'
             element.text = tag
-            html_file_dict[content_hash] = content
-        print(etree.tostring(self.etree))
+            html_file_dict[content_uuid] = content
+        print(html_file_dict)
         return html_file_dict
 
     def html_elements(self):
