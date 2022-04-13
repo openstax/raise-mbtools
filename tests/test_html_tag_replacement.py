@@ -1,8 +1,10 @@
 import html
 import pytest
+from pathlib import Path
 from mbtools.html_tag_insertion import TagReplacement
 from hashlib import sha256
 import os, glob
+from bs4 import BeautifulSoup as bs
 
 IM_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/imagename"
 OSX_MEDIA_LINK = "https://osx-int-alg.s3.us-east-1.amazonaws.com/l1/imagename"
@@ -142,16 +144,69 @@ def mbz_path(tmp_path):
     (tmp_path / "moodle_backup.xml").write_text(back_xml_content)
     return tmp_path
 
-def test_page2(mbz_path):
+def format_html_file(file_content):
+    soup = bs(file_content)  # make BeautifulSoup
+
+    prettyHTML = soup.prettify() # prettify the html
+    return prettyHTML
+
+
+def test_content_replacement(mbz_path):
     print(mbz_path)
     tag_replacer = TagReplacement(mbz_path)
 
     tag_replacer.replace_tags()
-    file_list = os.listdir(mbz_path)
+    file_list = os.listdir(f"{mbz_path}/activities")
     print(file_list)
-
+    content_list = []
     for file in glob.glob(f"{mbz_path}/*.html"):
         with open(file,"r") as f:
-            print(f.read())
+            content_list.append(f.read())
+    print(set(content_list))
+    content_set = set(content_list)
 
+    # assert that all tagged content matches.
+    answer_set = set([format_html_file(LESSON1_CONTENT1), format_html_file(LESSON1_CONTENT2), format_html_file(PAGE2_CONTENT)])
 
+    assert content_set == answer_set
+def test_html_files_created(mbz_path):
+    print(mbz_path)
+    tag_replacer = TagReplacement(mbz_path)
+
+    html_files_dict = tag_replacer.replace_tags()
+    html_files_inMBZ = []
+    for file in os.listdir(f"{mbz_path}"):
+        if file.endswith(".html"):
+            html_files_inMBZ.append(Path(file).stem)
+
+    print(html_files_inMBZ)
+    content_list = []
+    print(f" List of files extracted: {html_files_dict.keys()}")
+    print(f" List of files created: {html_files_inMBZ}")
+    files_in_mbz_set = set(html_files_inMBZ)
+    files_from_tag_replacer_set = set(html_files_dict)
+
+    assert files_in_mbz_set == files_from_tag_replacer_set
+
+def test_xml_content_changed(mbz_path):
+    print(mbz_path)
+    tag_replacer = TagReplacement(mbz_path)
+
+    tag_replacer.replace_tags()
+    file_list = os.listdir(f"{mbz_path}/activities")
+    print(file_list)
+    content_list = []
+    for file in glob.glob(f"{mbz_path}/*.html"):
+        with open(file,"r") as f:
+            content_list.append(f.read())
+    print(set(content_list))
+    content_set = set(content_list)
+
+    # assert that all tagged content matches.
+    answer_set = set([format_html_file(LESSON1_CONTENT1), format_html_file(LESSON1_CONTENT2), format_html_file(PAGE2_CONTENT)])
+
+"""
+Q: Output into single directory? 
+Q: Tabs with 4 spaces okay? 
+Q: 
+"""

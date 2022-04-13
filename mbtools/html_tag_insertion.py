@@ -1,7 +1,6 @@
 from mbtools import utils
-from hashlib import sha256
-from lxml import etree
 from pathlib import Path
+from bs4 import BeautifulSoup as bs
 
 
 class TagReplacement:
@@ -14,19 +13,20 @@ class TagReplacement:
         self.output_html_files = {}
         print(self.activities[0].activity_filename)
 
-
         # get activities from Etree
     def replace_tags(self):
         for activity in self.activities:
             self.output_html_files.update(activity.replace_tags("./"))
         self.write_html_files(self.mbz_path)
-
-
+        return self.output_html_files
+    def format_html_file(self, file_content):
+        soup = bs(file_content)
+        prettyHTML = soup.prettify()
+        return prettyHTML
     def write_html_files(self, file_path):
         for file_name, file_content in self.output_html_files.items():
             with open(f"{file_path}/{file_name}.html", "w") as file:
-                file.write(file_content)
-
+                file.write(self.format_html_file(file_content))
 
 
 

@@ -74,12 +74,14 @@ class MoodleActivity:
             output_html_files = self.change_element(valid_etree_elements)
 
         elif self.activity_type == "lesson":
+            etree_elements = self.find_etree_lesson_elements()
+            valid_etree_elements = self.validate_etree_elements(etree_elements)
+            output_html_files = self.change_element(valid_etree_elements)
 
-            pass
         return output_html_files
     # reason for these two methods is because inconsistant naming for content.
     def find_etree_lesson_elements(self):
-        return self.etree.xpath("//lesson/contents")
+        return self.etree.xpath("//pages/page/contents")
 
     def find_etree_page_elements(self):
 
@@ -92,14 +94,17 @@ class MoodleActivity:
                 if element.tag == 'div' and \
                         "class" in attrib_dict.keys() and \
                         attrib_dict["class"] == "os-raise-content":
+                    print("tag already replaced")
                     continue
                 else:
                     valid_list.append(element)
 
 
-
-
         return valid_list
+    def save_xml_changes(self,):
+
+        with open(self.activity_filename, "wb") as f:
+            self.etree.write(f, encoding="utf-8", xml_declaration=True)
 
     def change_element(self, etree_elements):
         #iterate over elements
@@ -114,6 +119,10 @@ class MoodleActivity:
             element.text = tag
             html_file_dict[content_uuid] = content
         print(html_file_dict)
+        # change original file content.
+        self.save_xml_changes()
+        #root = self.etree.getroot()
+        #self.etree.write(f"{self.activity_filename}", pretty_print=True)
         return html_file_dict
 
     def html_elements(self):
