@@ -1,11 +1,73 @@
 from pathlib import Path
 from xml.dom import NotFoundErr
-
-import lxml.html
+from bs4 import BeautifulSoup as bs
 from lxml import etree, html
 from bs4 import BeautifulSoup
 import uuid
-from sys import stdout
+
+class Tag_Extractor(object):
+
+    def replace_tags(object):
+        output_html_files = {}
+        if object.activity_type == "page":
+            # find and replace all html in content tag.
+            etree_elements = object.find_etree_page_elements()
+            # find html elements and check if they have been changed.
+            valid_etree_elements = object.validate_etree_elements(etree_elements)
+            # find check and replace HTML content.
+            output_html_files = object.change_element(valid_etree_elements)
+
+        elif object.activity_type == "lesson":
+            etree_elements = object.find_etree_lesson_elements()
+            valid_etree_elements = object.validate_etree_elements(etree_elements)
+            output_html_files = object.change_element(valid_etree_elements)
+
+        return output_html_files
+    # reason for these two methods is because inconsistant naming for content.
+    def find_etree_lesson_elements(object):
+        return object.etree.xpath("//pages/page/contents")
+
+    def find_etree_page_elements(object):
+        return object.etree.xpath("//page/content")
+
+    def validate_etree_elements(object, etree_elements):
+        valid_list = []
+        for element in etree_elements:
+                attrib_dict = element.attrib
+                if element.tag == 'div' and \
+                        "class" in attrib_dict.keys() and \
+                        attrib_dict["class"] == "os-raise-content":
+                    print("tag already replaced")
+                    continue
+                else:
+                    valid_list.append(element)
+
+
+        return valid_list
+
+    def save_xml_changes(object):
+
+        with open(object.activity_filename, "wb") as f:
+            object.etree.write(f, pretty_print=True)
+
+    def change_element(object, etree_elements):
+        #iterate over elements
+        # get the content of HTML
+
+        html_file_dict = {}
+        for element in etree_elements:
+            content = element.text
+            content_uuid = str(uuid.uuid4())
+
+            tag =f'<div class="os-raise-content" data-content-id="{content_uuid}"></div>'
+            element.text = tag
+            html_file_dict[content_uuid] = content
+        print(html_file_dict)
+        # change original file content.
+        object.save_xml_changes()
+        return html_file_dict
+
+
 
 class MoodleBackup:
     def __init__(self, mbz_path):
@@ -53,8 +115,7 @@ class MoodleQuestionBank:
         return questions
 
 
-
-class MoodleActivity:
+class MoodleActivity(Tag_Extractor):
     def __init__(self, activity_type, activity_path, mbz_path):
         self.mbz_path = Path(mbz_path)
         self.activity_path = Path(activity_path)
@@ -63,67 +124,10 @@ class MoodleActivity:
             str(self.activity_path / f"{self.activity_type}.xml")
         self.etree = etree.parse(self.activity_filename)
 
-    def replace_tags(self, output_file_path):
-        output_html_files = {}
-        if self.activity_type == "page":
-            # find and replace all html in content tag.
-            etree_elements = self.find_etree_page_elements()
-            # find html elements and check if they have been changed.
-            valid_etree_elements = self.validate_etree_elements(etree_elements)
-            # find check and replace HTML content.
-            output_html_files = self.change_element(valid_etree_elements)
-
-        elif self.activity_type == "lesson":
-            etree_elements = self.find_etree_lesson_elements()
-            valid_etree_elements = self.validate_etree_elements(etree_elements)
-            output_html_files = self.change_element(valid_etree_elements)
-
-        return output_html_files
-    # reason for these two methods is because inconsistant naming for content.
-    def find_etree_lesson_elements(self):
-        return self.etree.xpath("//pages/page/contents")
-
-    def find_etree_page_elements(self):
-
-        return self.etree.xpath("//page/content")
-
-    def validate_etree_elements(self, etree_elements):
-        valid_list = []
-        for element in etree_elements:
-                attrib_dict = element.attrib
-                if element.tag == 'div' and \
-                        "class" in attrib_dict.keys() and \
-                        attrib_dict["class"] == "os-raise-content":
-                    print("tag already replaced")
-                    continue
-                else:
-                    valid_list.append(element)
+    def replace_tags(self):
+        return Tag_Extractor.replace_tags(self)
 
 
-        return valid_list
-    def save_xml_changes(self,):
-
-        with open(self.activity_filename, "wb") as f:
-            self.etree.write(f, encoding="utf-8", xml_declaration=True)
-
-    def change_element(self, etree_elements):
-        #iterate over elements
-        # get the content of HTML
-
-        html_file_dict = {}
-        for element in etree_elements:
-            content = element.text
-            content_uuid = str(uuid.uuid4())
-
-            tag =f'<div class="os-raise-content" data-content-id="{content_uuid}"></div>'
-            element.text = tag
-            html_file_dict[content_uuid] = content
-        print(html_file_dict)
-        # change original file content.
-        self.save_xml_changes()
-        #root = self.etree.getroot()
-        #self.etree.write(f"{self.activity_filename}", pretty_print=True)
-        return html_file_dict
 
     def html_elements(self):
         elements = []

@@ -95,39 +95,46 @@ BACKUP_XML = """
                     <directory>activities/quiz_3</directory>
                 </activity>
                 """
-PAGE2_CONTENT_TAG = f'<div  class="os-raise-content" data-content-id="{sha256(PAGE2_CONTENT.encode())}">'
-LESSON1_CONTENT1_TAG = f'<div  class="os-raise-content" data-content-id="{sha256(LESSON1_CONTENT1.encode())}">'
-LESSON1_CONTENT2_TAG = f'<div  class="os-raise-content" data-content-id="{sha256(LESSON1_CONTENT2.encode())}">'
-
-LESSON1_CONTENT_TAGGED = f"""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="1" modulename="lesson">
-            <lesson id="1">
-                <pages>
-                    <page>
-                        <contents>{html.escape(LESSON1_CONTENT1_TAG)}</contents>
-                    </page>
-                    <page>
-                        <contents>{html.escape(LESSON1_CONTENT2_TAG)}</contents>
-                        <answers>
-                            <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
-                            <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
-                        </answers>
-                    </page>
-                </pages>
-            </lesson>
-        </activity>
-    """
-PAGE2_CONTENT_TAGGED = f"""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="2" modulename="page">
-            <page id="2">
-                <content>{html.escape(PAGE2_CONTENT_TAG)}</content>
-            </page>
-        </activity>
-    """
+def populate_tags(uuid_content1, uuid_content2, uuid_page  ):
 
 
+    PAGE2_CONTENT_TAG = f'<div  class="os-raise-content" data-content-id="{uuid_page}">'
+    LESSON1_CONTENT1_TAG = f'<div  class="os-raise-content" data-content-id="{uuid_content1}">'
+    LESSON1_CONTENT2_TAG = f'<div  class="os-raise-content" data-content-id="{uuid_content2}">'
+
+    LESSON1_CONTENT_TAGGED = f"""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <activity id="1" modulename="lesson">
+                <lesson id="1">
+                    <pages>
+                        <page>
+                            <contents>{html.escape(LESSON1_CONTENT1_TAG)}</contents>
+                        </page>
+                        <page>
+                            <contents>{html.escape(LESSON1_CONTENT2_TAG)}</contents>
+                            <answers>
+                                <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
+                                <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
+                            </answers>
+                        </page>
+                    </pages>
+                </lesson>
+            </activity>
+        """
+    PAGE2_CONTENT_TAGGED = f"""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <activity id="2" modulename="page">
+                <page id="2">
+                    <content>{html.escape(PAGE2_CONTENT_TAG)}</content>
+                </page>
+            </activity>
+        """
+    return [LESSON1_CONTENT_TAGGED,PAGE2_CONTENT_TAGGED]
+"""
+def format_html_file(self, file_content):
+        soup = bs(file_content)
+        prettyHTML = soup.prettify()
+        return prettyHTML"""
 @pytest.fixture
 def mbz_path(tmp_path):
     lesson1_content = LESSON1_XML.strip()
@@ -144,51 +151,67 @@ def mbz_path(tmp_path):
     (tmp_path / "moodle_backup.xml").write_text(back_xml_content)
     return tmp_path
 
-def format_html_file(file_content):
-    soup = bs(file_content)  # make BeautifulSoup
 
-    prettyHTML = soup.prettify() # prettify the html
-    return prettyHTML
 
 
 def test_content_replacement(mbz_path):
-    print(mbz_path)
     tag_replacer = TagReplacement(mbz_path)
 
     tag_replacer.replace_tags()
     file_list = os.listdir(f"{mbz_path}/activities")
-    print(file_list)
     content_list = []
     for file in glob.glob(f"{mbz_path}/*.html"):
         with open(file,"r") as f:
             content_list.append(f.read())
-    print(set(content_list))
     content_set = set(content_list)
 
     # assert that all tagged content matches.
-    answer_set = set([format_html_file(LESSON1_CONTENT1), format_html_file(LESSON1_CONTENT2), format_html_file(PAGE2_CONTENT)])
+    answer_set = set([LESSON1_CONTENT1, LESSON1_CONTENT2, PAGE2_CONTENT])
 
     assert content_set == answer_set
-def test_html_files_created(mbz_path):
-    print(mbz_path)
+def test_html_files_names(mbz_path):
     tag_replacer = TagReplacement(mbz_path)
-
+    # check file name against files in mbz
     html_files_dict = tag_replacer.replace_tags()
-    html_files_inMBZ = []
+    html_files_inmbz = []
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
-            html_files_inMBZ.append(Path(file).stem)
+            html_files_inmbz.append(Path(file).stem)
 
-    print(html_files_inMBZ)
-    content_list = []
-    print(f" List of files extracted: {html_files_dict.keys()}")
-    print(f" List of files created: {html_files_inMBZ}")
-    files_in_mbz_set = set(html_files_inMBZ)
-    files_from_tag_replacer_set = set(html_files_dict)
+    files_in_mbz_set = set(html_files_inmbz)
+    files_from_tag_replacer_set = set(list(html_files_dict.keys()))
+    print(files_from_tag_replacer_set)
+    print(files_in_mbz_set)
 
     assert files_in_mbz_set == files_from_tag_replacer_set
 
 def test_xml_content_changed(mbz_path):
+    tag_replacer = TagReplacement(mbz_path)
+    # check file content against files in mbz
+    html_files_dict = tag_replacer.replace_tags()
+    content_list_in_mbz = []
+    files =  os.listdir(f"{mbz_path}/activities")
+
+    print(f"Files in activities: {files}")
+    for file in glob.glob(f"{mbz_path}/activities/*/*.xml"):
+        with open(file,"r") as f:
+            content_list_in_mbz.append(f.read())
+
+    list_of_names = list(html_files_dict.keys())
+    correct_content = populate_tags(list_of_names[0], list_of_names[1], list_of_names[2])
+    content_list = set(correct_content)
+    files_from_tag_replacer_set = set(html_files_dict.values())
+    print("Content list ")
+    print(content_list_in_mbz)
+    print("Correct content ")
+
+    print(correct_content)
+    assert len(content_list) == len(content_list_in_mbz)
+    assert content_list == content_list_in_mbz
+
+
+
+def test_html_content_changed(mbz_path):
     print(mbz_path)
     tag_replacer = TagReplacement(mbz_path)
 
