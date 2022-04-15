@@ -4,33 +4,36 @@ from bs4 import BeautifulSoup as bs
 from lxml import etree, html
 from bs4 import BeautifulSoup
 import uuid
-
+import html
 class Tag_Extractor(object):
+    def __init__(self, object):
+        self.object = object
 
-    def replace_tags(object):
+
+    def replace_tags(self, type):
         output_html_files = {}
-        if object.activity_type == "page":
+        if type == "page":
             # find and replace all html in content tag.
-            etree_elements = object.find_etree_page_elements()
+            etree_elements = self.find_etree_page_elements()
             # find html elements and check if they have been changed.
-            valid_etree_elements = object.validate_etree_elements(etree_elements)
+            valid_etree_elements = self.validate_etree_elements(etree_elements)
             # find check and replace HTML content.
-            output_html_files = object.change_element(valid_etree_elements)
+            output_html_files = self.change_element(valid_etree_elements)
 
-        elif object.activity_type == "lesson":
-            etree_elements = object.find_etree_lesson_elements()
-            valid_etree_elements = object.validate_etree_elements(etree_elements)
-            output_html_files = object.change_element(valid_etree_elements)
+        elif type == "lesson":
+            etree_elements = self.find_etree_lesson_elements()
+            valid_etree_elements = self.validate_etree_elements(etree_elements)
+            output_html_files = self.change_element(valid_etree_elements)
 
         return output_html_files
     # reason for these two methods is because inconsistant naming for content.
-    def find_etree_lesson_elements(object):
-        return object.etree.xpath("//pages/page/contents")
+    def find_etree_lesson_elements(self):
+        return self.object.etree.xpath("//pages/page/contents")
 
-    def find_etree_page_elements(object):
-        return object.etree.xpath("//page/content")
+    def find_etree_page_elements(self):
+        return self.object.etree.xpath("//page/content")
 
-    def validate_etree_elements(object, etree_elements):
+    def validate_etree_elements(self, etree_elements):
         valid_list = []
         for element in etree_elements:
                 attrib_dict = element.attrib
@@ -45,12 +48,12 @@ class Tag_Extractor(object):
 
         return valid_list
 
-    def save_xml_changes(object):
+    def save_xml_changes(self):
 
-        with open(object.activity_filename, "wb") as f:
-            object.etree.write(f, pretty_print=True)
+        with open(self.object.activity_filename, "wb") as f:
+            self.object.etree.write(f, encoding="utf-8", xml_declaration=False)
 
-    def change_element(object, etree_elements):
+    def change_element(self, etree_elements):
         #iterate over elements
         # get the content of HTML
 
@@ -64,7 +67,7 @@ class Tag_Extractor(object):
             html_file_dict[content_uuid] = content
         print(html_file_dict)
         # change original file content.
-        object.save_xml_changes()
+        self.save_xml_changes()
         return html_file_dict
 
 
@@ -76,22 +79,26 @@ class MoodleBackup:
         self.etree = etree.parse(str(backup_xml_path))
         self.q_bank = MoodleQuestionBank(self.mbz_path)
 
-    def activities(self):
+    def activities(self, filter=[]):
         activity_elems = self.etree.xpath("//contents/activities/activity")
         activities = []
         for activity_elem in activity_elems:
             activity_type = activity_elem.find("modulename").text
             activity_path = \
                 self.mbz_path / activity_elem.find("directory").text
-            if activity_type == 'lesson':
-                activities.append(
-                    MoodleLesson(activity_path, self.mbz_path))
+            if activity_type == 'lesson' :
+                if len(filter) == 0 or "lesson" in filter:
+
+                    activities.append(
+                        MoodleLesson(activity_path, self.mbz_path))
             elif activity_type == 'page':
-                activities.append(
-                    MoodlePage(activity_path, self.mbz_path))
+                if len(filter) == 0 or "page" in filter:
+                    activities.append(
+                        MoodlePage(activity_path, self.mbz_path))
             elif activity_type == 'quiz':
-                activities.append(
-                    MoodleQuiz(activity_path, self.mbz_path, self.q_bank))
+                if len(filter) == 0 or "quiz" in filter:
+                    activities.append(
+                        MoodleQuiz(activity_path, self.mbz_path))
         return activities
 
 
@@ -101,6 +108,8 @@ class MoodleQuestionBank:
         self.questionbank_path = self.mbz_path / "questions.xml"
         self.etree = etree.parse(str(self.questionbank_path))
 
+    def replace_tags(self):
+        return {}
     def questions(self, ids=None, locations=None):
         questions = []
         if ids is None:
@@ -143,7 +152,7 @@ class MoodleLesson:
         self.etree = etree.parse(self.activity_filename)
 
     def replace_tags(self):
-        return Tag_Extractor.replace_tags(self)
+        return Tag_Extractor(self).replace_tags("lesson")
 
 
 
@@ -182,7 +191,8 @@ class MoodlePage:
         name = self.etree.xpath("//page/name")[0].text
         elements = self.etree.xpath(xpath_query)
         return [MoodleHtmlElement(el, name) for el in elements]
-
+    def replace_tags(self):
+        return Tag_Extractor(self).replace_tags("page")
 
 class MoodleQuiz:
     def __init__(self, activity_path, mbz_path, question_bank):
@@ -191,6 +201,9 @@ class MoodleQuiz:
         self.activity_filename = str(self.activity_path / "quiz.xml")
         self.etree = etree.parse(self.activity_filename)
         self.question_bank = question_bank
+
+    def replace_tags(self):
+        return {}
 
     def html_elements(self):
         ids = []
@@ -218,6 +231,8 @@ class MoodleQuestion:
         self.location = location
         self.id = id
 
+    def replace_tags(self):
+        return {}
     def html_elements(self):
         elements = []
         question_texts = self.etree.xpath(

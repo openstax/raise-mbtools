@@ -71,6 +71,10 @@ PAGE2_XML = f"""
             </page>
         </activity>
     """
+QUESTIONS_XML = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <a></a>
+        """
 BACKUP_XML = """
         <?xml version="1.0" encoding="UTF-8"?>
         <moodle_backup>
@@ -147,8 +151,14 @@ def mbz_path(tmp_path):
     page2_dir.mkdir(parents=True)
     (page2_dir / "page.xml").write_text(page2_content)
 
+
+
     back_xml_content = BACKUP_XML.strip()
     (tmp_path / "moodle_backup.xml").write_text(back_xml_content)
+
+    questions_xml_content = QUESTIONS_XML.strip()
+    (tmp_path / "questions.xml").write_text(questions_xml_content)
+
     return tmp_path
 
 
@@ -211,22 +221,7 @@ def test_xml_content_changed(mbz_path):
 
 
 
-def test_html_content_changed(mbz_path):
-    print(mbz_path)
-    tag_replacer = TagReplacement(mbz_path)
 
-    tag_replacer.replace_tags()
-    file_list = os.listdir(f"{mbz_path}/activities")
-    print(file_list)
-    content_list = []
-    for file in glob.glob(f"{mbz_path}/*.html"):
-        with open(file,"r") as f:
-            content_list.append(f.read())
-    print(set(content_list))
-    content_set = set(content_list)
-
-    # assert that all tagged content matches.
-    answer_set = set([format_html_file(LESSON1_CONTENT1), format_html_file(LESSON1_CONTENT2), format_html_file(PAGE2_CONTENT)])
 
 """
 Q: Output into single directory? 

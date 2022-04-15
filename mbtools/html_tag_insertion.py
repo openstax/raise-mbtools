@@ -1,6 +1,5 @@
 from mbtools import utils
 from pathlib import Path
-from bs4 import BeautifulSoup as bs
 
 
 class TagReplacement:
@@ -9,15 +8,15 @@ class TagReplacement:
     # if not converted add <div class="os-raise-content" data-content-id="UUID"></div>
     def __init__(self, mbz_path):
         self.mbz_path = Path(mbz_path)
-        self.activities = utils.parse_backup_activities(mbz_path)
         self.output_html_files = {}
-        print(self.activities[0].activity_filename)
 
         # get activities from Etree
     def replace_tags(self):
-        for activity in self.activities:
+        activities = utils.parse_backup_activities(self.mbz_path, ["lesson","page"])
+        for activity in activities:
             self.output_html_files.update(activity.replace_tags())
         self.write_html_files(self.mbz_path)
+        print(self.output_html_files)
         return self.output_html_files
 
     def write_html_files(self, file_path):
