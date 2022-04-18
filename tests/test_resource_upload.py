@@ -356,8 +356,8 @@ def test_add_metadata_indent(tmp_path):
     text = metadata_file.read_text()
 
     assert text == """[
-    {
-        "foo": 1,
-        "bar": 2
-    }
-    ]"""
+  {
+    "foo": 1,
+    "bar": 2
+  }
+]"""
