@@ -7,9 +7,10 @@ import boto3
 import argparse
 import botocore
 from pathlib import Path
+from csv import writer
 
 
-def upload_resources(resource_dir, metadata_file, bucket, s3_dir):
+def upload_resources(resource_dir, metadata_file, bucket, s3_dir, csv_file):
     """Uploads resources to s3 if they dont already exist there"""
 
     hash_to_filename_map = new_resource_hashes(resource_dir)
@@ -22,6 +23,17 @@ def upload_resources(resource_dir, metadata_file, bucket, s3_dir):
     add_new_resources_to_s3(
         bucket, s3_dir, hashes_to_update, hash_to_filename_map, metadata_file
     )
+
+    if csv_file is not None:
+        output_hash_csv(hash_to_filename_map, csv_file)
+
+
+def output_hash_csv(hash_to_filename_map, csv_file):
+    with open(csv_file, "w") as f:
+        w = writer(f)
+        w.writerow(['filename', 'hash'])
+        for key in hash_to_filename_map:
+            w.writerow([hash_to_filename_map[key], key])
 
 
 def existing_metadata_hashes(dir):
@@ -122,18 +134,27 @@ def main():
                         help='bucket name')
     parser.add_argument('s3_prefix', type=str,
                         help='prefix for s3 files')
+    parser.add_argument('-o', '--csv', const=None,
+                        help='hash to filename csv output file')
+
     args = parser.parse_args()
 
     new_resource_dir = Path(args.new_resource_path).resolve(strict=True)
 
     metadata_file = Path(args.metadata_file)
 
+    csv_file = None
+    if args.csv is not None:
+        csv_file = Path(args.csv)
+        if not csv_file.exists():
+            csv_file.parent.mkdir(parents=True, exist_ok=True)
+
     if not metadata_file.exists():
         metadata_file.parent.mkdir(parents=True, exist_ok=True)
         metadata_file.write_text("[]")
 
     upload_resources(new_resource_dir, args.metadata_file, args.bucket_name,
-                     args.s3_prefix)
+                     args.s3_prefix, csv_file)
 
 
 if __name__ == "__main__":
