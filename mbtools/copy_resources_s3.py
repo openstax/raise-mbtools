@@ -31,7 +31,7 @@ def upload_resources(resource_dir, metadata_file, bucket, s3_dir, csv_file):
 def output_hash_csv(hash_to_filename_map, csv_file):
     with open(csv_file, "w") as f:
         w = writer(f)
-        w.writerow(['hash', 'filename'])
+        w.writerow(['filename', 'hash'])
         for key in hash_to_filename_map:
             w.writerow([hash_to_filename_map[key], key])
 
