@@ -33,7 +33,7 @@ def output_hash_csv(hash_to_filename_map, csv_file):
         w = writer(f)
         w.writerow(['hash', 'filename'])
         for key in hash_to_filename_map:
-            w.writerow([key, hash_to_filename_map[key]])
+            w.writerow([hash_to_filename_map[key], key])
 
 
 def existing_metadata_hashes(dir):
@@ -148,7 +148,6 @@ def main():
         csv_file = Path(args.csv)
         if not csv_file.exists():
             csv_file.parent.mkdir(parents=True, exist_ok=True)
-            csv_file.write_text("[]")
 
     if not metadata_file.exists():
         metadata_file.parent.mkdir(parents=True, exist_ok=True)

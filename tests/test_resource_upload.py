@@ -3,6 +3,7 @@ import botocore.stub
 import boto3
 import os
 import json
+import csv
 from mbtools import copy_resources_s3
 
 
@@ -17,6 +18,7 @@ f3_data = {'jpeg_data': 'picture'}
 
 metadata_file = 'metadata/tags.json'
 new_metadata_file = 'new_tags.json'
+csv_file = "csv_output.csv"
 
 metadata_tags = [
     {
@@ -56,6 +58,10 @@ metadata_updates = [
      },
 ]
 
+csv_rows = [['dc330ae2bc1d0b2edac442ed3f8245647cf5c0c0', 'example1.txt'],
+            ['a31e7f061d762f1e5099ecebfe6877310e5be420', 'example2.mp4'],
+            ['e606bc6acc83666e1d40722e9c743a01e12e65ab', 'example3.jpeg']]
+
 
 @pytest.fixture
 def practice_filesystem(tmp_path):
@@ -73,9 +79,10 @@ def practice_filesystem(tmp_path):
         json.dump(metadata_tags, f)
 
     path_dict = {metadata_file: str(tmp_path / metadata_file),
+                 csv_file: str(tmp_path / csv_file),
                  test_dir: str(tmp_path / test_dir),
                  f1: str(tmp_path / f1),
-                 "home": str(tmp_path)
+                 "home": str(tmp_path),
                  }
     return path_dict
 
@@ -256,6 +263,87 @@ def test_upload_resources_no_existing_metadata_file(practice_filesystem,
         assert item in data
 
 
+def test_upload_resources_with_csv(practice_filesystem, mocker):
+    s3_dir = 'resources'
+    bucket_name = 'test-bucket'
+    sha1_map = copy_resources_s3.new_resource_hashes(
+               practice_filesystem[test_dir])
+    hash_keys = list(sha1_map)
+    s3_client = boto3.client('s3')
+    stubber = botocore.stub.Stubber(s3_client)
+
+    full_key1 = s3_dir + '/' + hash_keys[0]
+    full_key2 = s3_dir + '/' + hash_keys[1]
+    full_key3 = s3_dir + '/' + hash_keys[2]
+
+    stubber.add_client_error('head_object',
+                             service_error_meta={'Code': '404'},
+                             expected_params={
+                                 'Bucket': bucket_name,
+                                 'Key': full_key1
+                              }
+                             )
+    stubber.add_response('put_object', {},
+                         expected_params={
+                            'Body': botocore.stub.ANY,
+                            'Bucket': bucket_name,
+                            'Key': full_key1,
+                            'ContentType': 'application/json'
+                          }
+                         )
+    stubber.add_client_error('head_object',
+                             service_error_meta={'Code': '404'},
+                             expected_params={
+                                'Bucket': bucket_name,
+                                'Key': full_key2
+                                }
+                             )
+    stubber.add_response('put_object', {},
+                         expected_params={
+                            'Body': botocore.stub.ANY,
+                            'Bucket': bucket_name,
+                            'Key': full_key2,
+                            'ContentType': 'application/json'
+                            }
+                         )
+    stubber.add_client_error('head_object',
+                             service_error_meta={'Code': '404'},
+                             expected_params={
+                                'Bucket': bucket_name,
+                                'Key': full_key3
+                                }
+                             )
+    stubber.add_response('put_object', {},
+                         expected_params={
+                            'Body': botocore.stub.ANY,
+                            'Bucket': bucket_name,
+                            'Key': full_key3,
+                            'ContentType': 'application/json'
+                            }
+                         )
+    stubber.activate()
+    mocker.patch('boto3.client', lambda service: s3_client)
+
+    resource_dir = practice_filesystem[test_dir]
+    print(resource_dir)
+    metadata_path = practice_filesystem[metadata_file]
+    csv_path = practice_filesystem[csv_file]
+    mocker.patch(
+        "sys.argv",
+        ["", resource_dir, metadata_path, bucket_name,
+         s3_dir, "--csv", csv_path]
+    )
+    copy_resources_s3.main()
+
+    with open(csv_path, 'r') as f:
+        rows = csv.reader(f)
+        assert len(list(rows)) == len(csv_rows) + 1
+        for i, item in enumerate(rows):
+            if i == 0:
+                continue
+            assert item in csv_rows
+
+
 def test_add_metadata_indent(tmp_path):
     metadata_file = tmp_path / "media.json"
     metadata_file.write_text("[]")
@@ -268,8 +356,8 @@ def test_add_metadata_indent(tmp_path):
     text = metadata_file.read_text()
 
     assert text == """[
-  {
-    "foo": 1,
-    "bar": 2
-  }
-]"""
+    {
+        "foo": 1,
+        "bar": 2
+    }
+    ]"""
