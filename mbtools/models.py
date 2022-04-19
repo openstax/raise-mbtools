@@ -173,11 +173,10 @@ class MoodleHtmlElement:
     def replace_content_tag(self):
         # ignore replaced elements
         attrib_dict = self.parent.attrib
-        if self.parent.tag in ["content", "contents"] and \
-                "class" in attrib_dict.keys() and \
+        if self.parent.tag in ["content", "contents"]:
+            if "class" in attrib_dict.keys() and \
                 attrib_dict["class"] == "os-raise-content":
-            pass
-        else:
+                return {}
             html_file_dict = {}
             content_uuid = str(uuid.uuid4())
             content = self.parent.text
