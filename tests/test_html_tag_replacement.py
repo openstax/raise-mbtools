@@ -1,7 +1,7 @@
 import html
 import pytest
 from pathlib import Path
-from mbtools.html_tag_insertion import TagReplacement
+from mbtools.html_content_extractor import ContentExtractor
 from hashlib import sha256
 import os, glob
 from bs4 import BeautifulSoup as bs
@@ -48,11 +48,18 @@ LESSON1_XML = f"""
         <?xml version="1.0" encoding="UTF-8"?>
         <activity id="1" modulename="lesson">
             <lesson id="1">
+                <name>First Lesson: 1.1</name>
                 <pages>
-                    <page>
+                    <page id="3">
+                        <title>First Lession: 1.1 - lesson.xml</title>
                         <contents>{html.escape(LESSON1_CONTENT1)}</contents>
+                        <answers>
+                            <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
+                            <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
+                        </answers>
                     </page>
-                    <page>
+                    <page id="4">
+                        <title>Second Lession: 2.1 - lesson.xml</title>
                         <contents>{html.escape(LESSON1_CONTENT2)}</contents>
                         <answers>
                             <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
@@ -62,15 +69,16 @@ LESSON1_XML = f"""
                 </pages>
             </lesson>
         </activity>
-    """
+    """.strip()
 PAGE2_XML = f"""
         <?xml version="1.0" encoding="UTF-8"?>
         <activity id="2" modulename="page">
             <page id="2">
+                <name>Some Moodle Hosted Content</name>
                 <content>{html.escape(PAGE2_CONTENT)}</content>
             </page>
         </activity>
-    """
+    """.strip()
 QUESTIONS_XML = """
         <?xml version="1.0" encoding="UTF-8"?>
         <a></a>
@@ -99,46 +107,48 @@ BACKUP_XML = """
                     <directory>activities/quiz_3</directory>
                 </activity>
                 """
-def populate_tags(uuid_content1, uuid_content2, uuid_page  ):
-
-
-    PAGE2_CONTENT_TAG = f'<div  class="os-raise-content" data-content-id="{uuid_page}">'
-    LESSON1_CONTENT1_TAG = f'<div  class="os-raise-content" data-content-id="{uuid_content1}">'
-    LESSON1_CONTENT2_TAG = f'<div  class="os-raise-content" data-content-id="{uuid_content2}">'
+def populate_tags(uuid_content1, uuid_content2, uuid_page):
+    PAGE2_CONTENT_TAG = f'<div class="os-raise-content" data-content-id="{uuid_page}"></div>'
+    LESSON1_CONTENT1_TAG = f'<div class="os-raise-content" data-content-id="{uuid_content1}"></div>'
+    LESSON1_CONTENT2_TAG = f'<div class="os-raise-content" data-content-id="{uuid_content2}"></div>'
 
     LESSON1_CONTENT_TAGGED = f"""
-            <?xml version="1.0" encoding="UTF-8"?>
-            <activity id="1" modulename="lesson">
-                <lesson id="1">
-                    <pages>
-                        <page>
-                            <contents>{html.escape(LESSON1_CONTENT1_TAG)}</contents>
-                        </page>
-                        <page>
-                            <contents>{html.escape(LESSON1_CONTENT2_TAG)}</contents>
-                            <answers>
-                                <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
-                                <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
-                            </answers>
-                        </page>
-                    </pages>
-                </lesson>
-            </activity>
-        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <activity id="1" modulename="lesson">
+            <lesson id="1">
+                <name>First Lesson: 1.1</name>
+                <pages>
+                    <page id="3">
+                        <title>First Lession: 1.1 - lesson.xml</title>
+                        <contents>{html.escape(LESSON1_CONTENT1_TAG)}</contents>
+                        <answers>
+                            <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
+                            <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
+                        </answers>
+                    </page>
+                    <page id="4">
+                        <title>Second Lession: 2.1 - lesson.xml</title>
+                        <contents>{html.escape(LESSON1_CONTENT2_TAG)}</contents>
+                        <answers>
+                            <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
+                            <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
+                        </answers>
+                    </page>
+                </pages>
+            </lesson>
+        </activity>
+    """.strip()
     PAGE2_CONTENT_TAGGED = f"""
-            <?xml version="1.0" encoding="UTF-8"?>
-            <activity id="2" modulename="page">
-                <page id="2">
-                    <content>{html.escape(PAGE2_CONTENT_TAG)}</content>
-                </page>
-            </activity>
-        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <activity id="2" modulename="page">
+            <page id="2">
+                <name>Some Moodle Hosted Content</name>
+                <content>{html.escape(PAGE2_CONTENT_TAG)}</content>
+            </page>
+        </activity>
+    """.strip()
     return [LESSON1_CONTENT_TAGGED,PAGE2_CONTENT_TAGGED]
-"""
-def format_html_file(self, file_content):
-        soup = bs(file_content)
-        prettyHTML = soup.prettify()
-        return prettyHTML"""
+
 @pytest.fixture
 def mbz_path(tmp_path):
     lesson1_content = LESSON1_XML.strip()
@@ -164,67 +174,45 @@ def mbz_path(tmp_path):
 
 
 
-def test_content_replacement(mbz_path):
-    tag_replacer = TagReplacement(mbz_path)
 
-    tag_replacer.replace_tags()
-    file_list = os.listdir(f"{mbz_path}/activities")
-    content_list = []
-    for file in glob.glob(f"{mbz_path}/*.html"):
-        with open(file,"r") as f:
-            content_list.append(f.read())
-    content_set = set(content_list)
 
-    # assert that all tagged content matches.
-    answer_set = set([LESSON1_CONTENT1, LESSON1_CONTENT2, PAGE2_CONTENT])
 
-    assert content_set == answer_set
 def test_html_files_names(mbz_path):
-    tag_replacer = TagReplacement(mbz_path)
+    content_extractor = ContentExtractor(mbz_path)
     # check file name against files in mbz
-    html_files_dict = tag_replacer.replace_tags()
+    html_files_dict = content_extractor.replace_content_tags(mbz_path)
     html_files_inmbz = []
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
             html_files_inmbz.append(Path(file).stem)
 
     files_in_mbz_set = set(html_files_inmbz)
-    files_from_tag_replacer_set = set(list(html_files_dict.keys()))
-    print(files_from_tag_replacer_set)
-    print(files_in_mbz_set)
+    files_from_tag_replacer_set = set(html_files_dict.keys())
 
     assert files_in_mbz_set == files_from_tag_replacer_set
 
+
+
 def test_xml_content_changed(mbz_path):
-    tag_replacer = TagReplacement(mbz_path)
+    content_extractor = ContentExtractor(mbz_path)
     # check file content against files in mbz
-    html_files_dict = tag_replacer.replace_tags()
+    html_files_dict = content_extractor.replace_content_tags(mbz_path)
     content_list_in_mbz = []
     files =  os.listdir(f"{mbz_path}/activities")
 
-    print(f"Files in activities: {files}")
     for file in glob.glob(f"{mbz_path}/activities/*/*.xml"):
         with open(file,"r") as f:
             content_list_in_mbz.append(f.read())
 
     list_of_names = list(html_files_dict.keys())
     correct_content = populate_tags(list_of_names[0], list_of_names[1], list_of_names[2])
+
     content_list = set(correct_content)
-    files_from_tag_replacer_set = set(html_files_dict.values())
-    print("Content list ")
-    print(content_list_in_mbz)
-    print("Correct content ")
 
-    print(correct_content)
     assert len(content_list) == len(content_list_in_mbz)
-    assert content_list == content_list_in_mbz
+    assert content_list_in_mbz == content_list
 
 
 
 
 
-"""
-Q: Output into single directory? 
-Q: Tabs with 4 spaces okay? 
-Q: 
-"""
