@@ -2,9 +2,8 @@ import html
 import pytest
 from pathlib import Path
 from mbtools.html_content_extractor import ContentExtractor
-from hashlib import sha256
-import os, glob
-from bs4 import BeautifulSoup as bs
+import os
+import glob
 
 IM_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/imagename"
 OSX_MEDIA_LINK = "https://osx-int-alg.s3.us-east-1.amazonaws.com/l1/imagename"
@@ -25,7 +24,8 @@ LESSON1_CONTENT1 = (
 )
 
 LESSON1_CONTENT2 = "<div>" f'<img src="{OSX_MEDIA_LINK}">' "</div>"
-LESSON_ANSWER1 = '<p dir="ltr" style="text-align: left;">' "(6, 0)" "<br>" "</p>"
+LESSON_ANSWER1 = '<p dir="ltr" style="text-align:' \
+                 ' left;">' "(6, 0)" "<br>" "</p>"
 LESSON_ANSWER2 = (
     '<p dir="ltr" style="text-align: left;">'
     '<img alt="Answer Picture" height="71" role="image" '
@@ -96,7 +96,7 @@ BACKUP_XML = """
                     <modulename>page</modulename>
                     <directory>activities/page_2</directory>
                 </activity>
-                
+
             </activities>
             </contents>
         </moodle_backup>
@@ -107,10 +107,15 @@ BACKUP_XML = """
                     <directory>activities/quiz_3</directory>
                 </activity>
                 """
+
+
 def populate_tags(uuid_content1, uuid_content2, uuid_page):
-    PAGE2_CONTENT_TAG = f'<div class="os-raise-content" data-content-id="{uuid_page}"></div>'
-    LESSON1_CONTENT1_TAG = f'<div class="os-raise-content" data-content-id="{uuid_content1}"></div>'
-    LESSON1_CONTENT2_TAG = f'<div class="os-raise-content" data-content-id="{uuid_content2}"></div>'
+    PAGE2_CONTENT_TAG = f'<div class="os-raise-content"' \
+                        f' data-content-id="{uuid_page}"></div>'
+    LESSON1_CONTENT1_TAG = f'<div class="os-raise-content"' \
+                           f' data-content-id="{uuid_content1}"></div>'
+    LESSON1_CONTENT2_TAG = f'<div class="os-raise-content"' \
+                           f' data-content-id="{uuid_content2}"></div>'
 
     LESSON1_CONTENT_TAGGED = f"""
         <?xml version="1.0" encoding="UTF-8"?>
@@ -147,7 +152,8 @@ def populate_tags(uuid_content1, uuid_content2, uuid_page):
             </page>
         </activity>
     """.strip()
-    return [LESSON1_CONTENT_TAGGED,PAGE2_CONTENT_TAGGED]
+    return [LESSON1_CONTENT_TAGGED, PAGE2_CONTENT_TAGGED]
+
 
 @pytest.fixture
 def mbz_path(tmp_path):
@@ -161,8 +167,6 @@ def mbz_path(tmp_path):
     page2_dir.mkdir(parents=True)
     (page2_dir / "page.xml").write_text(page2_content)
 
-
-
     back_xml_content = BACKUP_XML.strip()
     (tmp_path / "moodle_backup.xml").write_text(back_xml_content)
 
@@ -172,12 +176,7 @@ def mbz_path(tmp_path):
     return tmp_path
 
 
-
-
-
-
-
-def test_html_files_names(mbz_path):
+def test_html_files_creation(mbz_path):
     content_extractor = ContentExtractor(mbz_path)
     # check file name against files in mbz
     html_files_dict = content_extractor.replace_content_tags(mbz_path)
@@ -192,27 +191,34 @@ def test_html_files_names(mbz_path):
     assert files_in_mbz_set == files_from_content_extractor_set
 
 
+def test_html_files_content(mbz_path):
+    content_extractor = ContentExtractor(mbz_path)
+    # check file name against files in mbz
+    html_files_dict = content_extractor.replace_content_tags(mbz_path)
+    content_expected_in_files = [LESSON1_CONTENT1,
+                                 LESSON1_CONTENT2, PAGE2_CONTENT]
+
+    files_in_mbz_set = set(content_expected_in_files)
+    files_from_content_extractor_set = set(html_files_dict.values())
+
+    assert files_in_mbz_set == files_from_content_extractor_set
+
 
 def test_xml_content_changed(mbz_path):
     content_extractor = ContentExtractor(mbz_path)
     # check file content against files in mbz
     html_files_dict = content_extractor.replace_content_tags(mbz_path)
     content_list_in_mbz = []
-    files =  os.listdir(f"{mbz_path}/activities")
 
     for file in glob.glob(f"{mbz_path}/activities/*/*.xml"):
-        with open(file,"r") as f:
+        with open(file, "r") as f:
             content_list_in_mbz.append(f.read())
 
     list_of_names = list(html_files_dict.keys())
-    correct_content = populate_tags(list_of_names[0], list_of_names[1], list_of_names[2])
+    correct_content = populate_tags(list_of_names[0],
+                                    list_of_names[1], list_of_names[2])
 
     content_list = set(correct_content)
 
     assert len(content_list) == len(content_list_in_mbz)
     assert content_list_in_mbz == content_list
-
-
-
-
-

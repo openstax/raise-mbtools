@@ -11,6 +11,7 @@ def parse_backup_activities(mbz_dir):
     moodle_backup = models.MoodleBackup(mbz_path)
     return moodle_backup.activities()
 
+
 def parse_backup_elements(mbz_dir):
     """
     Given a string with path to an extracted moodle backup directory return
