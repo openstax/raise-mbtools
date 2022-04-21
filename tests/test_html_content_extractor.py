@@ -1,6 +1,7 @@
 import html
 import pytest
 from pathlib import Path
+from lxml import etree
 from mbtools.html_content_extractor import ContentExtractor
 import os
 import glob
@@ -119,41 +120,42 @@ def populate_tags(uuid_content1, uuid_content2, uuid_page):
 
     LESSON1_CONTENT_TAGGED = f"""
         <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="1" modulename="lesson">
+<activity id="1" modulename="lesson">
             <lesson id="1">
                 <name>First Lesson: 1.1</name>
                 <pages>
                     <page id="3">
                         <title>First Lession: 1.1 - lesson.xml</title>
-                        <contents>{html.escape(LESSON1_CONTENT1_TAG)}</contents>
+                        <contents>{replace_ampersand(html.escape(LESSON1_CONTENT1_TAG))}</contents>
                         <answers>
-                            <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
-                            <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
+                            <answer_text>{replace_ampersand(html.escape(LESSON_ANSWER1))}</answer_text>
+                            <answer_text>{replace_ampersand(html.escape(LESSON_ANSWER2))}</answer_text>
                         </answers>
                     </page>
                     <page id="4">
                         <title>Second Lession: 2.1 - lesson.xml</title>
-                        <contents>{html.escape(LESSON1_CONTENT2_TAG)}</contents>
+                        <contents>{replace_ampersand(html.escape(LESSON1_CONTENT2_TAG))}</contents>
                         <answers>
-                            <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
-                            <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
+                            <answer_text>{replace_ampersand(html.escape(LESSON_ANSWER1))}</answer_text>
+                            <answer_text>{replace_ampersand(html.escape(LESSON_ANSWER2))}</answer_text>
                         </answers>
                     </page>
                 </pages>
             </lesson>
-        </activity>
-    """.strip()
+        </activity>""".strip()
     PAGE2_CONTENT_TAGGED = f"""
         <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="2" modulename="page">
+<activity id="2" modulename="page">
             <page id="2">
                 <name>Some Moodle Hosted Content</name>
-                <content>{html.escape(PAGE2_CONTENT_TAG)}</content>
+                <content>{replace_ampersand(html.escape(PAGE2_CONTENT_TAG))}</content>
             </page>
         </activity>
     """.strip()
     return [LESSON1_CONTENT_TAGGED, PAGE2_CONTENT_TAGGED]
 
+def replace_ampersand(content):
+    return content.replace("&amp;", "&").replace("&", "&amp;")
 
 @pytest.fixture
 def mbz_path(tmp_path):

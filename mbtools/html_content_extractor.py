@@ -20,7 +20,8 @@ class ContentExtractor:
 
                 self.output_html_files.update(html_elem.replace_content_tag())
                 with open(act.activity_filename, "wb") as f:
-                    act.etree.write(f, encoding="utf-8", xml_declaration=True)
+                    act.etree.write(f, encoding="utf-8",pretty_print=True,
+                                    doctype='<?xml version="1.0" encoding="UTF-8"?>')
 
         self.write_html_files(output_file_path)
         return self.output_html_files
