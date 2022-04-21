@@ -11,8 +11,6 @@ IFRAME_VIOLATION = "ERROR: Use of <iframe> with unexpected target"
 HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
 
 VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
-                  "https://osx-int-alg.s3",
-                  "https://openstax.org/apps/archive",
                   "https://k12.openstax.org/contents/raise",
                   "https://www.youtube.com/",
                   "https://digitalpromise.org"]
