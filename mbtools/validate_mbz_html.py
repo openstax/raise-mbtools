@@ -11,13 +11,20 @@ IFRAME_VIOLATION = "ERROR: Use of <iframe> with unexpected target"
 HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
 
 VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
+                  "https://osx-int-alg.s3",
+                  "https://openstax.org/apps/archive",
                   "https://k12.openstax.org/contents/raise"]
 
-VALID_IFRAME_PREFIXES = ["https://youtube.com"]
+VALID_IFRAME_PREFIXES = ["https://www.youtube.com"]
 
-VALID_HREF_PREFIXES = []
+VALID_HREF_PREFIXES = ["https://vimeo.com",
+                       "https://player.vimeo.com",
+                       "https://youtube.com",
+                       "https://www.youtube.com",
+                       "https://youtu.be",
+                       "https://characterlab.org/"]
 
-VALID_STYLES = ['text-align: left;']
+VALID_STYLES = []
 
 
 class Violation:
@@ -51,10 +58,11 @@ def find_style_violations(html_elements):
     for elem in html_elements:
         attributes = elem.get_attribute_values("style")
         for attr in attributes:
-            if attr not in VALID_STYLES:
+            if attr not in VALID_STYLES and attr != "":
                 violations.append(Violation(elem.tostring(),
                                             STYLE_VIOLATION,
-                                            elem.location))
+                                            elem.location,
+                                            attr))
     return violations
 
 
@@ -70,7 +78,7 @@ def find_tag_violations(html_elements):
         for hit in hits:
             link = hit.attrib['src']
             if len([prefix for prefix in VALID_IFRAME_PREFIXES
-                    if(prefix in link[0])]) == 0:
+                    if(prefix in link)]) == 0:
                 violations.append(Violation(elem.tostring(),
                                             IFRAME_VIOLATION,
                                             elem.location,
