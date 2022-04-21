@@ -41,7 +41,7 @@ def main():
     args = parser.parse_args()
     mbz_path = Path(args.mbz_path).resolve(strict=True)
     output_directory = Path(args.output_directory)
-    ContentExtractor(mbz_path).replace_tags(output_directory)
+    ContentExtractor(mbz_path).replace_content_tags(output_directory)
 
 
 if __name__ == "__main__":

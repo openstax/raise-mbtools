@@ -126,18 +126,18 @@ def populate_tags(uuid_content1, uuid_content2, uuid_page):
                 <pages>
                     <page id="3">
                         <title>First Lession: 1.1 - lesson.xml</title>
-                        <contents>{replace_ampersand(html.escape(LESSON1_CONTENT1_TAG))}</contents>
+                        <contents>{(html.escape(LESSON1_CONTENT1_TAG, quote=False))}</contents>
                         <answers>
-                            <answer_text>{replace_ampersand(html.escape(LESSON_ANSWER1))}</answer_text>
-                            <answer_text>{replace_ampersand(html.escape(LESSON_ANSWER2))}</answer_text>
+                            <answer_text>{(html.escape(LESSON_ANSWER1, quote=False))}</answer_text>
+                            <answer_text>{(html.escape(LESSON_ANSWER2, quote=False))}</answer_text>
                         </answers>
                     </page>
                     <page id="4">
                         <title>Second Lession: 2.1 - lesson.xml</title>
-                        <contents>{replace_ampersand(html.escape(LESSON1_CONTENT2_TAG))}</contents>
+                        <contents>{(html.escape(LESSON1_CONTENT2_TAG, quote=False))}</contents>
                         <answers>
-                            <answer_text>{replace_ampersand(html.escape(LESSON_ANSWER1))}</answer_text>
-                            <answer_text>{replace_ampersand(html.escape(LESSON_ANSWER2))}</answer_text>
+                            <answer_text>{(html.escape(LESSON_ANSWER1, quote=False))}</answer_text>
+                            <answer_text>{(html.escape(LESSON_ANSWER2, quote=False))}</answer_text>
                         </answers>
                     </page>
                 </pages>
@@ -148,7 +148,7 @@ def populate_tags(uuid_content1, uuid_content2, uuid_page):
 <activity id="2" modulename="page">
             <page id="2">
                 <name>Some Moodle Hosted Content</name>
-                <content>{replace_ampersand(html.escape(PAGE2_CONTENT_TAG))}</content>
+                <content>{(html.escape(PAGE2_CONTENT_TAG, quote=False))}</content>
             </page>
         </activity>
     """.strip()

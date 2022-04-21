@@ -170,7 +170,9 @@ class MoodleHtmlElement:
         self.location = location
         self.etree = html.fromstring(self.parent.text)
         # self.etree = html.fromstring(self.parent.text)
-
+    def prettify_html(self, html):
+        soup = BeautifulSoup(html, "html.parser")
+        return soup.prettify()
     def replace_content_tag(self):
         # ignore replaced elements
         attrib_dict = self.parent.attrib
@@ -184,10 +186,9 @@ class MoodleHtmlElement:
             tag = f'<div class="os-raise-content" ' \
                   f'data-content-id="{ content_uuid }"></div>'
 
-            self.parent.text = escape(tag)
-            html_file_dict[content_uuid] = content
+            self.parent.text = (tag)
+            html_file_dict[content_uuid] = self.prettify_html(content)
             return html_file_dict
-        self.parent.text = escape(self.parent.text)
         return {}
 
     def find_references_containing(self, src_content):
