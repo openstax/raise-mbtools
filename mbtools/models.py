@@ -176,7 +176,7 @@ class MoodleHtmlElement:
 
     def replace_content_tag(self):
 
-        attrib_dict = self.parent.attrib
+        attrib_dict = self.etree.attrib
         if self.parent.tag in ["content", "contents"]:
             if "class" in attrib_dict.keys() and \
                     attrib_dict["class"] == "os-raise-content":

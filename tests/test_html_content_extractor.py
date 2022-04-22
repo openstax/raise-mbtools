@@ -237,3 +237,29 @@ def test_xml_content_changed(mbz_path):
 
     assert len(content_list) == len(content_list_in_mbz)
     assert content_list_in_mbz == content_list
+
+
+def test_ignore_extracted_content(mbz_path):
+
+    # check file name against files in mbz
+    html_files_dict_first_run = replace_content_tags(mbz_path, mbz_path)
+    html_files_inmbz_first_run = []
+
+    for file in os.listdir(f"{mbz_path}"):
+        if file.endswith(".html"):
+            html_files_inmbz_first_run.append(Path(file).stem)
+
+    html_files_dict_second_run = replace_content_tags(mbz_path, mbz_path)
+    html_files_inmbz_second_run = []
+
+    for file in os.listdir(f"{mbz_path}"):
+        if file.endswith(".html"):
+            html_files_inmbz_second_run.append(Path(file).stem)
+
+    # Checking if more files were added second run which should not happen.
+    assert len(html_files_inmbz_first_run) == len(html_files_inmbz_second_run)
+
+    # first run of replace content should return some files
+    assert(len(html_files_dict_first_run) > 0)
+    # second run of the replace content should not return any files.
+    assert(len(html_files_dict_second_run) == 0)
