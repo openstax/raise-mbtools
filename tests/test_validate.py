@@ -38,7 +38,7 @@ LESSON_ANSWER1 = (
     '</p>'
 )
 LESSON_ANSWER2 = (
-    '<p dir="ltr" style="text-align: left;">'
+    '<p dir="ltr">'
     '<img alt="Answer Picture" height="71" role="image" '
     f'src="{LESSON_ANSW_ILLUSTRATION}" title="question" width="101">'
     '<br>'
@@ -307,4 +307,6 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
                     ADDITIONAL_MEDIA,
                     ADDITIONAL_MEDIA2,
                     ADDITIONAL_MEDIA3,
-                    ADDITIONAL_MEDIA4]) == set(violation_links)
+                    ADDITIONAL_MEDIA4,
+                    "text-align: left; color=blue;",
+                    "text-align: left; color= red;"]) == set(violation_links)
