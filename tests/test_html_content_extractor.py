@@ -1,8 +1,8 @@
 import html
 import pytest
 from pathlib import Path
-from lxml import etree
-from mbtools.html_content_extractor import ContentExtractor
+from bs4 import BeautifulSoup
+from mbtools.html_content_extractor import replace_content_tags
 import os
 import glob
 
@@ -126,18 +126,24 @@ def populate_tags(uuid_content1, uuid_content2, uuid_page):
                 <pages>
                     <page id="3">
                         <title>First Lession: 1.1 - lesson.xml</title>
-                        <contents>{(html.escape(LESSON1_CONTENT1_TAG, quote=False))}</contents>
+                        <contents>{(html.escape(LESSON1_CONTENT1_TAG,
+                                                quote=False))}</contents>
                         <answers>
-                            <answer_text>{(html.escape(LESSON_ANSWER1, quote=False))}</answer_text>
-                            <answer_text>{(html.escape(LESSON_ANSWER2, quote=False))}</answer_text>
+                            <answer_text>{(html.escape(LESSON_ANSWER1,
+                                                       quote=False))}</answer_text>
+                            <answer_text>{(html.escape(LESSON_ANSWER2,
+                                                       quote=False))}</answer_text>
                         </answers>
                     </page>
                     <page id="4">
                         <title>Second Lession: 2.1 - lesson.xml</title>
-                        <contents>{(html.escape(LESSON1_CONTENT2_TAG, quote=False))}</contents>
+                        <contents>{(html.escape(LESSON1_CONTENT2_TAG,
+                                                quote=False))}</contents>
                         <answers>
-                            <answer_text>{(html.escape(LESSON_ANSWER1, quote=False))}</answer_text>
-                            <answer_text>{(html.escape(LESSON_ANSWER2, quote=False))}</answer_text>
+                            <answer_text>{(html.escape(LESSON_ANSWER1,
+                                                       quote=False))}</answer_text>
+                            <answer_text>{(html.escape(LESSON_ANSWER2,
+                                                       quote=False))}</answer_text>
                         </answers>
                     </page>
                 </pages>
@@ -148,14 +154,17 @@ def populate_tags(uuid_content1, uuid_content2, uuid_page):
 <activity id="2" modulename="page">
             <page id="2">
                 <name>Some Moodle Hosted Content</name>
-                <content>{(html.escape(PAGE2_CONTENT_TAG, quote=False))}</content>
+                <content>{(html.escape(PAGE2_CONTENT_TAG,
+                                       quote=False))}</content>
             </page>
         </activity>
     """.strip()
     return [LESSON1_CONTENT_TAGGED, PAGE2_CONTENT_TAGGED]
 
+
 def replace_ampersand(content):
     return content.replace("&amp;", "&").replace("&", "&amp;")
+
 
 @pytest.fixture
 def mbz_path(tmp_path):
@@ -179,9 +188,9 @@ def mbz_path(tmp_path):
 
 
 def test_html_files_creation(mbz_path):
-    content_extractor = ContentExtractor(mbz_path)
+
     # check file name against files in mbz
-    html_files_dict = content_extractor.replace_content_tags(mbz_path)
+    html_files_dict = replace_content_tags(mbz_path, mbz_path)
     html_files_inmbz = []
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
@@ -194,11 +203,11 @@ def test_html_files_creation(mbz_path):
 
 
 def test_html_files_content(mbz_path):
-    content_extractor = ContentExtractor(mbz_path)
     # check file name against files in mbz
-    html_files_dict = content_extractor.replace_content_tags(mbz_path)
-    content_expected_in_files = [LESSON1_CONTENT1,
-                                 LESSON1_CONTENT2, PAGE2_CONTENT]
+    html_files_dict = replace_content_tags(mbz_path, mbz_path)
+    content_expected_in_files = [prettify_html(LESSON1_CONTENT1),
+                                 prettify_html(LESSON1_CONTENT2),
+                                 prettify_html(PAGE2_CONTENT)]
 
     files_in_mbz_set = set(content_expected_in_files)
     files_from_content_extractor_set = set(html_files_dict.values())
@@ -206,10 +215,14 @@ def test_html_files_content(mbz_path):
     assert files_in_mbz_set == files_from_content_extractor_set
 
 
+def prettify_html(html):
+    soup = BeautifulSoup(html, "html.parser")
+    return soup.prettify()
+
+
 def test_xml_content_changed(mbz_path):
-    content_extractor = ContentExtractor(mbz_path)
     # check file content against files in mbz
-    html_files_dict = content_extractor.replace_content_tags(mbz_path)
+    html_files_dict = replace_content_tags(mbz_path, mbz_path)
     content_list_in_mbz = []
 
     for file in glob.glob(f"{mbz_path}/activities/*/*.xml"):

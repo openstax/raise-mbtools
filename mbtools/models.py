@@ -2,7 +2,6 @@ import uuid
 from pathlib import Path
 from xml.dom import NotFoundErr
 from lxml import etree, html
-from html import escape
 from bs4 import BeautifulSoup
 
 
@@ -170,11 +169,13 @@ class MoodleHtmlElement:
         self.location = location
         self.etree = html.fromstring(self.parent.text)
         # self.etree = html.fromstring(self.parent.text)
+
     def prettify_html(self, html):
         soup = BeautifulSoup(html, "html.parser")
         return soup.prettify()
+
     def replace_content_tag(self):
-        # ignore replaced elements
+
         attrib_dict = self.parent.attrib
         if self.parent.tag in ["content", "contents"]:
             if "class" in attrib_dict.keys() and \
@@ -186,7 +187,7 @@ class MoodleHtmlElement:
             tag = f'<div class="os-raise-content" ' \
                   f'data-content-id="{ content_uuid }"></div>'
 
-            self.parent.text = (tag)
+            self.parent.text = tag
             html_file_dict[content_uuid] = self.prettify_html(content)
             return html_file_dict
         return {}
