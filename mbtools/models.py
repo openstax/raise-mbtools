@@ -168,7 +168,6 @@ class MoodleHtmlElement:
         self.parent = parent
         self.location = location
         self.etree = html.fromstring(self.parent.text)
-        # self.etree = html.fromstring(self.parent.text)
 
     def prettify_html(self, html):
         soup = BeautifulSoup(html, "html.parser")
@@ -176,21 +175,21 @@ class MoodleHtmlElement:
 
     def replace_content_tag(self):
 
-        attrib_dict = self.etree.attrib
         if self.parent.tag in ["content", "contents"]:
+            attrib_dict = self.etree.attrib
             if "class" in attrib_dict.keys() and \
                     attrib_dict["class"] == "os-raise-content":
-                return {}
-            html_file_dict = {}
+                return None
+            html_file = {}
             content_uuid = str(uuid.uuid4())
             content = self.parent.text
             tag = f'<div class="os-raise-content" ' \
                   f'data-content-id="{ content_uuid }"></div>'
 
             self.parent.text = tag
-            html_file_dict[content_uuid] = self.prettify_html(content)
-            return html_file_dict
-        return {}
+            html_file[content_uuid] = self.prettify_html(content)
+            return html_file
+        return None
 
     def find_references_containing(self, src_content):
         matching_elems = self.etree.xpath(

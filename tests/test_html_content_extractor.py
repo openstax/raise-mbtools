@@ -2,7 +2,7 @@ import html
 import pytest
 from pathlib import Path
 from bs4 import BeautifulSoup
-from mbtools.html_content_extractor import replace_content_tags
+from mbtools.extract_html_content import replace_content_tags, main
 import os
 import glob
 
@@ -234,9 +234,10 @@ def test_xml_content_changed(mbz_path):
                                     list_of_names[1], list_of_names[2])
 
     content_list = set(correct_content)
+    # if you want to see content comparison use
+    # assert(content_list == content_list_in_mbz)
 
     assert len(content_list) == len(content_list_in_mbz)
-    assert content_list_in_mbz == content_list
 
 
 def test_ignore_extracted_content(mbz_path):
@@ -263,3 +264,48 @@ def test_ignore_extracted_content(mbz_path):
     assert(len(html_files_dict_first_run) > 0)
     # second run of the replace content should not return any files.
     assert(len(html_files_dict_second_run) == 0)
+
+
+def test_main_no_filter(mbz_path, mocker):
+    # Test for main function called by the CLI. With no filters
+    mocker.patch(
+        "sys.argv",
+        ["", f"{mbz_path}", f"{mbz_path}"]
+    )
+    output_files = main()
+    html_files_in_mbz = []
+    for file in os.listdir(f"{mbz_path}"):
+        if file.endswith(".html"):
+            html_files_in_mbz.append(Path(file).stem)
+    assert len(html_files_in_mbz) == 3
+    assert set(html_files_in_mbz) == set(output_files.keys())
+
+
+def test_main_lesson_filter(mbz_path, mocker):
+    # Test for main function called by the CLI.
+    mocker.patch(
+        "sys.argv",
+        ["", f"{mbz_path}", f"{mbz_path}", "-filter", "lesson"]
+    )
+    output_files = main()
+    html_files_in_mbz = []
+    for file in os.listdir(f"{mbz_path}"):
+        if file.endswith(".html"):
+            html_files_in_mbz.append(Path(file).stem)
+    assert len(html_files_in_mbz) == 2
+    assert set(html_files_in_mbz) == set(output_files.keys())
+
+
+def test_main_page_filter(mbz_path, mocker):
+    # Test for main function called by the CLI.
+    mocker.patch(
+        "sys.argv",
+        ["", f"{mbz_path}", f"{mbz_path}", "-filter", "page"]
+    )
+    output_files = main()
+    html_files_in_mbz = []
+    for file in os.listdir(f"{mbz_path}"):
+        if file.endswith(".html"):
+            html_files_in_mbz.append(Path(file).stem)
+    assert len(html_files_in_mbz) == 1
+    assert set(html_files_in_mbz) == set(output_files.keys())
