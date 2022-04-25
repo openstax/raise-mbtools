@@ -51,7 +51,7 @@ LESSON_ANSWER3 = (
 )
 PAGE2_CONTENT = (
     '<div>'
-    '<video controls="true">'
+    '<video style="border: 5px" :controls="true">'
     f'<source src="{MOODLE_VIDEO_FILE}">'
     f'<track src="{MOODLE_TRACK_FILE}">'
     f'<track src="{ADDITIONAL_MEDIA2}">'
@@ -86,7 +86,7 @@ QUESTION2_CONTENT = (
     '<img alt="A picture of a map of Brazil" height="71" role="image" '
     f'src="{QUESTION2_ILLUSTRATION}" title="question" width="202">'
     '</div>'
-    '<p>'
+    '<p style="border: 5px">'
     'Select <strong>all</strong> statements that must be true.'
     '</p>'
     '</div>'
@@ -102,7 +102,7 @@ QUESTION3_CONTENT = (
     '</div>'
     '<script>var variable=0'
     '</script>'
-    '<p>'
+    '<p style="border: 5px">'
     'Select <strong>all</strong> statements that must be true.'
     '</p>'
     '</div>'
@@ -120,7 +120,7 @@ ANSWER1_CONTENT = (
 )
 ANSWER2_CONTENT = (
     '<div>'
-    '<p>'
+    '<p style="border: 5px">'
     'Rio de Janiero'
     '</p>'
     '<img alt="A picture of Rio De Janiero" height="71" role="image" '
@@ -259,10 +259,32 @@ def mbz_path(tmp_path):
     return tmp_path
 
 
-def test_remove_styles(mbz_path, tmp_path):
-    bad_styles = ['font-size', 'color', 'text-align']
-    remove_styles.remove_styles(mbz_path, bad_styles)
+def test_remove_all_styles(mbz_path, tmp_path):
+    remove_styles.remove_styles(mbz_path)
     with open(f"{tmp_path}/activities/lesson_1/lesson.xml", 'r') as f:
         file = f.read()
-        for style in bad_styles:
-            assert (style not in file)
+        assert ('style' not in file)
+    with open(f"{tmp_path}/activities/page_2/page.xml", 'r') as f:
+        file = f.read()
+        assert ('style' not in file)
+    with open(f"{tmp_path}/questions.xml", 'r') as f:
+        file = f.read()
+        assert ('style' not in file)
+
+
+def test_remove_styles_from_main(mbz_path, tmp_path, mocker):
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}"]
+    )
+    remove_styles.main()
+
+    with open(f"{tmp_path}/activities/lesson_1/lesson.xml", 'r') as f:
+        file = f.read()
+        assert ('style' not in file)
+    with open(f"{tmp_path}/activities/page_2/page.xml", 'r') as f:
+        file = f.read()
+        assert ('style' not in file)
+    with open(f"{tmp_path}/questions.xml", 'r') as f:
+        file = f.read()
+        assert ('style' not in file)
