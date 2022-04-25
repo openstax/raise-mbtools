@@ -2,6 +2,7 @@ from pathlib import Path
 from xml.dom import NotFoundErr
 from lxml import etree, html
 from bs4 import BeautifulSoup
+import re
 
 
 class MoodleBackup:
@@ -200,3 +201,24 @@ class MoodleHtmlElement:
             if child.tag == element_name:
                 elems.append(child)
         return elems
+
+    def remove_attr(self, attr, values):
+        if attr in self.etree.attrib.keys():
+            curr = self.etree.attrib[attr]
+            for value in values:
+                if value in curr:
+                    regex = f'{value}(.*?)(;)?$'
+                    curr = re.sub(regex, '', curr).strip().strip(';')
+                    self.etree.attrib[attr] = curr
+                    if self.etree.attrib[attr] == '':
+                        self.etree.attrib.pop(attr)
+        for elem in self.etree.xpath(".//*"):
+            if attr in elem.attrib.keys():
+                curr = elem.attrib[attr]
+                for value in values:
+                    if value in curr:
+                        regex = f'{value}(.*?)(;)?$'
+                        curr = re.sub(regex, '', curr).strip().strip(';')
+                        elem.attrib[attr] = curr
+                        if elem.attrib[attr] == '':
+                            elem.attrib.pop(attr)
