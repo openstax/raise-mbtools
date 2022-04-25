@@ -1,12 +1,7 @@
 from mbtools import utils
 from pathlib import Path
 import argparse
-
 from mbtools.models import MoodleLesson, MoodlePage
-
-
-def __init__(self, mbz_path):
-    self.mbz_path = Path(mbz_path)
 
 
 def replace_content_tags(mbz_path, output_file_path,
