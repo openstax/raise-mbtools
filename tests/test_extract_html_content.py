@@ -272,13 +272,12 @@ def test_main_no_filter(mbz_path, mocker):
         "sys.argv",
         ["", f"{mbz_path}", f"{mbz_path}"]
     )
-    output_files = main()
+    main()
     html_files_in_mbz = []
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
             html_files_in_mbz.append(Path(file).stem)
     assert len(html_files_in_mbz) == 3
-    assert set(html_files_in_mbz) == set(output_files.keys())
 
 
 def test_main_lesson_filter(mbz_path, mocker):
@@ -287,13 +286,12 @@ def test_main_lesson_filter(mbz_path, mocker):
         "sys.argv",
         ["", f"{mbz_path}", f"{mbz_path}", "-filter", "lesson"]
     )
-    output_files = main()
+    main()
     html_files_in_mbz = []
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
             html_files_in_mbz.append(Path(file).stem)
     assert len(html_files_in_mbz) == 2
-    assert set(html_files_in_mbz) == set(output_files.keys())
 
 
 def test_main_page_filter(mbz_path, mocker):
@@ -302,10 +300,9 @@ def test_main_page_filter(mbz_path, mocker):
         "sys.argv",
         ["", f"{mbz_path}", f"{mbz_path}", "-filter", "page"]
     )
-    output_files = main()
+    main()
     html_files_in_mbz = []
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
             html_files_in_mbz.append(Path(file).stem)
     assert len(html_files_in_mbz) == 1
-    assert set(html_files_in_mbz) == set(output_files.keys())

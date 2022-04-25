@@ -47,7 +47,7 @@ def main():
     mbz_path = Path(args.mbz_path).resolve(strict=True)
     filter = args.filter
     output_directory = Path(args.output_directory).resolve(strict=True)
-    return replace_content_tags(mbz_path, output_directory, filter)
+    replace_content_tags(mbz_path, output_directory, filter)
 
 
 if __name__ == "__main__":
