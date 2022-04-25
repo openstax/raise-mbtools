@@ -190,29 +190,30 @@ def mbz_path(tmp_path):
 def test_html_files_creation(mbz_path):
 
     # check file name against files in mbz
-    html_files_dict = replace_content_tags(mbz_path, mbz_path)
-    html_files_inmbz = []
+    html_files_list = replace_content_tags(mbz_path, mbz_path)
+    html_file_names_expected = []
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
-            html_files_inmbz.append(Path(file).stem)
+            html_file_names_expected.append(Path(file).stem)
 
-    files_in_mbz_set = set(html_files_inmbz)
-    files_from_content_extractor_set = set(html_files_dict.keys())
-
-    assert files_in_mbz_set == files_from_content_extractor_set
+    file_names = []
+    for file in html_files_list:
+        file_names.append(file["uuid"])
+    assert set(html_file_names_expected) == set(file_names)
 
 
 def test_html_files_content(mbz_path):
-    # check file name against files in mbz
-    html_files_dict = replace_content_tags(mbz_path, mbz_path)
+    # compare expected html file content files in mbz
+    html_files_list = replace_content_tags(mbz_path, mbz_path)
     content_expected_in_files = [prettify_html(LESSON1_CONTENT1),
                                  prettify_html(LESSON1_CONTENT2),
                                  prettify_html(PAGE2_CONTENT)]
 
-    files_in_mbz_set = set(content_expected_in_files)
-    files_from_content_extractor_set = set(html_files_dict.values())
+    file_contents = []
+    for file in html_files_list:
+        file_contents.append(file["content"])
 
-    assert files_in_mbz_set == files_from_content_extractor_set
+    assert set(content_expected_in_files) == set(file_contents)
 
 
 def prettify_html(html):
@@ -222,16 +223,21 @@ def prettify_html(html):
 
 def test_xml_content_changed(mbz_path):
     # check file content against files in mbz
-    html_files_dict = replace_content_tags(mbz_path, mbz_path)
+    html_files_list = replace_content_tags(mbz_path, mbz_path)
     content_list_in_mbz = []
 
     for file in glob.glob(f"{mbz_path}/activities/*/*.xml"):
         with open(file, "r") as f:
             content_list_in_mbz.append(f.read())
+    file_names = []
+    for file in html_files_list:
+        file_names.append(file["uuid"])
+    file_contents = []
+    for file in html_files_list:
+        file_contents.append(file["content"])
 
-    list_of_names = list(html_files_dict.keys())
-    correct_content = populate_tags(list_of_names[0],
-                                    list_of_names[1], list_of_names[2])
+    correct_content = populate_tags(file_names[0],
+                                    file_names[1], file_names[2])
 
     content_list = set(correct_content)
     # if you want to see content comparison use
@@ -261,7 +267,7 @@ def test_ignore_extracted_content(mbz_path):
     assert len(html_files_inmbz_first_run) == len(html_files_inmbz_second_run)
 
     # first run of replace content should return some files
-    assert(len(html_files_dict_first_run) > 0)
+    assert(len(html_files_dict_first_run) == 3)
     # second run of the replace content should not return any files.
     assert(len(html_files_dict_second_run) == 0)
 

@@ -180,15 +180,14 @@ class MoodleHtmlElement:
             if "class" in attrib_dict.keys() and \
                     attrib_dict["class"] == "os-raise-content":
                 return None
-            html_file = {}
             content_uuid = str(uuid.uuid4())
             content = self.parent.text
             tag = f'<div class="os-raise-content" ' \
                   f'data-content-id="{ content_uuid }"></div>'
 
             self.parent.text = tag
-            html_file[content_uuid] = self.prettify_html(content)
-            return html_file
+            return {"uuid": content_uuid,
+                    "content": self.prettify_html(content)}
         return None
 
     def find_references_containing(self, src_content):
