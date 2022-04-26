@@ -17,10 +17,7 @@ def replace_content_tags(mbz_path, output_file_path,
                 html_file = html_elem.replace_content_tag()
                 if html_file:
                     output_html_files.append(html_file)
-                    with open(act.activity_filename, "wb") as f:
-                        act.etree.write(f, encoding="utf-8",
-                                        pretty_print=True,
-                                        xml_declaration=True)
+                    utils.write_etree(act.activity_filename, act.etree)
 
     write_html_files(output_html_files, output_file_path)
     return output_html_files

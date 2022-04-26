@@ -240,7 +240,6 @@ def test_xml_content_changed(mbz_path):
                                     file_names[1], file_names[2])
 
     content_list = set(correct_content)
-
     assert len(content_list) == len(content_list_in_mbz)
 
 
