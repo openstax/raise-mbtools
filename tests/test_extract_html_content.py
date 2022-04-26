@@ -189,7 +189,7 @@ def mbz_path(tmp_path):
 
 def test_html_files_creation(mbz_path):
 
-    # check file name against files in mbz
+    # Compare file name with files in mbz.
     html_files_list = replace_content_tags(mbz_path, mbz_path)
     html_file_names_expected = []
     for file in os.listdir(f"{mbz_path}"):
@@ -203,7 +203,7 @@ def test_html_files_creation(mbz_path):
 
 
 def test_html_files_content(mbz_path):
-    # compare expected html file content files in mbz
+    # compare expected html file content with files in mbz
     html_files_list = replace_content_tags(mbz_path, mbz_path)
     content_expected_in_files = [prettify_html(LESSON1_CONTENT1),
                                  prettify_html(LESSON1_CONTENT2),
@@ -222,7 +222,7 @@ def prettify_html(html):
 
 
 def test_xml_content_changed(mbz_path):
-    # check file content against files in mbz
+    # Compare file content with files in mbz
     html_files_list = replace_content_tags(mbz_path, mbz_path)
     content_list_in_mbz = []
 
@@ -240,40 +240,39 @@ def test_xml_content_changed(mbz_path):
                                     file_names[1], file_names[2])
 
     content_list = set(correct_content)
-    # if you want to see content comparison use
-    # assert(content_list == content_list_in_mbz)
 
     assert len(content_list) == len(content_list_in_mbz)
 
 
 def test_ignore_extracted_content(mbz_path):
 
-    # check file name against files in mbz
-    html_files_dict_first_run = replace_content_tags(mbz_path, mbz_path)
+    # Extracted tags should not be extracted again.
+    html_files_list_first_run = replace_content_tags(mbz_path, mbz_path)
     html_files_inmbz_first_run = []
 
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
             html_files_inmbz_first_run.append(Path(file).stem)
 
-    html_files_dict_second_run = replace_content_tags(mbz_path, mbz_path)
+    html_files_list_second_run = replace_content_tags(mbz_path, mbz_path)
     html_files_inmbz_second_run = []
 
     for file in os.listdir(f"{mbz_path}"):
         if file.endswith(".html"):
             html_files_inmbz_second_run.append(Path(file).stem)
 
-    # Checking if more files were added second run which should not happen.
+    # Number of html files should remain the same after second run.
     assert len(html_files_inmbz_first_run) == len(html_files_inmbz_second_run)
 
-    # first run of replace content should return some files
-    assert(len(html_files_dict_first_run) == 3)
-    # second run of the replace content should not return any files.
-    assert(len(html_files_dict_second_run) == 0)
+    # First run of extract content should return 3 files
+    assert(len(html_files_list_first_run) == 3)
+    # Second run of the extract content should not return files.
+    assert(len(html_files_list_second_run) == 0)
 
 
 def test_main_no_filter(mbz_path, mocker):
-    # Test for main function called by the CLI. With no filters
+    # Test for main function called by the CLI.
+    # No filter args should default to extract page and lesson content.
     mocker.patch(
         "sys.argv",
         ["", f"{mbz_path}", f"{mbz_path}"]
@@ -287,7 +286,7 @@ def test_main_no_filter(mbz_path, mocker):
 
 
 def test_main_lesson_filter(mbz_path, mocker):
-    # Test for main function called by the CLI.
+    # Test for main function called by the CLI with lesson filter.
     mocker.patch(
         "sys.argv",
         ["", f"{mbz_path}", f"{mbz_path}", "-filter", "lesson"]
@@ -301,7 +300,7 @@ def test_main_lesson_filter(mbz_path, mocker):
 
 
 def test_main_page_filter(mbz_path, mocker):
-    # Test for main function called by the CLI.
+    # Test for main function called by the CLI with page filter.
     mocker.patch(
         "sys.argv",
         ["", f"{mbz_path}", f"{mbz_path}", "-filter", "page"]
