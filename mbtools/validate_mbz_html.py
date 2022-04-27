@@ -70,12 +70,12 @@ def find_style_violations(html_elements):
 def find_tag_violations(html_elements):
     violations = []
     for elem in html_elements:
-        hits = elem.get_child_elements("script")
-        for hit in hits:
+        hits = elem.get_elements_by_name("script")
+        for _ in hits:
             violations.append(Violation(elem.tostring(),
                                         SCRIPT_VIOLATION,
                                         elem.location))
-        hits = elem.get_child_elements("iframe")
+        hits = elem.get_elements_by_name("iframe")
         for hit in hits:
             link = hit.attrib['src']
             if len([prefix for prefix in VALID_IFRAME_PREFIXES
@@ -84,7 +84,7 @@ def find_tag_violations(html_elements):
                                             IFRAME_VIOLATION,
                                             elem.location,
                                             link))
-        hits = elem.get_child_elements("a")
+        hits = elem.get_elements_by_name("a")
         for hit in hits:
             if "href" in hit.attrib.keys():
                 link = hit.attrib["href"]

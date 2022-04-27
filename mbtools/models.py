@@ -196,10 +196,9 @@ class MoodleHtmlElement:
         return None
 
     def find_references_containing(self, src_content):
-        matching_elems = []
-        matching_elems.extend(self.etree_fragments[0].xpath(
+        matching_elems = self.etree_fragments[0].xpath(
             f'//*[contains(@src, "{src_content}")]'
-        ))
+        )
         return [el.get("src") for el in matching_elems]
 
     def tostring(self):
@@ -225,9 +224,8 @@ class MoodleHtmlElement:
                     values.append(elem.attrib[attr])
         return values
 
-    def get_child_elements(self, element_name):
+    def get_elements_by_name(self, element_name):
         elems = []
-        for child in self.etree_fragments[0].xpath("//*"):
-            if child.tag == element_name:
-                elems.append(child)
+        for child in self.etree_fragments[0].xpath(f'//{element_name}'):
+            elems.append(child)
         return elems
