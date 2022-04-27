@@ -1,10 +1,9 @@
 import html
 import pytest
 from pathlib import Path
-from bs4 import BeautifulSoup
+from mbtools import utils
 from mbtools.extract_html_content import replace_content_tags, main
 import os
-import glob
 
 IM_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/imagename"
 OSX_MEDIA_LINK = "https://osx-int-alg.s3.us-east-1.amazonaws.com/l1/imagename"
@@ -24,7 +23,10 @@ LESSON1_CONTENT1 = (
     "</div>"
 )
 
-LESSON1_CONTENT2 = "<div>" f'<img src="{OSX_MEDIA_LINK}">' "</div>"
+LESSON1_CONTENT2 = (
+    "<div>" f'<img src="{OSX_MEDIA_LINK}">' "</div>"
+    "<div><p>More content</p></div>"
+)
 LESSON_ANSWER1 = '<p dir="ltr" style="text-align:' \
                  ' left;">' "(6, 0)" "<br>" "</p>"
 LESSON_ANSWER2 = (
@@ -162,10 +164,6 @@ def populate_tags(uuid_content1, uuid_content2, uuid_page):
     return [LESSON1_CONTENT_TAGGED, PAGE2_CONTENT_TAGGED]
 
 
-def replace_ampersand(content):
-    return content.replace("&amp;", "&").replace("&", "&amp;")
-
-
 @pytest.fixture
 def mbz_path(tmp_path):
     lesson1_content = LESSON1_XML.strip()
@@ -205,9 +203,9 @@ def test_html_files_creation(mbz_path):
 def test_html_files_content(mbz_path):
     # compare expected html file content with files in mbz
     html_files_list = replace_content_tags(mbz_path, mbz_path)
-    content_expected_in_files = [prettify_html(LESSON1_CONTENT1),
-                                 prettify_html(LESSON1_CONTENT2),
-                                 prettify_html(PAGE2_CONTENT)]
+    content_expected_in_files = [utils.prettify_html(LESSON1_CONTENT1),
+                                 utils.prettify_html(LESSON1_CONTENT2),
+                                 utils.prettify_html(PAGE2_CONTENT)]
 
     file_contents = []
     for file in html_files_list:
@@ -216,31 +214,25 @@ def test_html_files_content(mbz_path):
     assert set(content_expected_in_files) == set(file_contents)
 
 
-def prettify_html(html):
-    soup = BeautifulSoup(html, "html.parser")
-    return soup.prettify()
-
-
 def test_xml_content_changed(mbz_path):
     # Compare file content with files in mbz
     html_files_list = replace_content_tags(mbz_path, mbz_path)
-    content_list_in_mbz = []
 
-    for file in glob.glob(f"{mbz_path}/activities/*/*.xml"):
-        with open(file, "r") as f:
-            content_list_in_mbz.append(f.read())
     file_names = []
     for file in html_files_list:
         file_names.append(file["uuid"])
-    file_contents = []
-    for file in html_files_list:
-        file_contents.append(file["content"])
+
+    tags = []
+    for name in file_names:
+        tags.append(html.escape(f'<div class="os-raise-content" '
+                                f'data-content-id="{name}"></div>',
+                                quote=False))
 
     correct_content = populate_tags(file_names[0],
                                     file_names[1], file_names[2])
-
-    content_list = set(correct_content)
-    assert len(content_list) == len(content_list_in_mbz)
+    correct_content = "".join(correct_content)
+    for tag in tags:
+        assert tag in correct_content
 
 
 def test_ignore_extracted_content(mbz_path):

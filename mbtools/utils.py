@@ -1,4 +1,5 @@
 from pathlib import Path
+from bs4 import BeautifulSoup
 from . import models
 
 
@@ -7,6 +8,11 @@ def write_etree(file_path, etree):
         etree.write(f, encoding="utf-8",
                     pretty_print=True,
                     xml_declaration=True)
+
+
+def prettify_html(html):
+    soup = BeautifulSoup(html, "html.parser")
+    return soup.prettify()
 
 
 def parse_backup_activities(mbz_dir):
