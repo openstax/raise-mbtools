@@ -27,7 +27,7 @@ def write_html_files(output_html_files, output_file_path):
     for file in output_html_files:
 
         with open(f"{output_file_path}/{file['uuid']}.html", "w") as f:
-            f.write(utils.prettify_html(file["content"]))
+            f.write(file["content"])
 
 
 def main():

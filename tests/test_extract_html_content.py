@@ -1,7 +1,6 @@
 import html
 import pytest
 from pathlib import Path
-from mbtools import utils
 from mbtools.extract_html_content import replace_content_tags, main
 import os
 
@@ -203,13 +202,13 @@ def test_html_files_creation(mbz_path):
 def test_html_files_content(mbz_path):
     # compare expected html file content with files in mbz
     html_files_list = replace_content_tags(mbz_path, mbz_path)
-    content_expected_in_files = [utils.prettify_html(LESSON1_CONTENT1),
-                                 utils.prettify_html(LESSON1_CONTENT2),
-                                 utils.prettify_html(PAGE2_CONTENT)]
+    content_expected_in_files = [LESSON1_CONTENT1,
+                                 LESSON1_CONTENT2,
+                                 PAGE2_CONTENT]
 
     file_contents = []
     for file in html_files_list:
-        file_contents.append(utils.prettify_html(file["content"]))
+        file_contents.append(file["content"])
 
     assert set(content_expected_in_files) == set(file_contents)
 
