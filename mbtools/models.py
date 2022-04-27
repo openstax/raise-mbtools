@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 from xml.dom import NotFoundErr
 from lxml import etree, html
@@ -177,6 +178,22 @@ class MoodleHtmlElement:
                 self.etree_fragments.append(p_element)
             else:
                 self.etree_fragments.append(fragment)
+
+    def replace_content_tag(self):
+        if self.parent.tag in ["content", "contents"]:
+            attrib_dict = self.etree_fragments[0].attrib
+            if "class" in attrib_dict.keys() and \
+                    attrib_dict["class"] == "os-raise-content":
+                return None
+            content_uuid = str(uuid.uuid4())
+            content = self.parent.text
+            tag = f'<div class="os-raise-content" ' \
+                  f'data-content-id="{ content_uuid }"></div>'
+
+            self.parent.text = tag
+            return {"uuid": content_uuid,
+                    "content": content}
+        return None
 
     def find_references_containing(self, src_content):
         matching_elems = []

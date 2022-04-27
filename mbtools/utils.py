@@ -2,6 +2,13 @@ from pathlib import Path
 from . import models
 
 
+def write_etree(file_path, etree):
+    with open(file_path, "wb") as f:
+        etree.write(f, encoding="utf-8",
+                    pretty_print=True,
+                    xml_declaration=True)
+
+
 def parse_backup_activities(mbz_dir):
     """
     Given a string with path to an extracted moodle backup directory return
@@ -61,10 +68,3 @@ def find_moodle_media_references(activity):
         )
 
     return media_references
-
-
-def write_etree(file_path, etree):
-    with open(file_path, "wb") as f:
-        etree.write(f, encoding="utf-8",
-                    pretty_print=True,
-                    xml_declaration=True)
