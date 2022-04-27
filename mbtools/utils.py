@@ -61,3 +61,10 @@ def find_moodle_media_references(activity):
         )
 
     return media_references
+
+
+def write_etree(file_path, etree):
+    with open(file_path, "wb") as f:
+        etree.write(f, encoding="utf-8",
+                    pretty_print=True,
+                    xml_declaration=True)

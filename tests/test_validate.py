@@ -1,7 +1,9 @@
 import csv
 import pytest
 import html
+from lxml import etree
 from mbtools import validate_mbz_html
+from mbtools.models import MoodleHtmlElement
 
 IM_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/imagename"
 OSX_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/l1/imagename"
@@ -21,7 +23,7 @@ ADDITIONAL_MEDIA4 = "https://wikipedia.com/brazil/image4"
 LESSON1_CONTENT1 = (
     '<div>'
     '<div>'
-    f'<img src="{IM_MEDIA_LINK}">'
+    f'<img style="color: orange" src="{IM_MEDIA_LINK}">'
     f'<img src="{ADDITIONAL_MEDIA}">'
     '</div>'
     '</div>'
@@ -30,22 +32,32 @@ LESSON1_CONTENT2 = (
     '<div>'
     f'<img src="{OSX_MEDIA_LINK}">'
     '</div>'
+    '<script>'
+    'var something = 0'
+    '</script>'
 )
 LESSON_ANSWER1 = (
-    '<p dir="ltr" style="text-align: left; color=blue;">'
+    '<p dir="ltr" style="color: blue">'
     '(6, 0)'
     '<br>'
+    '</p>'
+    '<p style="text-align: left">'
+    'words'
+    '</p>'
+    '<p style="text-align: center">'
+    'words'
     '</p>'
 )
 LESSON_ANSWER2 = (
     '<p dir="ltr">'
     '<img alt="Answer Picture" height="71" role="image" '
-    f'src="{LESSON_ANSW_ILLUSTRATION}" title="question" width="101">'
+    f'src="{LESSON_ANSW_ILLUSTRATION}" title="question" style="color: grey"'
+    ' width="101">'
     '<br>'
     '</p>'
 )
 LESSON_ANSWER3 = (
-    '<p dir="ltr" style="text-align: left; color= red;">'
+    '<p dir="ltr" style="text-align: left; color: red;">'
     '(3, 2)'
     '<br>'
     '</p>'
@@ -62,6 +74,9 @@ PAGE2_CONTENT = (
     '</a>'
     '<script>var variable=0'
     '</script>'
+    '</div>'
+    '<div style="color: green">'
+    'some text'
     '</div>'
 )
 QUESTION1_CONTENT = (
@@ -290,8 +305,11 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
             violation_messages.append(row[0])
             if row[2] != '':
                 violation_links.append(row[2])
-        assert (len(violation_messages) == 10)
+        assert (len(violation_messages) == 16)
         assert set([validate_mbz_html.STYLE_VIOLATION,
+                    validate_mbz_html.STYLE_VIOLATION,
+                    validate_mbz_html.STYLE_VIOLATION,
+                    validate_mbz_html.STYLE_VIOLATION,
                     validate_mbz_html.STYLE_VIOLATION,
                     validate_mbz_html.SOURCE_VIOLATION,
                     validate_mbz_html.SOURCE_VIOLATION,
@@ -308,5 +326,19 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
                     ADDITIONAL_MEDIA2,
                     ADDITIONAL_MEDIA3,
                     ADDITIONAL_MEDIA4,
-                    "text-align: left; color=blue;",
-                    "text-align: left; color= red;"]) == set(violation_links)
+                    "color: blue",
+                    "text-align: left; color: red;",
+                    "text-align: left",
+                    "color: green",
+                    "color: grey",
+                    "color: orange",
+                    "text-align: center"]) == set(violation_links)
+
+
+def test_string_without_html():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = "Hi hello<p>actual_html</p>"
+    elem = MoodleHtmlElement(parent, location)
+    assert (elem.tostring() == "<p>Hi hello</p><p>actual_html</p>")
+    assert len(elem.etree_fragments) == 2

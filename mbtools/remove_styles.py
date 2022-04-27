@@ -1,6 +1,6 @@
 from pathlib import Path
 from . import models
-from lxml.etree import tostring
+from mbtools.utils import write_etree
 import argparse
 
 
@@ -11,20 +11,7 @@ def remove_styles(mbz_dir):
     for activity in activities:
         for elem in activity.html_elements():
             elem.remove_attr("style")
-        with open(activity.activity_filename, "w") as f:
-            f.write(tostring(activity.etree,
-                             pretty_print=True,
-                             encoding='utf8').decode())
-
-    question_bank = models.MoodleQuestionBank(mbz_path)
-    questions = question_bank.questions()
-    for question in questions:
-        for elem in question.html_elements():
-            elem.remove_attr("style")
-        with open(question_bank.questionbank_path, 'w') as f:
-            f.write(tostring(question_bank.etree,
-                             pretty_print=True,
-                             encoding='utf8').decode())
+        write_etree(activity.activity_filename, activity.etree)
 
 
 def main():

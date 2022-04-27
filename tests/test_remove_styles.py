@@ -259,32 +259,15 @@ def mbz_path(tmp_path):
     return tmp_path
 
 
-def test_remove_all_styles(mbz_path, tmp_path):
-    remove_styles.remove_styles(mbz_path)
-    with open(f"{tmp_path}/activities/lesson_1/lesson.xml", 'r') as f:
-        file = f.read()
-        assert ('style' not in file)
-    with open(f"{tmp_path}/activities/page_2/page.xml", 'r') as f:
-        file = f.read()
-        assert ('style' not in file)
-    with open(f"{tmp_path}/questions.xml", 'r') as f:
-        file = f.read()
-        assert ('style' not in file)
-
-
 def test_remove_styles_from_main(mbz_path, tmp_path, mocker):
     mocker.patch(
         "sys.argv",
         ["", f"{tmp_path}"]
     )
     remove_styles.main()
-
     with open(f"{tmp_path}/activities/lesson_1/lesson.xml", 'r') as f:
         file = f.read()
         assert ('style' not in file)
     with open(f"{tmp_path}/activities/page_2/page.xml", 'r') as f:
-        file = f.read()
-        assert ('style' not in file)
-    with open(f"{tmp_path}/questions.xml", 'r') as f:
         file = f.read()
         assert ('style' not in file)
