@@ -1,8 +1,7 @@
-import csv
 import pytest
 import html
+from mbtools import remove_styles
 from lxml import etree
-from mbtools import validate_mbz_html
 from mbtools.models import MoodleHtmlElement
 
 IM_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/imagename"
@@ -23,7 +22,7 @@ ADDITIONAL_MEDIA4 = "https://wikipedia.com/brazil/image4"
 LESSON1_CONTENT1 = (
     '<div>'
     '<div>'
-    f'<img style="color: orange" src="{IM_MEDIA_LINK}">'
+    f'<img src="{IM_MEDIA_LINK}">'
     f'<img src="{ADDITIONAL_MEDIA}">'
     '</div>'
     '</div>'
@@ -32,39 +31,29 @@ LESSON1_CONTENT2 = (
     '<div>'
     f'<img src="{OSX_MEDIA_LINK}">'
     '</div>'
-    '<script>'
-    'var something = 0'
-    '</script>'
 )
 LESSON_ANSWER1 = (
-    '<p dir="ltr" style="color: blue">'
+    '<p dir="ltr" style="text-align: left; color=blue; font-size: 10px">'
     '(6, 0)'
     '<br>'
-    '</p>'
-    '<p style="text-align: left">'
-    'words'
-    '</p>'
-    '<p style="text-align: center">'
-    'words'
     '</p>'
 )
 LESSON_ANSWER2 = (
     '<p dir="ltr">'
     '<img alt="Answer Picture" height="71" role="image" '
-    f'src="{LESSON_ANSW_ILLUSTRATION}" title="question" style="color: grey"'
-    ' width="101">'
+    f'src="{LESSON_ANSW_ILLUSTRATION}" title="question" width="101">'
     '<br>'
     '</p>'
 )
 LESSON_ANSWER3 = (
-    '<p dir="ltr" style="text-align: left; color: red;">'
+    '<p dir="ltr" style="text-align: left; color= red;">'
     '(3, 2)'
     '<br>'
     '</p>'
 )
 PAGE2_CONTENT = (
     '<div>'
-    '<video controls="true">'
+    '<video style="border: 5px" :controls="true">'
     f'<source src="{MOODLE_VIDEO_FILE}">'
     f'<track src="{MOODLE_TRACK_FILE}">'
     f'<track src="{ADDITIONAL_MEDIA2}">'
@@ -74,9 +63,6 @@ PAGE2_CONTENT = (
     '</a>'
     '<script>var variable=0'
     '</script>'
-    '</div>'
-    '<div style="color: green">'
-    'some text'
     '</div>'
 )
 QUESTION1_CONTENT = (
@@ -102,7 +88,7 @@ QUESTION2_CONTENT = (
     '<img alt="A picture of a map of Brazil" height="71" role="image" '
     f'src="{QUESTION2_ILLUSTRATION}" title="question" width="202">'
     '</div>'
-    '<p>'
+    '<p style="border: 5px">'
     'Select <strong>all</strong> statements that must be true.'
     '</p>'
     '</div>'
@@ -118,7 +104,7 @@ QUESTION3_CONTENT = (
     '</div>'
     '<script>var variable=0'
     '</script>'
-    '<p>'
+    '<p style="border: 5px">'
     'Select <strong>all</strong> statements that must be true.'
     '</p>'
     '</div>'
@@ -136,7 +122,7 @@ ANSWER1_CONTENT = (
 )
 ANSWER2_CONTENT = (
     '<div>'
-    '<p>'
+    '<p style="border: 5px">'
     'Rio de Janiero'
     '</p>'
     '<img alt="A picture of Rio De Janiero" height="71" role="image" '
@@ -275,70 +261,46 @@ def mbz_path(tmp_path):
     return tmp_path
 
 
-def test_validate_all(mbz_path):
-    violations = validate_mbz_html.validate_mbz(mbz_path)
-    violation_names = [x.issue for x in violations]
-    assert set([validate_mbz_html.STYLE_VIOLATION,
-                validate_mbz_html.STYLE_VIOLATION,
-                validate_mbz_html.SOURCE_VIOLATION,
-                validate_mbz_html.SOURCE_VIOLATION,
-                validate_mbz_html.SCRIPT_VIOLATION,
-                validate_mbz_html.SCRIPT_VIOLATION,
-                validate_mbz_html.IFRAME_VIOLATION,
-                validate_mbz_html.MOODLE_VIOLATION,
-                validate_mbz_html.MOODLE_VIOLATION,
-                validate_mbz_html.HREF_VIOLATION]) == set(violation_names)
-
-
-def test_validate_output_file(mbz_path, mocker, tmp_path):
+def test_remove_styles_from_main(mbz_path, tmp_path, mocker):
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}", f"{tmp_path}/test_output.csv"]
+        ["", f"{tmp_path}"]
     )
-    validate_mbz_html.main()
-    with open(f"{tmp_path}/test_output.csv", 'r') as f:
-        violations = csv.reader(f, delimiter=",")
-        next(violations)
-        violation_messages = []
-        violation_links = []
-        for row in violations:
-            violation_messages.append(row[0])
-            if row[2] != '':
-                violation_links.append(row[2])
-        assert (len(violation_messages) == 16)
-        assert set([validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.SOURCE_VIOLATION,
-                    validate_mbz_html.SOURCE_VIOLATION,
-                    validate_mbz_html.SCRIPT_VIOLATION,
-                    validate_mbz_html.SCRIPT_VIOLATION,
-                    validate_mbz_html.IFRAME_VIOLATION,
-                    validate_mbz_html.MOODLE_VIOLATION,
-                    validate_mbz_html.MOODLE_VIOLATION,
-                    validate_mbz_html.HREF_VIOLATION]) == \
-               set(violation_messages)
-        assert set([MOODLE_VIDEO_FILE,
-                    MOODLE_TRACK_FILE,
-                    ADDITIONAL_MEDIA,
-                    ADDITIONAL_MEDIA2,
-                    ADDITIONAL_MEDIA3,
-                    ADDITIONAL_MEDIA4,
-                    "color: blue",
-                    "text-align: left; color: red;",
-                    "text-align: left",
-                    "color: green",
-                    "color: grey",
-                    "color: orange",
-                    "text-align: center"]) == set(violation_links)
+    remove_styles.main()
+    with open(f"{tmp_path}/activities/lesson_1/lesson.xml", 'r') as f:
+        file = f.read()
+        assert ('style' not in file)
+    with open(f"{tmp_path}/activities/page_2/page.xml", 'r') as f:
+        file = f.read()
+        assert ('style' not in file)
 
 
-def test_string_without_html():
+def test_styles_removed_from_html():
     location = "here"
     parent = etree.fromstring("<content></content>")
-    parent.text = "Hi hello<p>actual_html</p>"
+    parent.text = (
+        '<p dir="ltr" style="color: blue">'
+        '(6, 0)'
+        '<br>'
+        '</p>'
+        '<p style="text-align: left">'
+        'words'
+        '</p>'
+        '<p style="text-align: center">'
+        'words'
+        '</p>'
+    )
     elem = MoodleHtmlElement(parent, location)
-    assert (elem.tostring() == "<p>Hi hello</p><p>actual_html</p>")
-    assert len(elem.etree_fragments) == 2
+    elem.remove_attr("style")
+    assert (elem.tostring() == (
+            '<p dir="ltr">'
+            '(6, 0)'
+            '<br>'
+            '</p>'
+            '<p>'
+            'words'
+            '</p>'
+            '<p>'
+            'words'
+            '</p>'))
+    assert len(elem.etree_fragments) == 3

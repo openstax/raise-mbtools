@@ -167,12 +167,21 @@ class MoodleHtmlElement:
     def __init__(self, parent, location):
         self.parent = parent
         self.location = location
-        self.etree = html.fromstring(self.parent.text)
+        self.etree_fragments = []
+
+        # Catch strings that exist without html tags
+        temp = html.fragments_fromstring(self.parent.text)
+        for fragment in temp:
+            if type(fragment) != html.HtmlElement:
+                p_element = etree.Element('p')
+                p_element.text = fragment
+                self.etree_fragments.append(p_element)
+            else:
+                self.etree_fragments.append(fragment)
 
     def replace_content_tag(self):
-
         if self.parent.tag in ["content", "contents"]:
-            attrib_dict = self.etree.attrib
+            attrib_dict = self.etree_fragments[0].attrib
             if "class" in attrib_dict.keys() and \
                     attrib_dict["class"] == "os-raise-content":
                 return None
@@ -187,33 +196,36 @@ class MoodleHtmlElement:
         return None
 
     def find_references_containing(self, src_content):
-        matching_elems = self.etree.xpath(
+        matching_elems = self.etree_fragments[0].xpath(
             f'//*[contains(@src, "{src_content}")]'
         )
-
         return [el.get("src") for el in matching_elems]
 
     def tostring(self):
         # Pass things through bs4 so we can avoid adding closing tags and
         # closing slashes that lxml may otherwise emit on void elements
+        html_content = b''.join(
+            [etree.tostring(fragment) for fragment in self.etree_fragments])
         return BeautifulSoup(
-            etree.tostring(self.etree),
+            html_content,
             "html.parser"
         ).encode(formatter="html5").decode('utf-8')
 
+    def remove_attr(self, attr):
+        for elem in self.etree_fragments[0].xpath(f'//*[@{attr}]'):
+            elem.attrib.pop(attr)
+        self.parent.text = self.tostring()
+
     def get_attribute_values(self, attr, exception=None):
         values = []
-        if attr in self.etree.attrib.keys():
-            values.append(self.etree.attrib[attr])
-        for elem in self.etree.xpath(".//*"):
+        for elem in self.etree_fragments[0].xpath('//*'):
             if elem.tag != exception or exception is None:
                 if attr in elem.attrib.keys():
                     values.append(elem.attrib[attr])
         return values
 
-    def get_child_elements(self, element_name):
+    def get_elements_by_name(self, element_name):
         elems = []
-        for child in self.etree.xpath(".//*"):
-            if child.tag == element_name:
-                elems.append(child)
+        for child in self.etree_fragments[0].xpath(f'//{element_name}'):
+            elems.append(child)
         return elems
