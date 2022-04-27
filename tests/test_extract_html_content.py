@@ -209,7 +209,7 @@ def test_html_files_content(mbz_path):
 
     file_contents = []
     for file in html_files_list:
-        file_contents.append(file["content"])
+        file_contents.append(utils.prettify_html(file["content"]))
 
     assert set(content_expected_in_files) == set(file_contents)
 

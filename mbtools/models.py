@@ -4,8 +4,6 @@ from xml.dom import NotFoundErr
 from lxml import etree, html
 from bs4 import BeautifulSoup
 
-from mbtools import utils
-
 
 class MoodleBackup:
     def __init__(self, mbz_path):
@@ -185,7 +183,7 @@ class MoodleHtmlElement:
 
             self.parent.text = tag
             return {"uuid": content_uuid,
-                    "content": utils.prettify_html(content)}
+                    "content": content}
         return None
 
     def find_references_containing(self, src_content):
