@@ -168,6 +168,7 @@ class MoodleHtmlElement:
         self.parent = parent
         self.location = location
         self.etree_fragments = []
+        self.unnested_content = []
 
         # Catch strings that exist without html tags
         temp = html.fragments_fromstring(self.parent.text)
@@ -175,6 +176,7 @@ class MoodleHtmlElement:
             if type(fragment) != html.HtmlElement:
                 p_element = etree.Element('p')
                 p_element.text = fragment
+                self.unnested_content.append(fragment)
                 self.etree_fragments.append(p_element)
             else:
                 self.etree_fragments.append(fragment)

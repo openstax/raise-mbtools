@@ -9,6 +9,7 @@ MOODLE_VIOLATION = "ERROR: References to Uploaded Files in Moodle DB"
 SCRIPT_VIOLATION = "ERROR: Use of <script> element"
 IFRAME_VIOLATION = "ERROR: Use of <iframe> with unexpected target"
 HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
+UNNESTED_VIOLATION = "ERROR: Contains content not nested in HTML Element"
 
 VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
                   "https://k12.openstax.org/contents/raise",
@@ -47,10 +48,23 @@ def validate_mbz(mbz_path):
     html_elements = utils.parse_backup_elements(mbz_path)
 
     violations = []
+    violations.extend(find_unnested_violations(html_elements))
     violations.extend(find_style_violations(html_elements))
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
 
+    return violations
+
+
+def find_unnested_violations(html_elements):
+    violations = []
+    for elem in html_elements:
+        if len(elem.unnested_content) > 0:
+            for fragment in elem.unnested_content:
+                violations.append(Violation(elem.tostring(),
+                                            UNNESTED_VIOLATION,
+                                            elem.location,
+                                            fragment))
     return violations
 
 

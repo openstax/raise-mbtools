@@ -4,6 +4,7 @@ import html
 from lxml import etree
 from mbtools import validate_mbz_html
 from mbtools.models import MoodleHtmlElement
+from collections import defaultdict
 
 IM_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/imagename"
 OSX_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/l1/imagename"
@@ -23,7 +24,9 @@ ADDITIONAL_MEDIA4 = "https://wikipedia.com/brazil/image4"
 LESSON1_CONTENT1 = (
     '<div>'
     '<div>'
+    # Style Violation 1
     f'<img style="color: orange" src="{IM_MEDIA_LINK}">'
+    # Source Violation 1
     f'<img src="{ADDITIONAL_MEDIA}">'
     '</div>'
     '</div>'
@@ -32,21 +35,27 @@ LESSON1_CONTENT2 = (
     '<div>'
     f'<img src="{OSX_MEDIA_LINK}">'
     '</div>'
+    # Script Violation 1
     '<script>'
     'var something = 0'
     '</script>'
 )
 LESSON_ANSWER1 = (
+    # Style Violation 2
     '<p dir="ltr" style="color: blue">'
     '(6, 0)'
     '<br>'
     '</p>'
+    # Style Violation 3
     '<p style="text-align: left">'
     'words'
     '</p>'
+    # Style Violation 4
     '<p style="text-align: center">'
     'words'
     '</p>'
+    # Unnested Violation 1
+    'Bad Content'
 )
 LESSON_ANSWER2 = (
     '<p dir="ltr">'
@@ -57,6 +66,7 @@ LESSON_ANSWER2 = (
     '</p>'
 )
 LESSON_ANSWER3 = (
+    # Style Violation 5
     '<p dir="ltr" style="text-align: left; color: red;">'
     '(3, 2)'
     '<br>'
@@ -65,16 +75,21 @@ LESSON_ANSWER3 = (
 PAGE2_CONTENT = (
     '<div>'
     '<video controls="true">'
+    # Moodle Violation 1
     f'<source src="{MOODLE_VIDEO_FILE}">'
+    # Moodle Violation 2
     f'<track src="{MOODLE_TRACK_FILE}">'
     f'<track src="{ADDITIONAL_MEDIA2}">'
     'fallback content'
     '</video>'
+    # Source Violation 2
     f'<a href="{ADDITIONAL_MEDIA3}">'
     '</a>'
+    # Script Violation 2
     '<script>var variable=0'
     '</script>'
     '</div>'
+    # Style Violaiton 6
     '<div style="color: green">'
     'some text'
     '</div>'
@@ -116,7 +131,9 @@ QUESTION3_CONTENT = (
     '<img alt="A picture of a map of Brazil" height="71" role="image" '
     f'src="{QUESTION3_ILLUSTRATION}" title="question" width="202">'
     '</div>'
-    '<script>var variable=0'
+    # Script Violation 3
+    '<script>'
+    'var variable=0'
     '</script>'
     '<p>'
     'Select <strong>all</strong> statements that must be true.'
@@ -299,40 +316,37 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
     with open(f"{tmp_path}/test_output.csv", 'r') as f:
         violations = csv.reader(f, delimiter=",")
         next(violations)
-        violation_messages = []
-        violation_links = []
+        violation_map = defaultdict(lambda: 0)
+        violation_descriptions = defaultdict(lambda: 0)
         for row in violations:
-            violation_messages.append(row[0])
-            if row[2] != '':
-                violation_links.append(row[2])
-        assert (len(violation_messages) == 16)
-        assert set([validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.SOURCE_VIOLATION,
-                    validate_mbz_html.SOURCE_VIOLATION,
-                    validate_mbz_html.SCRIPT_VIOLATION,
-                    validate_mbz_html.SCRIPT_VIOLATION,
-                    validate_mbz_html.IFRAME_VIOLATION,
-                    validate_mbz_html.MOODLE_VIOLATION,
-                    validate_mbz_html.MOODLE_VIOLATION,
-                    validate_mbz_html.HREF_VIOLATION]) == \
-               set(violation_messages)
-        assert set([MOODLE_VIDEO_FILE,
-                    MOODLE_TRACK_FILE,
-                    ADDITIONAL_MEDIA,
-                    ADDITIONAL_MEDIA2,
-                    ADDITIONAL_MEDIA3,
-                    ADDITIONAL_MEDIA4,
-                    "color: blue",
-                    "text-align: left; color: red;",
-                    "text-align: left",
-                    "color: green",
-                    "color: grey",
-                    "color: orange",
-                    "text-align: center"]) == set(violation_links)
+            violation_map[row[0]] += 1
+            violation_descriptions[row[2]] += 1
+
+        hash_map = {validate_mbz_html.UNNESTED_VIOLATION: 1,
+                    validate_mbz_html.STYLE_VIOLATION: 6,
+                    validate_mbz_html.SOURCE_VIOLATION: 2,
+                    validate_mbz_html.SCRIPT_VIOLATION: 3,
+                    validate_mbz_html.IFRAME_VIOLATION: 1,
+                    validate_mbz_html.MOODLE_VIOLATION: 2,
+                    validate_mbz_html.HREF_VIOLATION: 1}
+        assert hash_map == violation_map
+
+        description_map = {'': 3,
+                           MOODLE_VIDEO_FILE: 1,
+                           MOODLE_TRACK_FILE: 1,
+                           ADDITIONAL_MEDIA: 1,
+                           ADDITIONAL_MEDIA2: 1,
+                           ADDITIONAL_MEDIA3: 1,
+                           ADDITIONAL_MEDIA4: 1,
+                           "color: blue": 1,
+                           "text-align: left; color: red;": 1,
+                           "text-align: left": 1,
+                           "color: green": 1,
+                           "color: grey": 1,
+                           "color: orange": 1,
+                           "text-align: center": 1,
+                           "Bad Content": 1}
+        assert description_map == violation_descriptions
 
 
 def test_string_without_html():
@@ -342,3 +356,12 @@ def test_string_without_html():
     elem = MoodleHtmlElement(parent, location)
     assert (elem.tostring() == "<p>Hi hello</p><p>actual_html</p>")
     assert len(elem.etree_fragments) == 2
+
+
+def test_unnested_content():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = "Hi hello<p>actual_html</p>"
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
