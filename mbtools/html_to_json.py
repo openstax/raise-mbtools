@@ -7,13 +7,13 @@ test_path = '/Users/prabhdipgill/Documents/openstax/raise-mbtools/htmlTest'
 def create_json_content(uuid, content, variant = "main"):
 
      json_content = {"id": uuid, "content": [{"variant": variant, "html": content}]}
-     return json.dumps(json_content, indent= 4)
+     return json.dumps(json_content, indent=4)
 
 
 
-def html_to_json(html_directory, json_directory, recursive_option = True ):
+def html_to_json(html_directory, json_directory):
     file_list = []
-    for file_name in glob.iglob(f'{html_directory}/**/*.html', recursive=recursive_option):
+    for file_name in glob.iglob(f'{html_directory}/*.html'):
         print(Path(file_name).stem)
         with open(f'{file_name}') as f:
             file_list.append({"name": Path(file_name).stem, "content": f.read()})
@@ -24,5 +24,5 @@ def html_to_json(html_directory, json_directory, recursive_option = True ):
         new_file.close()
 
 
-html_to_json(test_path, f'{test_path}/output', True)
+html_to_json(test_path, f'{test_path}/output')
 
