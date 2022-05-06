@@ -21,6 +21,28 @@ ADDITIONAL_MEDIA2 = "https://wikipedia.com/brazil/image2"
 ADDITIONAL_MEDIA3 = "https://wikipedia.com/brazil/image3"
 ADDITIONAL_MEDIA4 = "https://wikipedia.com/brazil/image4"
 
+VIOLATION_HASHMAP = {validate_mbz_html.STYLE_VIOLATION: 7,
+                     validate_mbz_html.SOURCE_VIOLATION: 2,
+                     validate_mbz_html.SCRIPT_VIOLATION: 3,
+                     validate_mbz_html.IFRAME_VIOLATION: 1,
+                     validate_mbz_html.MOODLE_VIOLATION: 2,
+                     validate_mbz_html.HREF_VIOLATION: 1}
+
+VIOLATION_LINK_HASHMAP = {None: 3,
+                          MOODLE_VIDEO_FILE: 1,
+                          MOODLE_TRACK_FILE: 1,
+                          ADDITIONAL_MEDIA: 1,
+                          ADDITIONAL_MEDIA2: 1,
+                          ADDITIONAL_MEDIA3: 1,
+                          ADDITIONAL_MEDIA4: 1,
+                          "color: blue": 1,
+                          "text-align: left; color: red;": 1,
+                          "text-align: left": 1,
+                          "color: green": 1,
+                          "color: grey": 1,
+                          "color: orange": 1,
+                          "text-align: center": 1}
+
 LESSON1_CONTENT1 = (
     '<div>'
     '<div>'
@@ -54,11 +76,10 @@ LESSON_ANSWER1 = (
     '<p style="text-align: center">'
     'words'
     '</p>'
-    # Unnested Violation 1
-    'Bad Content'
 )
 LESSON_ANSWER2 = (
     '<p dir="ltr">'
+    # Style Violation 5
     '<img alt="Answer Picture" height="71" role="image" '
     f'src="{LESSON_ANSW_ILLUSTRATION}" title="question" style="color: grey"'
     ' width="101">'
@@ -66,7 +87,7 @@ LESSON_ANSWER2 = (
     '</p>'
 )
 LESSON_ANSWER3 = (
-    # Style Violation 5
+    # Style Violation 6
     '<p dir="ltr" style="text-align: left; color: red;">'
     '(3, 2)'
     '<br>'
@@ -89,7 +110,7 @@ PAGE2_CONTENT = (
     '<script>var variable=0'
     '</script>'
     '</div>'
-    # Style Violaiton 6
+    # Style Violaiton 7
     '<div style="color: green">'
     'some text'
     '</div>'
@@ -294,17 +315,13 @@ def mbz_path(tmp_path):
 
 def test_validate_all(mbz_path):
     violations = validate_mbz_html.validate_mbz(mbz_path)
-    violation_names = [x.issue for x in violations]
-    assert set([validate_mbz_html.STYLE_VIOLATION,
-                validate_mbz_html.STYLE_VIOLATION,
-                validate_mbz_html.SOURCE_VIOLATION,
-                validate_mbz_html.SOURCE_VIOLATION,
-                validate_mbz_html.SCRIPT_VIOLATION,
-                validate_mbz_html.SCRIPT_VIOLATION,
-                validate_mbz_html.IFRAME_VIOLATION,
-                validate_mbz_html.MOODLE_VIOLATION,
-                validate_mbz_html.MOODLE_VIOLATION,
-                validate_mbz_html.HREF_VIOLATION]) == set(violation_names)
+    violations_map = defaultdict(lambda: 0)
+    violations_link_map = defaultdict(lambda: 0)
+    for v in violations:
+        violations_map[v.issue] += 1
+        violations_link_map[v.link] += 1
+    assert VIOLATION_HASHMAP == violations_map
+    assert VIOLATION_LINK_HASHMAP == violations_link_map
 
 
 def test_validate_output_file(mbz_path, mocker, tmp_path):
@@ -320,48 +337,121 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
         violation_descriptions = defaultdict(lambda: 0)
         for row in violations:
             violation_map[row[0]] += 1
-            violation_descriptions[row[2]] += 1
-
-        hash_map = {validate_mbz_html.UNNESTED_VIOLATION: 1,
-                    validate_mbz_html.STYLE_VIOLATION: 6,
-                    validate_mbz_html.SOURCE_VIOLATION: 2,
-                    validate_mbz_html.SCRIPT_VIOLATION: 3,
-                    validate_mbz_html.IFRAME_VIOLATION: 1,
-                    validate_mbz_html.MOODLE_VIOLATION: 2,
-                    validate_mbz_html.HREF_VIOLATION: 1}
-        assert hash_map == violation_map
-
-        description_map = {'': 3,
-                           MOODLE_VIDEO_FILE: 1,
-                           MOODLE_TRACK_FILE: 1,
-                           ADDITIONAL_MEDIA: 1,
-                           ADDITIONAL_MEDIA2: 1,
-                           ADDITIONAL_MEDIA3: 1,
-                           ADDITIONAL_MEDIA4: 1,
-                           "color: blue": 1,
-                           "text-align: left; color: red;": 1,
-                           "text-align: left": 1,
-                           "color: green": 1,
-                           "color: grey": 1,
-                           "color: orange": 1,
-                           "text-align: center": 1,
-                           "Bad Content": 1}
-        assert description_map == violation_descriptions
+            link = (None if row[2] == '' else row[2])
+            violation_descriptions[link] += 1
+        assert VIOLATION_HASHMAP == violation_map
+        assert VIOLATION_LINK_HASHMAP == violation_descriptions
 
 
-def test_string_without_html():
+def test_unnested_front():
     location = "here"
     parent = etree.fromstring("<content></content>")
-    parent.text = "Hi hello<p>actual_html</p>"
-    elem = MoodleHtmlElement(parent, location)
-    assert (elem.tostring() == "<p>Hi hello</p><p>actual_html</p>")
-    assert len(elem.etree_fragments) == 2
-
-
-def test_unnested_content():
-    location = "here"
-    parent = etree.fromstring("<content></content>")
-    parent.text = "Hi hello<p>actual_html</p>"
+    parent.text = 'Hi hello<p>actual_html</p>'
     elem = MoodleHtmlElement(parent, location)
     violations = validate_mbz_html.find_unnested_violations([elem])
     assert len(violations) == 1
+
+
+def test_unnested_back():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p>actual_html</p>Hi Hello'
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
+def test_unnested_middle():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p>actual_html</p>Hi Hello<p>actual_html_also</p>'
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
+def test_unnested_multiple():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = 'Front<p>actual_html</p>Middle<p>actual_html_also</p>Back'
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 3
+    for v in violations:
+        assert v.issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
+def test_ignore_space_tail():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p>actual_html_also</p>    '
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 0
+
+
+def test_style_violation():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p style="left: allign">html</p>'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_style_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.STYLE_VIOLATION
+    assert style_violations[0].link == "left: allign"
+    assert style_violations[0].html == '<p style="left: allign">html</p>'
+    assert style_violations[0].location == "here"
+
+
+def test_href_violaiton():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<a href="something">html</a>'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_tag_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.HREF_VIOLATION
+    assert style_violations[0].link == "something"
+    assert style_violations[0].html == '<a href="something">html</a>'
+    assert style_violations[0].location == "here"
+
+
+def test_script_violaiton():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<script>javascript</script>'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_tag_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.SCRIPT_VIOLATION
+    assert style_violations[0].link is None
+    assert style_violations[0].html == '<script>javascript</script>'
+    assert style_violations[0].location == "here"
+
+
+def test_iframe_violaiton():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<iframe src="link">something</iframe>'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_tag_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.IFRAME_VIOLATION
+    assert style_violations[0].link == "link"
+    assert style_violations[0].html == '<iframe src="link">something</iframe>'
+    assert style_violations[0].location == "here"
+
+
+def test_source_violaiton():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<img src="link">'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_source_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.SOURCE_VIOLATION
+    assert style_violations[0].link == "link"
+    assert style_violations[0].html == '<img src="link">'
+    assert style_violations[0].location == "here"

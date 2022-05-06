@@ -49,6 +49,8 @@ def validate_mbz(mbz_path):
 
     violations = []
     violations.extend(find_unnested_violations(html_elements))
+    if len(violations) > 0:
+        return violations
     violations.extend(find_style_violations(html_elements))
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))

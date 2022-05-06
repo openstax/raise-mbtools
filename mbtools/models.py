@@ -1,3 +1,4 @@
+import re
 import uuid
 from pathlib import Path
 from xml.dom import NotFoundErr
@@ -174,10 +175,9 @@ class MoodleHtmlElement:
         temp = html.fragments_fromstring(self.parent.text)
         for fragment in temp:
             if type(fragment) != html.HtmlElement:
-                p_element = etree.Element('p')
-                p_element.text = fragment
                 self.unnested_content.append(fragment)
-                self.etree_fragments.append(p_element)
+            elif fragment.tail is not None:
+                self.unnested_content.append(fragment.tail)
             else:
                 self.etree_fragments.append(fragment)
 
