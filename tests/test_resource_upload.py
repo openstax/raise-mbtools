@@ -58,10 +58,6 @@ metadata_updates = [
      },
 ]
 
-csv_rows = [['dc330ae2bc1d0b2edac442ed3f8245647cf5c0c0', 'example1.txt'],
-            ['a31e7f061d762f1e5099ecebfe6877310e5be420', 'example2.mp4'],
-            ['e606bc6acc83666e1d40722e9c743a01e12e65ab', 'example3.jpeg']]
-
 
 @pytest.fixture
 def practice_filesystem(tmp_path):
@@ -325,7 +321,7 @@ def test_upload_resources_with_csv(practice_filesystem, mocker):
     mocker.patch('boto3.client', lambda service: s3_client)
 
     resource_dir = practice_filesystem[test_dir]
-    print(resource_dir)
+
     metadata_path = practice_filesystem[metadata_file]
     csv_path = practice_filesystem[csv_file]
     mocker.patch(
@@ -335,13 +331,26 @@ def test_upload_resources_with_csv(practice_filesystem, mocker):
     )
     copy_resources_s3.main()
 
+    expected_csv_data = [
+        {
+            "filename": "example1.txt",
+            "hash": "dc330ae2bc1d0b2edac442ed3f8245647cf5c0c0"
+        },
+        {
+            "filename": "example3.jpeg",
+            "hash": "e606bc6acc83666e1d40722e9c743a01e12e65ab"
+        },
+        {
+            "filename": "example2.mp4",
+            "hash": "a31e7f061d762f1e5099ecebfe6877310e5be420"
+        }
+    ]
+
     with open(csv_path, 'r') as f:
-        rows = csv.reader(f)
-        assert len(list(rows)) == len(csv_rows) + 1
-        for i, item in enumerate(rows):
-            if i == 0:
-                continue
-            assert item in csv_rows
+        reader = csv.DictReader(f)
+        data = [row for row in reader]
+        assert len(data) == 3
+        assert data == expected_csv_data
 
 
 def test_add_metadata_indent(tmp_path):
