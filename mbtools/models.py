@@ -177,6 +177,8 @@ class MoodleHtmlElement:
                 self.unnested_content.append(fragment)
             elif (fragment.tail is not None and fragment.tail.strip()):
                 self.unnested_content.append(fragment.tail)
+                fragment.tail = None
+                self.etree_fragments.append(fragment)
             else:
                 self.etree_fragments.append(fragment)
 
