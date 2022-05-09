@@ -1,14 +1,14 @@
+import argparse
 import glob
 import json
 from pathlib import Path
+
 test_path = '/Users/prabhdipgill/Documents/openstax/raise-mbtools/htmlTest'
 
 
-def create_json_content(uuid, content, variant = "main"):
-
-     json_content = {"id": uuid, "content": [{"variant": variant, "html": content}]}
-     return json.dumps(json_content, indent=4)
-
+def create_json_content(uuid, content, variant="main"):
+    json_content = {"id": uuid, "content": [{"variant": variant, "html": content}]}
+    return json.dumps(json_content, indent=4)
 
 
 def html_to_json(html_directory, json_directory):
@@ -24,5 +24,18 @@ def html_to_json(html_directory, json_directory):
         new_file.close()
 
 
-html_to_json(test_path, f'{test_path}/output')
+def main():
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('html_directory', type=str,
+                        help='relative path to HTML files')
+    parser.add_argument('output_directory', type=str,
+                        help='Path to where JSON files will be output')
 
+    args = parser.parse_args()
+    html_directory = Path(args.html_directory).resolve(strict=True)
+    output_directory = Path(args.output_directory).resolve(strict=True)
+    html_to_json(html_directory, output_directory)
+
+
+if __name__ == "__main__":
+    main()
