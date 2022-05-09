@@ -350,7 +350,8 @@ def test_upload_resources_with_csv(practice_filesystem, mocker):
         reader = csv.DictReader(f)
         data = [row for row in reader]
         assert len(data) == 3
-        assert data == expected_csv_data
+        for row in data:
+            assert row in expected_csv_data
 
 
 def test_add_metadata_indent(tmp_path):
