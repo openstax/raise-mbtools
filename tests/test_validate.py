@@ -115,6 +115,13 @@ PAGE2_CONTENT = (
     'some text'
     '</div>'
 )
+PAGE2_INVALID_CONTENT = (
+    'Invalid Content Before'
+    '<p>Valid content</p>'
+    'Invalid Content Between'
+    '<p style="color: green">some text</p>'
+    'Invalid Content After'
+)
 QUESTION1_CONTENT = (
     '<div>'
     '<p>'
@@ -182,134 +189,168 @@ ANSWER2_CONTENT = (
     '</div>'
 )
 
+BACK_XML_CONETENT = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <moodle_backup>
+        <contents>
+        <activities>
+            <activity>
+                <modulename>lesson</modulename>
+                <title>First Lesson: 1.1</title>
+                <directory>activities/lesson_1</directory>
+            </activity>
+            <activity>
+                <modulename>page</modulename>
+                <title>Second Lesson: 2.1</title>
+                <directory>activities/page_2</directory>
+            </activity>
+            <activity>
+                <modulename>quiz</modulename>
+                <title>Third Lesson: 3.1</title>
+                <directory>activities/quiz_3</directory>
+            </activity>
+        </activities>
+        </contents>
+    </moodle_backup>
+""".strip()
+
+LESSON1_CONTENT = f"""
+    <?xml version="1.0" encoding="UTF-8"?>
+    <activity id="1" modulename="lesson">
+        <lesson id="1">
+            <name>First Lesson: 1.1</name>
+            <pages>
+                <page id="3">
+                    <title>First Lession: 1.1 - lesson.xml</title>
+                    <contents>{html.escape(LESSON1_CONTENT1)}</contents>
+                    <answers>
+                        <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
+                        <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
+                    </answers>
+                </page>
+                <page id="4">
+                    <title>Second Lession: 2.1 - lesson.xml</title>
+                    <contents>{html.escape(LESSON1_CONTENT2)}</contents>
+                    <answers>
+                        <answer_text>{html.escape(LESSON_ANSWER3)}</answer_text>
+                    </answers>
+                </page>
+            </pages>
+        </lesson>
+    </activity>
+""".strip()
+
+PAGE2_CONTENT = f"""
+<?xml version="1.0" encoding="UTF-8"?>
+<activity id="2" modulename="page">
+    <page id="2">
+        <name>Page 2 - A Special Activity</name>
+        <content>{html.escape(PAGE2_CONTENT)}</content>
+    </page>
+</activity>
+""".strip()
+
+PAGE2_INVALID_CONTENT = f"""
+<?xml version="1.0" encoding="UTF-8"?>
+<activity id="2" modulename="page">
+    <page id="2">
+        <name>Page 2 - A Special Activity</name>
+        <content>{html.escape(PAGE2_INVALID_CONTENT)}</content>
+    </page>
+</activity>
+""".strip()
+
+QUIZ3_CONTENT = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <activity id="3" modulename="quiz">
+        <quiz id="1">
+            <name>Fist Example Quiz</name>
+            <question_instances>
+                <question_instance id="1">
+                    <questionid>1</questionid>
+                </question_instance>
+                <question_instance id ="2">
+                    <questionid>2</questionid>
+                </question_instance>
+            </question_instances>
+        </quiz>
+        <quiz id="2">
+            <name>Second Example Quiz</name>
+            <question_instances>
+                <question_instance id="3">
+                    <questionid>3</questionid>
+                </question_instance>
+            </question_instances>
+        </quiz>
+    </activity>
+""".strip()
+
+QUESTION_CONTENT = f"""
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+    <question_category id="1">
+        <name>Quiz Bank 'Algebra1.1 Check Your Readiness'</name>
+        <questions>
+            <question id="1">
+            <questiontext>{html.escape(QUESTION1_CONTENT)}</questiontext>
+            <answers>
+                <answer id="1">
+                <answertext>{html.escape(ANSWER1_CONTENT)}</answertext>
+                </answer>
+                <answer id="2">
+                <answertext>{html.escape(ANSWER2_CONTENT)}</answertext>
+                </answer>
+            </answers>
+            </question>
+            <question id="2">
+            <questiontext>{html.escape(QUESTION2_CONTENT)}</questiontext>
+            </question>
+            <question id="3">
+            <questiontext>{html.escape(QUESTION3_CONTENT)}</questiontext>
+            </question>
+        </questions>
+    </question_category>
+</question_categories>
+""".strip()
+
 
 @pytest.fixture
 def mbz_path(tmp_path):
-    back_xml_content = """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <moodle_backup>
-            <contents>
-            <activities>
-                <activity>
-                    <modulename>lesson</modulename>
-                    <title>First Lesson: 1.1</title>
-                    <directory>activities/lesson_1</directory>
-                </activity>
-                <activity>
-                    <modulename>page</modulename>
-                    <title>Second Lesson: 2.1</title>
-                    <directory>activities/page_2</directory>
-                </activity>
-                <activity>
-                    <modulename>quiz</modulename>
-                    <title>Third Lesson: 3.1</title>
-                    <directory>activities/quiz_3</directory>
-                </activity>
-            </activities>
-            </contents>
-        </moodle_backup>
-    """.strip()
-    (tmp_path / "moodle_backup.xml").write_text(back_xml_content)
+    (tmp_path / "moodle_backup.xml").write_text(BACK_XML_CONETENT)
 
-    lesson1_content = f"""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="1" modulename="lesson">
-            <lesson id="1">
-                <name>First Lesson: 1.1</name>
-                <pages>
-                    <page id="3">
-                        <title>First Lession: 1.1 - lesson.xml</title>
-                        <contents>{html.escape(LESSON1_CONTENT1)}</contents>
-                        <answers>
-                            <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
-                            <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
-                        </answers>
-                    </page>
-                    <page id="4">
-                        <title>Second Lession: 2.1 - lesson.xml</title>
-                        <contents>{html.escape(LESSON1_CONTENT2)}</contents>
-                        <answers>
-                            <answer_text>{html.escape(LESSON_ANSWER3)}</answer_text>
-                        </answers>
-                    </page>
-                </pages>
-            </lesson>
-        </activity>
-    """.strip()
     lesson1_dir = tmp_path / "activities/lesson_1"
     lesson1_dir.mkdir(parents=True)
-    (lesson1_dir / "lesson.xml").write_text(lesson1_content)
+    (lesson1_dir / "lesson.xml").write_text(LESSON1_CONTENT)
 
-    page2_content = f"""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="2" modulename="page">
-            <page id="2">
-                <name>Page 2 - A Special Activity</name>
-                <content>{html.escape(PAGE2_CONTENT)}</content>
-            </page>
-        </activity>
-    """.strip()
     page2_dir = tmp_path / "activities/page_2"
     page2_dir.mkdir(parents=True)
-    (page2_dir / "page.xml").write_text(page2_content)
+    (page2_dir / "page.xml").write_text(PAGE2_CONTENT)
 
-    quiz3_content = """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="3" modulename="quiz">
-            <quiz id="1">
-                <name>Fist Example Quiz</name>
-                <question_instances>
-                    <question_instance id="1">
-                        <questionid>1</questionid>
-                    </question_instance>
-                    <question_instance id ="2">
-                        <questionid>2</questionid>
-                    </question_instance>
-                </question_instances>
-            </quiz>
-            <quiz id="2">
-                <name>Second Example Quiz</name>
-                <question_instances>
-                    <question_instance id="3">
-                        <questionid>3</questionid>
-                    </question_instance>
-                </question_instances>
-            </quiz>
-        </activity>
-    """.strip()
     quiz3_dir = tmp_path / "activities/quiz_3"
     quiz3_dir.mkdir(parents=True)
-    (quiz3_dir / "quiz.xml").write_text(quiz3_content)
+    (quiz3_dir / "quiz.xml").write_text(QUIZ3_CONTENT)
 
-    question_content = f"""
-    <?xml version="1.0" encoding="UTF-8"?>
-    <question_categories>
-        <question_category id="1">
-            <name>Quiz Bank 'Algebra1.1 Check Your Readiness'</name>
-            <questions>
-                <question id="1">
-                <questiontext>{html.escape(QUESTION1_CONTENT)}</questiontext>
-                <answers>
-                    <answer id="1">
-                    <answertext>{html.escape(ANSWER1_CONTENT)}</answertext>
-                    </answer>
-                    <answer id="2">
-                    <answertext>{html.escape(ANSWER2_CONTENT)}</answertext>
-                    </answer>
-                </answers>
-                </question>
-                <question id="2">
-                <questiontext>{html.escape(QUESTION2_CONTENT)}</questiontext>
-                </question>
-                <question id="3">
-                <questiontext>{html.escape(QUESTION3_CONTENT)}</questiontext>
-                </question>
-            </questions>
-        </question_category>
-    </question_categories>
-    """.strip()
-    (tmp_path / "questions.xml").write_text(question_content)
+    (tmp_path / "questions.xml").write_text(QUESTION_CONTENT)
+    return tmp_path
 
+
+@pytest.fixture
+def mbz_invalid_html(tmp_path):
+    (tmp_path / "moodle_backup.xml").write_text(BACK_XML_CONETENT)
+
+    lesson1_dir = tmp_path / "activities/lesson_1"
+    lesson1_dir.mkdir(parents=True)
+    (lesson1_dir / "lesson.xml").write_text(LESSON1_CONTENT)
+
+    page2_dir = tmp_path / "activities/page_2"
+    page2_dir.mkdir(parents=True)
+    (page2_dir / "page.xml").write_text(PAGE2_INVALID_CONTENT)
+
+    quiz3_dir = tmp_path / "activities/quiz_3"
+    quiz3_dir.mkdir(parents=True)
+    (quiz3_dir / "quiz.xml").write_text(QUIZ3_CONTENT)
+
+    (tmp_path / "questions.xml").write_text(QUESTION_CONTENT)
     return tmp_path
 
 
@@ -341,6 +382,27 @@ def test_validate_output_file(mbz_path, mocker, tmp_path):
             violation_descriptions[link] += 1
         assert VIOLATION_HASHMAP == violation_map
         assert VIOLATION_LINK_HASHMAP == violation_descriptions
+
+
+def test_erroneous_output_file(mbz_invalid_html, mocker, tmp_path):
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}", f"{tmp_path}/test_output.csv"]
+    )
+    validate_mbz_html.main()
+    with open(f"{tmp_path}/test_output.csv", 'r') as f:
+        violations = csv.reader(f, delimiter=",")
+        next(violations)
+        violation_map = defaultdict(lambda: 0)
+        violation_descriptions = defaultdict(lambda: 0)
+        for row in violations:
+            violation_map[row[0]] += 1
+            link = (None if row[2] == '' else row[2])
+            violation_descriptions[link] += 1
+        assert {validate_mbz_html.UNNESTED_VIOLATION: 3} == violation_map
+        assert {'Invalid Content Before': 1,
+                'Invalid Content Between': 1,
+                'Invalid Content After': 1} == violation_descriptions
 
 
 def test_unnested_front():
