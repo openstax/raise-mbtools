@@ -189,7 +189,7 @@ ANSWER2_CONTENT = (
     '</div>'
 )
 
-BACK_XML_CONETENT = """
+BACK_XML_CONTENT = """
     <?xml version="1.0" encoding="UTF-8"?>
     <moodle_backup>
         <contents>
@@ -316,7 +316,7 @@ QUESTION_CONTENT = f"""
 
 @pytest.fixture
 def mbz_path(tmp_path):
-    (tmp_path / "moodle_backup.xml").write_text(BACK_XML_CONETENT)
+    (tmp_path / "moodle_backup.xml").write_text(BACK_XML_CONTENT)
 
     lesson1_dir = tmp_path / "activities/lesson_1"
     lesson1_dir.mkdir(parents=True)
@@ -336,7 +336,7 @@ def mbz_path(tmp_path):
 
 @pytest.fixture
 def mbz_invalid_html(tmp_path):
-    (tmp_path / "moodle_backup.xml").write_text(BACK_XML_CONETENT)
+    (tmp_path / "moodle_backup.xml").write_text(BACK_XML_CONTENT)
 
     lesson1_dir = tmp_path / "activities/lesson_1"
     lesson1_dir.mkdir(parents=True)

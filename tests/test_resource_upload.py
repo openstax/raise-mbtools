@@ -337,12 +337,12 @@ def test_upload_resources_with_csv(practice_filesystem, mocker):
             "hash": "dc330ae2bc1d0b2edac442ed3f8245647cf5c0c0"
         },
         {
-            "filename": "example3.jpeg",
-            "hash": "e606bc6acc83666e1d40722e9c743a01e12e65ab"
-        },
-        {
             "filename": "example2.mp4",
             "hash": "a31e7f061d762f1e5099ecebfe6877310e5be420"
+        },
+        {
+            "filename": "example3.jpeg",
+            "hash": "e606bc6acc83666e1d40722e9c743a01e12e65ab"
         }
     ]
 
