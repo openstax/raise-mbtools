@@ -33,7 +33,7 @@ def output_hash_csv(hash_to_filename_map, csv_file):
         w = writer(f)
         w.writerow(['filename', 'hash'])
         for key in hash_to_filename_map:
-            w.writerow([hash_to_filename_map[key], key])
+            w.writerow([os.path.basename(hash_to_filename_map[key]), key])
 
 
 def existing_metadata_hashes(dir):
