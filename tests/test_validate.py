@@ -383,6 +383,16 @@ def test_unnested_multiple():
         assert v.issue == validate_mbz_html.UNNESTED_VIOLATION
 
 
+def test_unnested_different_line():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p>actual_html</p>\nHi Hello'
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
 def test_ignore_space_tail():
     location = "here"
     parent = etree.fromstring("<content></content>")
