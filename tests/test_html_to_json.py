@@ -1,5 +1,8 @@
+import json
 import os
-from mbtools.html_to_json import html_to_json
+from pathlib import Path
+
+from mbtools.html_to_json import html_to_json, main
 import pytest
 
 HTML_FRAGMENT1 = (
@@ -21,29 +24,55 @@ HTML_FRAGMENT2 = (
 
 
 @pytest.fixture
-def html_path(tmp_path):
+def file_path(tmp_path):
     html_dir = tmp_path
     (html_dir / "fragment.html").write_text(HTML_FRAGMENT1)
     (html_dir / "fragment2.html").write_text(HTML_FRAGMENT2)
 
     return tmp_path
 
-def test_json_file_created(html_path):
-    for file in os.listdir(f"{html_path}"):
-        if file.endswith(".html"):
-            print(file)
-    html_to_json(f'{html_path}', f'{html_path}')
-    assert("fragment.json" in os.listdir(f'{html_path}'))
-    assert("fragment2.json" in os.listdir(f'{html_path}'))
+
+def get_json_content(file_path):
+    content_in_json = []
+    for file in os.listdir(f"{file_path}"):
+        if file.endswith(".json"):
+            with open(f'{file_path}/{file}') as f:
+                content_in_json.append(f.read())
+    return content_in_json
 
 
-def test_json_file_content(html_path):
-    content_in_html = []
-    html_to_json(f'{html_path}', f'{html_path}')
+def test_json_file_created(file_path):
+    html_to_json(f'{file_path}', f'{file_path}')
+    assert("fragment.json" in os.listdir(f'{file_path}'))
+    assert("fragment2.json" in os.listdir(f'{file_path}'))
 
-    for file in os.listdir(f"{html_path}"):
-        if file.endswith(".html"):
-            with open(f'{html_path}/{file.split(".")[0]}.json') as f:
-                content_in_html.append(f.read())
 
-    assert ""
+def test_html_in_json(file_path):
+    html_to_json(f'{file_path}', f'{file_path}')
+    content_in_json = get_json_content(file_path)
+
+    # json dumps to escape html content
+    assert any(json.dumps(HTML_FRAGMENT1) in s for s in content_in_json)
+    assert any(json.dumps(HTML_FRAGMENT2) in s for s in content_in_json)
+
+
+def test_json_content_is_valid(file_path):
+    html_to_json(f'{file_path}', f'{file_path}')
+    content_in_json = get_json_content(file_path)
+    # json files are valid json
+    for content in content_in_json:
+        assert json.loads(content)
+
+
+def test_main(file_path, mocker):
+    # Test for main function called by the CLI.
+    mocker.patch(
+        "sys.argv",
+        ["", f"{file_path}", f"{file_path}"]
+    )
+    main()
+    json_files = []
+    for file in os.listdir(f"{file_path}"):
+        if file.endswith(".json"):
+            json_files.append(Path(file).stem)
+    assert len(json_files) == 2
