@@ -30,6 +30,7 @@ VALID_HREF_PREFIXES = ["https://vimeo.com",
 VALID_STYLES = []
 
 INTERACTIVE_BLOCK_CLASS_PREFIX = "os-raise-ib-"
+INTERACTIVE_BLOCK_ALLOWED_NESTING = ["os-raise-ib-tooltip"]
 
 
 class Violation:
@@ -139,7 +140,7 @@ def find_source_violations(html_elements):
 
 
 def find_nested_ib_violations(html_elements):
-    def is_ib_component(elem):
+    def is_unnestable_ib_component(elem):
         """Helper function that looks at the class string for an element
         and determines if it's an actual component. This function avoids
         having to know all of the class names used and instead relies on the
@@ -148,6 +149,8 @@ def find_nested_ib_violations(html_elements):
         """
         class_string = elem.attrib["class"]
         for class_name in class_string.split(" "):
+            if class_name in INTERACTIVE_BLOCK_ALLOWED_NESTING:
+                continue
             ib_name = class_name.split(INTERACTIVE_BLOCK_CLASS_PREFIX)[1]
             if len(ib_name.split("-")) == 1:
                 return True
@@ -160,8 +163,8 @@ def find_nested_ib_violations(html_elements):
             elem.get_elements_with_string_in_class(
                 INTERACTIVE_BLOCK_CLASS_PREFIX
             )
-        actual_ibs = filter(is_ib_component, maybe_ibs)
-        for ib in actual_ibs:
+        maybe_broken_ibs = filter(is_unnestable_ib_component, maybe_ibs)
+        for ib in maybe_broken_ibs:
             if not elem.element_is_fragment(ib):
                 violations.append(Violation(
                     elem.tostring(),

@@ -535,7 +535,9 @@ def test_find_nested_ib_violations():
   <div class="os-raise-ib-sometype-somedata"></div>
   <div class="os-raise-ib-sometype-otherdata"></div>
 </div>
-<div class="os-raise-ib-anothertype"></div>
+<div class="os-raise-ib-anothertype">
+<p><span class="os-raise-ib-tooltip">vocab word</span></p>
+</div>
     """
     bad_content = """
 <div>
