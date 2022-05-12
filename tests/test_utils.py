@@ -268,34 +268,6 @@ def test_parse_activity_html_contents(mbz_path):
                 ANSWER2_CONTENT]) == set(parsed_html_content_strings)
 
 
-def test_find_external_media_references(mbz_path):
-    activities = utils.parse_backup_activities(mbz_path)
-    media_references = []
-
-    for act in activities:
-        media_references += utils.find_external_media_references(act)
-
-    assert set([IM_MEDIA_LINK,
-                OSX_MEDIA_LINK,
-                LESSON_ANSW_ILLUSTRATION,
-                QUESTION1_ILLUSTRATION,
-                QUESTION2_ILLUSTRATION,
-                QUESTION3_ILLUSTRATION,
-                ANSWER1_ILLUSTRATION,
-                ANSWER2_ILLUSTRATION]) == set(media_references)
-
-
-def test_find_moodle_media_references(mbz_path):
-    activities = utils.parse_backup_activities(mbz_path)
-    media_references = []
-
-    for act in activities:
-        media_references += utils.find_moodle_media_references(act)
-
-    assert set([MOODLE_VIDEO_FILE, MOODLE_TRACK_FILE]) == \
-        set(media_references)
-
-
 def test_find_question_html(mbz_path):
     html_elements = utils.parse_question_bank_for_html(mbz_path)
     html = []

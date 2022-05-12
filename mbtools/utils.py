@@ -44,27 +44,3 @@ def parse_question_bank_for_html(mbz_dir, ids=None):
         for item in question.html_elements():
             html.append(item)
     return html
-
-
-def find_external_media_references(activity):
-    """Given an activity find external media file references"""
-    media_references = []
-
-    for html_elem in activity.html_elements():
-        media_references += html_elem.find_references_containing(
-            "amazonaws.com"
-        )
-
-    return media_references
-
-
-def find_moodle_media_references(activity):
-    """Given an activity find moodle media file references"""
-    media_references = []
-
-    for html_elem in activity.html_elements():
-        media_references += html_elem.find_references_containing(
-            "@@PLUGINFILE@@"
-        )
-
-    return media_references
