@@ -221,10 +221,9 @@ class MoodleHtmlElement:
 
     def get_attribute_values(self, attr, exception=None):
         values = []
-        for elem in self.etree_fragments[0].xpath('//*'):
+        for elem in self.etree_fragments[0].xpath(f'//*[@{attr}]'):
             if elem.tag != exception or exception is None:
-                if attr in elem.attrib.keys():
-                    values.append(elem.attrib[attr])
+                values.append(elem.attrib[attr])
         return values
 
     def get_elements_by_name(self, element_name):
