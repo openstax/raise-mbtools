@@ -527,3 +527,31 @@ def test_source_violaiton():
     assert style_violations[0].link == "link"
     assert style_violations[0].html == '<img src="link">'
     assert style_violations[0].location == "here"
+
+
+def test_find_nested_ib_violations():
+    valid_content = """
+<div class="os-raise-ib-sometype">
+  <div class="os-raise-ib-sometype-somedata"></div>
+  <div class="os-raise-ib-sometype-otherdata"></div>
+</div>
+<div class="os-raise-ib-anothertype"></div>
+    """
+    bad_content = """
+<div>
+  <div class="os-raise-ib-sometype"></div>
+</div>
+<div class="os-raise-ib-anothertype"></div>
+    """
+    html1 = etree.fromstring("<content></content>")
+    html1.text = valid_content
+    elem1 = MoodleHtmlElement(html1, "loc1")
+    html2 = etree.fromstring("<content></content>")
+    html2.text = bad_content
+    elem2 = MoodleHtmlElement(html2, "loc2")
+    violations = validate_mbz_html.find_nested_ib_violations([elem1, elem2])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.NESTED_IB_VIOLATION
+    assert '<div class="os-raise-ib-sometype"></div>' in violations[0].html
+    assert violations[0].location == "loc2"
+    assert violations[0].link == "os-raise-ib-sometype"

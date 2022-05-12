@@ -10,6 +10,7 @@ SCRIPT_VIOLATION = "ERROR: Use of <script> element"
 IFRAME_VIOLATION = "ERROR: Use of <iframe> with unexpected target"
 HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
 UNNESTED_VIOLATION = "ERROR: Contains content not nested in HTML Element"
+NESTED_IB_VIOLATION = "ERROR: Interactive block nested within HTML"
 
 VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
                   "https://k12.openstax.org/contents/raise",
@@ -27,6 +28,8 @@ VALID_HREF_PREFIXES = ["https://vimeo.com",
                        "https://digitalpromise.org"]
 
 VALID_STYLES = []
+
+INTERACTIVE_BLOCK_CLASS_PREFIX = "os-raise-ib-"
 
 
 class Violation:
@@ -54,6 +57,7 @@ def validate_mbz(mbz_path):
     violations.extend(find_style_violations(html_elements))
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
+    violations.extend(find_nested_ib_violations(html_elements))
 
     return violations
 
@@ -131,6 +135,41 @@ def find_source_violations(html_elements):
                                             SOURCE_VIOLATION,
                                             elem.location,
                                             link))
+    return violations
+
+
+def find_nested_ib_violations(html_elements):
+    def is_ib_component(elem):
+        """Helper function that looks at the class string for an element
+        and determines if it's an actual component. This function avoids
+        having to know all of the class names used and instead relies on the
+        convention that parent components are always os-raise-ib-{name} and
+        all other classes are namespaced as os-raise-ib-{name}-{more}
+        """
+        class_string = elem.attrib["class"]
+        for class_name in class_string.split(" "):
+            ib_name = class_name.split(INTERACTIVE_BLOCK_CLASS_PREFIX)[1]
+            if len(ib_name.split("-")) == 1:
+                return True
+        return False
+
+    violations = []
+
+    for elem in html_elements:
+        maybe_ibs = \
+            elem.get_elements_with_string_in_class(
+                INTERACTIVE_BLOCK_CLASS_PREFIX
+            )
+        actual_ibs = filter(is_ib_component, maybe_ibs)
+        for ib in actual_ibs:
+            if not elem.element_is_fragment(ib):
+                violations.append(Violation(
+                    elem.tostring(),
+                    NESTED_IB_VIOLATION,
+                    elem.location,
+                    ib.attrib["class"]
+                ))
+
     return violations
 
 

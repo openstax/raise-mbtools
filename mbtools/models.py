@@ -231,3 +231,16 @@ class MoodleHtmlElement:
         for child in self.etree_fragments[0].xpath(f'//{element_name}'):
             elems.append(child)
         return elems
+
+    def get_elements_with_string_in_class(self, class_string):
+        # NOTE: This method is only checking if the class string is included
+        #  in the attribute string versus if the specific class is defined
+        xpath_query = f"//*[contains(@class, '{class_string}')]"
+        return self.etree_fragments[0].xpath(xpath_query)
+
+    def element_is_fragment(self, elem):
+        """Checks if the provided element is a fragment"""
+        for fragment in self.etree_fragments:
+            if fragment == elem:
+                return True
+        return False
