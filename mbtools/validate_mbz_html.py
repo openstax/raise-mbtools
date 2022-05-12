@@ -29,8 +29,8 @@ VALID_HREF_PREFIXES = ["https://vimeo.com",
 
 VALID_STYLES = []
 
-INTERACTIVE_BLOCK_CLASS_PREFIX = "os-raise-ib-"
-INTERACTIVE_BLOCK_ALLOWED_NESTING = ["os-raise-ib-tooltip"]
+IB_CLASS_PREFIX = "os-raise-ib-"
+IB_ALLOWED_NESTING = ["os-raise-ib-tooltip"]
 
 
 class Violation:
@@ -140,28 +140,31 @@ def find_source_violations(html_elements):
 
 
 def find_nested_ib_violations(html_elements):
-    def is_unnestable_ib_component(elem):
+    def is_unnestable_ib_component(etree_elem):
         """Helper function that looks at the class string for an element
-        and determines if it's an actual component. This function avoids
-        having to know all of the class names used and instead relies on the
-        convention that parent components are always os-raise-ib-{name} and
-        all other classes are namespaced as os-raise-ib-{name}-{more}
+        and determines if it's an unnestable component. This function avoids
+        having to know all of the class names by looking for elements with
+        the expected class prefix that don't have parents with the same prefix
+        to differentiate component child elements.
         """
-        class_string = elem.attrib["class"]
+        class_string = etree_elem.attrib["class"]
+
         for class_name in class_string.split(" "):
-            if class_name in INTERACTIVE_BLOCK_ALLOWED_NESTING:
-                continue
-            ib_name = class_name.split(INTERACTIVE_BLOCK_CLASS_PREFIX)[1]
-            if len(ib_name.split("-")) == 1:
-                return True
-        return False
+            if class_name in IB_ALLOWED_NESTING:
+                return False
+
+        elem_parent = etree_elem.xpath("..")[0]
+        if IB_CLASS_PREFIX in elem_parent.attrib.get("class", ""):
+            return False
+
+        return True
 
     violations = []
 
     for elem in html_elements:
         maybe_ibs = \
             elem.get_elements_with_string_in_class(
-                INTERACTIVE_BLOCK_CLASS_PREFIX
+                IB_CLASS_PREFIX
             )
         maybe_broken_ibs = filter(is_unnestable_ib_component, maybe_ibs)
         for ib in maybe_broken_ibs:

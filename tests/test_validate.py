@@ -536,14 +536,18 @@ def test_find_nested_ib_violations():
   <div class="os-raise-ib-sometype-otherdata"></div>
 </div>
 <div class="os-raise-ib-anothertype">
-<p><span class="os-raise-ib-tooltip">vocab word</span></p>
+<p><span class="os-raise-ib-tooltip styleclass">vocab word</span></p>
 </div>
     """
     bad_content = """
 <div>
-  <div class="os-raise-ib-sometype"></div>
+  <div class="os-raise-ib-nestedtype"></div>
 </div>
 <div class="os-raise-ib-anothertype"></div>
+<div class="os-raise-ib-sometype">
+  <div class="os-raise-ib-sometype-somedata"></div>
+  <div class="os-raise-ib-sometype-otherdata"></div>
+</div>
     """
     html1 = etree.fromstring("<content></content>")
     html1.text = valid_content
@@ -554,6 +558,6 @@ def test_find_nested_ib_violations():
     violations = validate_mbz_html.find_nested_ib_violations([elem1, elem2])
     assert len(violations) == 1
     assert violations[0].issue == validate_mbz_html.NESTED_IB_VIOLATION
-    assert '<div class="os-raise-ib-sometype"></div>' in violations[0].html
+    assert '<div class="os-raise-ib-nestedtype"></div>' in violations[0].html
     assert violations[0].location == "loc2"
-    assert violations[0].link == "os-raise-ib-sometype"
+    assert violations[0].link == "os-raise-ib-nestedtype"
