@@ -147,7 +147,6 @@ def main():
 
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        output_file.write_text("[]")
 
     violations = validate_mbz(mbz_path)
     with open(output_file, 'w') as f:
