@@ -34,8 +34,7 @@ IB_ALLOWED_NESTING = ["os-raise-ib-tooltip"]
 
 
 class Violation:
-    def __init__(self, html_string, issue, location, link=None):
-        self.html = html_string
+    def __init__(self, issue, location, link=None):
         self.issue = issue
         self.location = location
         self.link = link
@@ -68,8 +67,7 @@ def find_unnested_violations(html_elements):
     for elem in html_elements:
         if len(elem.unnested_content) > 0:
             for fragment in elem.unnested_content:
-                violations.append(Violation(elem.tostring(),
-                                            UNNESTED_VIOLATION,
+                violations.append(Violation(UNNESTED_VIOLATION,
                                             elem.location,
                                             fragment))
     return violations
@@ -81,8 +79,7 @@ def find_style_violations(html_elements):
         attributes = elem.get_attribute_values("style")
         for attr in attributes:
             if attr not in VALID_STYLES and attr != "":
-                violations.append(Violation(elem.tostring(),
-                                            STYLE_VIOLATION,
+                violations.append(Violation(STYLE_VIOLATION,
                                             elem.location,
                                             attr))
     return violations
@@ -93,16 +90,14 @@ def find_tag_violations(html_elements):
     for elem in html_elements:
         hits = elem.get_elements_by_name("script")
         for _ in hits:
-            violations.append(Violation(elem.tostring(),
-                                        SCRIPT_VIOLATION,
+            violations.append(Violation(SCRIPT_VIOLATION,
                                         elem.location))
         hits = elem.get_elements_by_name("iframe")
         for hit in hits:
             link = hit.attrib['src']
             if len([prefix for prefix in VALID_IFRAME_PREFIXES
                     if(prefix in link)]) == 0:
-                violations.append(Violation(elem.tostring(),
-                                            IFRAME_VIOLATION,
+                violations.append(Violation(IFRAME_VIOLATION,
                                             elem.location,
                                             link))
         hits = elem.get_elements_by_name("a")
@@ -111,8 +106,7 @@ def find_tag_violations(html_elements):
                 link = hit.attrib["href"]
                 if len([prefix for prefix in VALID_HREF_PREFIXES
                         if(prefix in link)]) == 0:
-                    violations.append(Violation(elem.tostring(),
-                                                HREF_VIOLATION,
+                    violations.append(Violation(HREF_VIOLATION,
                                                 elem.location,
                                                 link))
     return violations
@@ -127,13 +121,11 @@ def find_source_violations(html_elements):
                     > 0:    # check if link contains a valid prefix
                 continue
             elif "@@PLUGINFILE@@" in link:
-                violations.append(Violation(elem.tostring(),
-                                            MOODLE_VIOLATION,
+                violations.append(Violation(MOODLE_VIOLATION,
                                             elem.location,
                                             link))
             else:
-                violations.append(Violation(elem.tostring(),
-                                            SOURCE_VIOLATION,
+                violations.append(Violation(SOURCE_VIOLATION,
                                             elem.location,
                                             link))
     return violations
@@ -170,7 +162,6 @@ def find_nested_ib_violations(html_elements):
         for ib in maybe_broken_ibs:
             if not elem.element_is_fragment(ib):
                 violations.append(Violation(
-                    elem.tostring(),
                     NESTED_IB_VIOLATION,
                     elem.location,
                     ib.attrib["class"]

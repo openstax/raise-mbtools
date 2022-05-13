@@ -473,7 +473,6 @@ def test_style_violation():
     assert len(style_violations) == 1
     assert style_violations[0].issue == validate_mbz_html.STYLE_VIOLATION
     assert style_violations[0].link == "left: allign"
-    assert style_violations[0].html == '<p style="left: allign">html</p>'
     assert style_violations[0].location == "here"
 
 
@@ -486,7 +485,6 @@ def test_href_violaiton():
     assert len(style_violations) == 1
     assert style_violations[0].issue == validate_mbz_html.HREF_VIOLATION
     assert style_violations[0].link == "something"
-    assert style_violations[0].html == '<a href="something">html</a>'
     assert style_violations[0].location == "here"
 
 
@@ -499,7 +497,6 @@ def test_script_violaiton():
     assert len(style_violations) == 1
     assert style_violations[0].issue == validate_mbz_html.SCRIPT_VIOLATION
     assert style_violations[0].link is None
-    assert style_violations[0].html == '<script>javascript</script>'
     assert style_violations[0].location == "here"
 
 
@@ -512,7 +509,6 @@ def test_iframe_violaiton():
     assert len(style_violations) == 1
     assert style_violations[0].issue == validate_mbz_html.IFRAME_VIOLATION
     assert style_violations[0].link == "link"
-    assert style_violations[0].html == '<iframe src="link">something</iframe>'
     assert style_violations[0].location == "here"
 
 
@@ -525,7 +521,6 @@ def test_source_violaiton():
     assert len(style_violations) == 1
     assert style_violations[0].issue == validate_mbz_html.SOURCE_VIOLATION
     assert style_violations[0].link == "link"
-    assert style_violations[0].html == '<img src="link">'
     assert style_violations[0].location == "here"
 
 
@@ -558,6 +553,5 @@ def test_find_nested_ib_violations():
     violations = validate_mbz_html.find_nested_ib_violations([elem1, elem2])
     assert len(violations) == 1
     assert violations[0].issue == validate_mbz_html.NESTED_IB_VIOLATION
-    assert '<div class="os-raise-ib-nestedtype"></div>' in violations[0].html
     assert violations[0].location == "loc2"
     assert violations[0].link == "os-raise-ib-nestedtype"
