@@ -240,7 +240,4 @@ class MoodleHtmlElement:
 
     def element_is_fragment(self, elem):
         """Checks if the provided element is a fragment"""
-        for fragment in self.etree_fragments:
-            if fragment == elem:
-                return True
-        return False
+        return elem in self.etree_fragments
