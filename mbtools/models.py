@@ -221,10 +221,9 @@ class MoodleHtmlElement:
 
     def get_attribute_values(self, attr, exception=None):
         values = []
-        for elem in self.etree_fragments[0].xpath('//*'):
+        for elem in self.etree_fragments[0].xpath(f'//*[@{attr}]'):
             if elem.tag != exception or exception is None:
-                if attr in elem.attrib.keys():
-                    values.append(elem.attrib[attr])
+                values.append(elem.attrib[attr])
         return values
 
     def get_elements_by_name(self, element_name):
@@ -232,3 +231,13 @@ class MoodleHtmlElement:
         for child in self.etree_fragments[0].xpath(f'//{element_name}'):
             elems.append(child)
         return elems
+
+    def get_elements_with_string_in_class(self, class_string):
+        # NOTE: This method is only checking if the class string is included
+        #  in the attribute string versus if the specific class is defined
+        xpath_query = f"//*[contains(@class, '{class_string}')]"
+        return self.etree_fragments[0].xpath(xpath_query)
+
+    def element_is_fragment(self, elem):
+        """Checks if the provided element is a fragment"""
+        return elem in self.etree_fragments
