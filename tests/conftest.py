@@ -2,14 +2,29 @@ import pytest
 import html
 from string import Template
 
-ANSWER_TEXT_TEMPLATE = Template("""
+LESSON_ANSWER_TEXT_TEMPLATE = Template("""
 <answer id="$id">
+  <answerformat>1</answerformat>
   <answer_text>$content</answer_text>
 </answer>
 """)
 
+QUESTION_BANK_ANSWER_TEXT_TEMPLATE = Template("""
+<answer id="$id">
+  <answertext>$content</answertext>
+</answer>
+""")
+
+QUESTION_BANK_MATCH_TEXT_TEMPLATE = Template("""
+<match id="$id">
+  <answertext>$answercontent</answertext>
+  <questiontext>$questioncontent</questiontext>
+</match>
+""")
+
 LESSON_PAGE_TEMPLATE = Template("""
 <page id="$id">
+  <title>$title</title>
   <contents>$content</contents>
   <answers>
     $answerdata
@@ -81,6 +96,9 @@ QUESTION_TEMPLATE = Template("""
   <answers>
     $answerdata
   </answers>
+  <matches>
+    $matchdata
+  </matches>
 </question>
 """)
 
@@ -99,6 +117,7 @@ QUESTION_BANK_TEMPLATE = Template("""
 @pytest.fixture
 def mbz_builder():
     def _builder(tmp_path, activities, questionbank_questions=[]):
+        tmp_path.mkdir(parents=True, exist_ok=True)
         activitydata = ""
         for act in activities:
             activity_id = act["id"]
@@ -116,15 +135,23 @@ def mbz_builder():
         questiondata = ""
         for question in questionbank_questions:
             answerdata = ""
+            matchdata = ""
             for ans in question.get("answers", []):
-                answerdata += ANSWER_TEXT_TEMPLATE.substitute(
+                answerdata += QUESTION_BANK_ANSWER_TEXT_TEMPLATE.substitute(
                     id=ans["id"],
                     content=html.escape(ans["html_content"])
+                )
+            for match in question.get("matches", []):
+                matchdata += QUESTION_BANK_MATCH_TEXT_TEMPLATE.substitute(
+                    id=match["id"],
+                    answercontent=match["answer_content"],
+                    questioncontent=html.escape(match["question_html_content"])
                 )
             questiondata += QUESTION_TEMPLATE.substitute(
                 id=question["id"],
                 content=html.escape(question["html_content"]),
-                answerdata=answerdata
+                answerdata=answerdata,
+                matchdata=matchdata
             )
 
         questionbank_xml = QUESTION_BANK_TEMPLATE.substitute(
@@ -142,15 +169,16 @@ def mbz_builder():
 
 @pytest.fixture
 def lesson_page_builder():
-    def _builder(id, html_content, answers=[]):
+    def _builder(id, title, html_content, answers=[]):
         answerdata = ""
         for ans in answers:
-            answerdata += ANSWER_TEXT_TEMPLATE.substitute(
+            answerdata += LESSON_ANSWER_TEXT_TEMPLATE.substitute(
                 id=ans["id"],
                 content=html.escape(ans["html_content"])
             )
         return LESSON_PAGE_TEMPLATE.substitute(
             id=id,
+            title=title,
             content=html.escape(html_content),
             answerdata=answerdata
         )
@@ -165,6 +193,7 @@ def lesson_builder(lesson_page_builder):
         for page in pages:
             pagedata += lesson_page_builder(
                 id=page["id"],
+                title=page["title"],
                 html_content=page["html_content"],
                 answers=page.get("answers", [])
             )
