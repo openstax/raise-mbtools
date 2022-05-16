@@ -46,9 +46,11 @@ class Violation:
         return dict
 
 
-def validate_mbz(mbz_path):
+def validate_mbz(mbz_path, include_questionbank=False):
 
     html_elements = utils.parse_backup_elements(mbz_path)
+    if include_questionbank:
+        html_elements += utils.parse_question_bank_for_html(mbz_path)
 
     violations = []
     violations.extend(find_unnested_violations(html_elements))
@@ -176,15 +178,21 @@ def main():
                         help='relative path to unzipped mbz')
     parser.add_argument('output_file', type=str,
                         help='Path to a file where flags will be outputted')
+    parser.add_argument(
+        '--no-qb',
+        action='store_true',
+        help="Exclude question bank in validation"
+    )
     args = parser.parse_args()
 
     mbz_path = Path(args.mbz_path).resolve(strict=True)
     output_file = Path(args.output_file)
+    include_questionbank = not args.no_qb
 
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    violations = validate_mbz(mbz_path)
+    violations = validate_mbz(mbz_path, include_questionbank)
     with open(output_file, 'w') as f:
         w = DictWriter(f, ['issue', 'location', 'link'])
         w.writeheader()
