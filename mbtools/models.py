@@ -65,8 +65,7 @@ class MoodleQuestionBank:
                     questions.append(MoodleQuestion(elems[0],
                                                     ids[i],
                                                     location))
-            if len(questions) != len(ids):
-                raise(NotFoundErr)
+
         return questions
 
 
@@ -202,12 +201,6 @@ class MoodleHtmlElement:
             return {"uuid": content_uuid,
                     "content": content}
         return None
-
-    def find_references_containing(self, src_content):
-        matching_elems = self.etree_fragments[0].xpath(
-            f'//*[contains(@src, "{src_content}")]'
-        )
-        return [el.get("src") for el in matching_elems]
 
     def tostring(self):
         # Pass things through bs4 so we can avoid adding closing tags and
