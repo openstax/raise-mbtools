@@ -65,8 +65,7 @@ class MoodleQuestionBank:
                     questions.append(MoodleQuestion(elems[0],
                                                     ids[i],
                                                     location))
-            if len(questions) != len(ids):
-                raise(NotFoundErr)
+
         return questions
 
 
@@ -87,16 +86,21 @@ class MoodleLesson:
             contents = page.xpath("contents")
 
             location = \
-                f'Lesson: {lesson_name} Page_id={page_id}'\
+                f'Lesson: {lesson_name} (page id={page_id}) ' \
                 f'Page Title: {page_title}'
             elements.append(MoodleHtmlElement(contents[0], location))
 
-            if len(page.xpath("answers")) > 0:
-                answer_texts = page.xpath("answers/answer_text")
-                for answer in answer_texts:
-                    answer_location = f'{location} Answer: {answer.text}'
+            for answer in page.xpath("answers/answer"):
+                answer_format = answer.xpath("answerformat")[0]
+                # We need to check the answer format to filter out things
+                # like buttons which are also serialized as answers but are
+                # not HTML
+                if answer_format.text == "1":
+                    answer_text = answer.xpath("answer_text")[0]
+                    answer_location = \
+                        f'{location} (answer id: {answer.attrib["id"]})'
                     elements.append(
-                        MoodleHtmlElement(answer, answer_location))
+                        MoodleHtmlElement(answer_text, answer_location))
         return elements
 
 
@@ -151,7 +155,7 @@ class MoodleQuestion:
     def html_elements(self):
         elements = []
         question_texts = self.etree.xpath(
-                f"//question[@id={self.id}]/questiontext")
+                f"//question[@id={self.id}]//questiontext")
         for question_html in question_texts:
             elements.append(
                 MoodleHtmlElement(question_html, self.location))
@@ -197,12 +201,6 @@ class MoodleHtmlElement:
             return {"uuid": content_uuid,
                     "content": content}
         return None
-
-    def find_references_containing(self, src_content):
-        matching_elems = self.etree_fragments[0].xpath(
-            f'//*[contains(@src, "{src_content}")]'
-        )
-        return [el.get("src") for el in matching_elems]
 
     def tostring(self):
         # Pass things through bs4 so we can avoid adding closing tags and
