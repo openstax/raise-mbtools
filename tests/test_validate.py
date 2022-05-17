@@ -362,43 +362,32 @@ def test_find_multiple_activity_violations_mbz(
 def test_questionbank_validation_and_optout_flag_mbz(
     tmp_path, mbz_builder, quiz_builder, mocker
 ):
-    quiz = quiz_builder(
-        id=1,
-        name="Quiz",
-        questions=[
+    bad_content = '<img src="http://foobar"><script></script>'
+    page1 = page_builder(1, "Page", bad_content)
+    lesson2 = lesson_builder(
+        id=2,
+        name="Lesson 2",
+        pages=[
             {
-                "id": 1,
-                "questionid": 2
-            }
-        ]
-    )
-    mbz_builder(
-        tmp_path / "mbz",
-        activities=[quiz],
-        questionbank_questions=[
+                "id": 21,
+                "title": "Lesson 2 Page 1",
+                "html_content": '<img src="@@PLUGINFILE@@">'
+            },
             {
-                "id": 1,
-                "html_content": '<img src="@@PLUGINFILE@@">',
+                "id": 21,
+                "title": "Lesson 2 Page 2",
+                "html_content": "<p></p>",
                 "answers": [
                     {
-                        "id": 11,
-                        "html_content": "<script></script>"
+                        "id": 111,
+                        "html_content": '<iframe src="http://foobaz"></iframe>'
                     }
                 ]
             },
-            {
-                "id": 2,
-                "html_content": '<iframe src="http://foobaz"></iframe>',
-                "matches": [
-                    {
-                        "id": 2,
-                        "answer_content": "Some non-HTML content",
-                        "question_html_content": '<img src="http://foobar">'
-                    }
-                ]
-            }
         ]
     )
+
+    mbz_builder(tmp_path / "mbz", [page1, lesson2])
 
     mocker.patch(
         "sys.argv",
@@ -493,3 +482,22 @@ def test_multiple_violations_on_content_with_fragments(
 
     assert page_style_error in errors
     assert page_moodle_error in errors
+
+
+def test_style_exclusion_from_validation_flag_mbz(
+    tmp_path, mbz_builder, page_builder, mocker
+):
+    bad_content = '<p style="color: blue"></p>'
+    page1 = page_builder(1, "Page", bad_content)
+    mbz_builder(tmp_path / "mbz", [page1])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "--no-style"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 0

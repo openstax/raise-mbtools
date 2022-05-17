@@ -198,7 +198,6 @@ def main():
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-
     violations = validate_mbz(mbz_path, include_styles, include_questionbank)
     with open(output_file, 'w') as f:
         w = DictWriter(f, ['issue', 'location', 'link'])
