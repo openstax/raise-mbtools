@@ -362,32 +362,43 @@ def test_find_multiple_activity_violations_mbz(
 def test_questionbank_validation_and_optout_flag_mbz(
     tmp_path, mbz_builder, quiz_builder, mocker
 ):
-    bad_content = '<img src="http://foobar"><script></script>'
-    page1 = page_builder(1, "Page", bad_content)
-    lesson2 = lesson_builder(
-        id=2,
-        name="Lesson 2",
-        pages=[
+    quiz = quiz_builder(
+        id=1,
+        name="Quiz",
+        questions=[
             {
-                "id": 21,
-                "title": "Lesson 2 Page 1",
-                "html_content": '<img src="@@PLUGINFILE@@">'
-            },
+                "id": 1,
+                "questionid": 2
+            }
+        ]
+    )
+    mbz_builder(
+        tmp_path / "mbz",
+        activities=[quiz],
+        questionbank_questions=[
             {
-                "id": 21,
-                "title": "Lesson 2 Page 2",
-                "html_content": "<p></p>",
+                "id": 1,
+                "html_content": '<img src="@@PLUGINFILE@@">',
                 "answers": [
                     {
-                        "id": 111,
-                        "html_content": '<iframe src="http://foobaz"></iframe>'
+                        "id": 11,
+                        "html_content": "<script></script>"
                     }
                 ]
             },
+            {
+                "id": 2,
+                "html_content": '<iframe src="http://foobaz"></iframe>',
+                "matches": [
+                    {
+                        "id": 2,
+                        "answer_content": "Some non-HTML content",
+                        "question_html_content": '<img src="http://foobar">'
+                    }
+                ]
+            }
         ]
     )
-
-    mbz_builder(tmp_path / "mbz", [page1, lesson2])
 
     mocker.patch(
         "sys.argv",
