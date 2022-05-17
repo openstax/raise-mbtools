@@ -69,6 +69,8 @@ def practice_filesystem(tmp_path):
         json.dump(f2_data, f)
     with open(str(tmp_path / f3), 'w') as f:
         json.dump(f3_data, f)
+    with open(f"{tmp_path}/{test_dir}/.DS_Store", "w") as f:
+        f.write(".DS_Store file")
 
     (tmp_path / 'metadata').mkdir()
     with open(str(tmp_path / metadata_file), 'w') as f:
