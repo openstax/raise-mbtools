@@ -36,5 +36,5 @@ def main():
     html_to_json(html_directory, output_directory)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
