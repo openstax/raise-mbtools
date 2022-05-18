@@ -1,7 +1,6 @@
 import json
 import os
 from pathlib import Path
-
 from mbtools.html_to_json import html_to_json, main
 import pytest
 
