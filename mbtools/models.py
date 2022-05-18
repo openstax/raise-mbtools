@@ -65,8 +65,7 @@ class MoodleQuestionBank:
                     questions.append(MoodleQuestion(elems[0],
                                                     ids[i],
                                                     location))
-            if len(questions) != len(ids):
-                raise(NotFoundErr)
+
         return questions
 
 
@@ -87,16 +86,21 @@ class MoodleLesson:
             contents = page.xpath("contents")
 
             location = \
-                f'Lesson: {lesson_name} Page_id={page_id}'\
+                f'Lesson: {lesson_name} (page id={page_id}) ' \
                 f'Page Title: {page_title}'
             elements.append(MoodleHtmlElement(contents[0], location))
 
-            if len(page.xpath("answers")) > 0:
-                answer_texts = page.xpath("answers/answer_text")
-                for answer in answer_texts:
-                    answer_location = f'{location} Answer: {answer.text}'
+            for answer in page.xpath("answers/answer"):
+                answer_format = answer.xpath("answerformat")[0]
+                # We need to check the answer format to filter out things
+                # like buttons which are also serialized as answers but are
+                # not HTML
+                if answer_format.text == "1":
+                    answer_text = answer.xpath("answer_text")[0]
+                    answer_location = \
+                        f'{location} (answer id: {answer.attrib["id"]})'
                     elements.append(
-                        MoodleHtmlElement(answer, answer_location))
+                        MoodleHtmlElement(answer_text, answer_location))
         return elements
 
 
@@ -151,12 +155,12 @@ class MoodleQuestion:
     def html_elements(self):
         elements = []
         question_texts = self.etree.xpath(
-                f"//question[@id={self.id}]/questiontext")
+                f"//question[@id={self.id}]//questiontext")
         for question_html in question_texts:
             elements.append(
                 MoodleHtmlElement(question_html, self.location))
         answer_texts = self.etree.xpath(
-                f"//question[@id={self.id}]/answers/answer/answertext")
+                f"//question[@id={self.id}]//answers/answer/answertext")
         for answer_html in answer_texts:
             elements.append(
                 MoodleHtmlElement(answer_html, self.location))
@@ -168,14 +172,17 @@ class MoodleHtmlElement:
         self.parent = parent
         self.location = location
         self.etree_fragments = []
+        self.unnested_content = []
 
         # Catch strings that exist without html tags
         temp = html.fragments_fromstring(self.parent.text)
         for fragment in temp:
             if type(fragment) != html.HtmlElement:
-                p_element = etree.Element('p')
-                p_element.text = fragment
-                self.etree_fragments.append(p_element)
+                self.unnested_content.append(fragment)
+            elif (fragment.tail is not None and fragment.tail.strip()):
+                self.unnested_content.append(fragment.tail)
+                fragment.tail = None
+                self.etree_fragments.append(fragment)
             else:
                 self.etree_fragments.append(fragment)
 
@@ -195,12 +202,6 @@ class MoodleHtmlElement:
                     "content": content}
         return None
 
-    def find_references_containing(self, src_content):
-        matching_elems = self.etree_fragments[0].xpath(
-            f'//*[contains(@src, "{src_content}")]'
-        )
-        return [el.get("src") for el in matching_elems]
-
     def tostring(self):
         # Pass things through bs4 so we can avoid adding closing tags and
         # closing slashes that lxml may otherwise emit on void elements
@@ -218,10 +219,9 @@ class MoodleHtmlElement:
 
     def get_attribute_values(self, attr, exception=None):
         values = []
-        for elem in self.etree_fragments[0].xpath('//*'):
+        for elem in self.etree_fragments[0].xpath(f'//*[@{attr}]'):
             if elem.tag != exception or exception is None:
-                if attr in elem.attrib.keys():
-                    values.append(elem.attrib[attr])
+                values.append(elem.attrib[attr])
         return values
 
     def get_elements_by_name(self, element_name):
@@ -229,3 +229,13 @@ class MoodleHtmlElement:
         for child in self.etree_fragments[0].xpath(f'//{element_name}'):
             elems.append(child)
         return elems
+
+    def get_elements_with_string_in_class(self, class_string):
+        # NOTE: This method is only checking if the class string is included
+        #  in the attribute string versus if the specific class is defined
+        xpath_query = f"//*[contains(@class, '{class_string}')]"
+        return self.etree_fragments[0].xpath(xpath_query)
+
+    def element_is_fragment(self, elem):
+        """Checks if the provided element is a fragment"""
+        return elem in self.etree_fragments

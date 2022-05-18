@@ -9,6 +9,8 @@ import botocore
 from pathlib import Path
 from csv import writer
 
+IGNORED_FILES = [".DS_Store"]
+
 
 def upload_resources(resource_dir, metadata_file, bucket, s3_dir, csv_file):
     """Uploads resources to s3 if they dont already exist there"""
@@ -33,7 +35,7 @@ def output_hash_csv(hash_to_filename_map, csv_file):
         w = writer(f)
         w.writerow(['filename', 'hash'])
         for key in hash_to_filename_map:
-            w.writerow([hash_to_filename_map[key], key])
+            w.writerow([os.path.basename(hash_to_filename_map[key]), key])
 
 
 def existing_metadata_hashes(dir):
@@ -50,7 +52,12 @@ def new_resource_hashes(resource_dir):
     """Generates sha1 hashes for all the resources in a local directory"""
     sha1_map = {}
     buff_size = io.DEFAULT_BUFFER_SIZE
-    for filename in os.listdir(resource_dir):
+    resource_files = filter(
+        lambda x: x not in IGNORED_FILES,
+        os.listdir(resource_dir)
+    )
+
+    for filename in resource_files:
 
         sha1 = hashlib.sha1()
         full_path = os.path.join(resource_dir, filename)

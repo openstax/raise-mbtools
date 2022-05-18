@@ -1,344 +1,514 @@
 import csv
-import pytest
-import html
 from lxml import etree
 from mbtools import validate_mbz_html
 from mbtools.models import MoodleHtmlElement
 
-IM_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/imagename"
-OSX_MEDIA_LINK = "https://s3.amazonaws.com/im-ims-export/l1/imagename"
-MOODLE_VIDEO_FILE = "@@PLUGINFILE@@/video.mp4"
-MOODLE_TRACK_FILE = "@@PLUGINFILE@@/video.vtt"
-LESSON_ANSW_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/la1"
-QUESTION1_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/q1"
-QUESTION2_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/q2"
-QUESTION3_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/q3"
-ANSWER1_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/answer1"
-ANSWER2_ILLUSTRATION = "https://s3.amazonaws.com/im-ims-export/answer2"
-ADDITIONAL_MEDIA = "https://wikipedia.com/brazil/image1"
-ADDITIONAL_MEDIA2 = "https://wikipedia.com/brazil/image2"
-ADDITIONAL_MEDIA3 = "https://wikipedia.com/brazil/image3"
-ADDITIONAL_MEDIA4 = "https://wikipedia.com/brazil/image4"
 
-LESSON1_CONTENT1 = (
-    '<div>'
-    '<div>'
-    f'<img style="color: orange" src="{IM_MEDIA_LINK}">'
-    f'<img src="{ADDITIONAL_MEDIA}">'
-    '</div>'
-    '</div>'
-)
-LESSON1_CONTENT2 = (
-    '<div>'
-    f'<img src="{OSX_MEDIA_LINK}">'
-    '</div>'
-    '<script>'
-    'var something = 0'
-    '</script>'
-)
-LESSON_ANSWER1 = (
-    '<p dir="ltr" style="color: blue">'
-    '(6, 0)'
-    '<br>'
-    '</p>'
-    '<p style="text-align: left">'
-    'words'
-    '</p>'
-    '<p style="text-align: center">'
-    'words'
-    '</p>'
-)
-LESSON_ANSWER2 = (
-    '<p dir="ltr">'
-    '<img alt="Answer Picture" height="71" role="image" '
-    f'src="{LESSON_ANSW_ILLUSTRATION}" title="question" style="color: grey"'
-    ' width="101">'
-    '<br>'
-    '</p>'
-)
-LESSON_ANSWER3 = (
-    '<p dir="ltr" style="text-align: left; color: red;">'
-    '(3, 2)'
-    '<br>'
-    '</p>'
-)
-PAGE2_CONTENT = (
-    '<div>'
-    '<video controls="true">'
-    f'<source src="{MOODLE_VIDEO_FILE}">'
-    f'<track src="{MOODLE_TRACK_FILE}">'
-    f'<track src="{ADDITIONAL_MEDIA2}">'
-    'fallback content'
-    '</video>'
-    f'<a href="{ADDITIONAL_MEDIA3}">'
-    '</a>'
-    '<script>var variable=0'
-    '</script>'
-    '</div>'
-    '<div style="color: green">'
-    'some text'
-    '</div>'
-)
-QUESTION1_CONTENT = (
-    '<div>'
-    '<p>'
-    'What is the capital of Brazil'
-    '</p>'
-    '<div>'
-    '<img alt="A picture of a map of Brazil" height="71" role="image" '
-    f'src="{QUESTION1_ILLUSTRATION}" title="question" width="202">'
-    '</div>'
-    '<p>'
-    'Select <strong>all</strong> statements that must be true.'
-    '</p>'
-    '</div>'
-)
-QUESTION2_CONTENT = (
-    '<div>'
-    '<p>'
-    'Write 10 pages on the colonization of Brazil'
-    '</p>'
-    '<div>'
-    '<img alt="A picture of a map of Brazil" height="71" role="image" '
-    f'src="{QUESTION2_ILLUSTRATION}" title="question" width="202">'
-    '</div>'
-    '<p>'
-    'Select <strong>all</strong> statements that must be true.'
-    '</p>'
-    '</div>'
-)
-QUESTION3_CONTENT = (
-    '<div>'
-    '<p>'
-    'Draw and submit a picture of Brazil'
-    '</p>'
-    '<div>'
-    '<img alt="A picture of a map of Brazil" height="71" role="image" '
-    f'src="{QUESTION3_ILLUSTRATION}" title="question" width="202">'
-    '</div>'
-    '<script>var variable=0'
-    '</script>'
-    '<p>'
-    'Select <strong>all</strong> statements that must be true.'
-    '</p>'
-    '</div>'
-)
-ANSWER1_CONTENT = (
-    '<div>'
-    '<p>'
-    'Brasilia'
-    '</p>'
-    '<img alt="A Picture of Brasilia" height="71" role="image" '
-    f'src="{ANSWER1_ILLUSTRATION}" title="answer1" width="101">'
-    f'<iframe src="{ADDITIONAL_MEDIA4}">A SINGLE IFRAME'
-    '</iframe>'
-    '</div>'
-)
-ANSWER2_CONTENT = (
-    '<div>'
-    '<p>'
-    'Rio de Janiero'
-    '</p>'
-    '<img alt="A picture of Rio De Janiero" height="71" role="image" '
-    f'src="{ANSWER2_ILLUSTRATION}" title="answer2" width="101">'
-    '</div>'
-)
-
-
-@pytest.fixture
-def mbz_path(tmp_path):
-    back_xml_content = """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <moodle_backup>
-            <contents>
-            <activities>
-                <activity>
-                    <modulename>lesson</modulename>
-                    <title>First Lesson: 1.1</title>
-                    <directory>activities/lesson_1</directory>
-                </activity>
-                <activity>
-                    <modulename>page</modulename>
-                    <title>Second Lesson: 2.1</title>
-                    <directory>activities/page_2</directory>
-                </activity>
-                <activity>
-                    <modulename>quiz</modulename>
-                    <title>Third Lesson: 3.1</title>
-                    <directory>activities/quiz_3</directory>
-                </activity>
-            </activities>
-            </contents>
-        </moodle_backup>
-    """.strip()
-    (tmp_path / "moodle_backup.xml").write_text(back_xml_content)
-
-    lesson1_content = f"""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="1" modulename="lesson">
-            <lesson id="1">
-                <name>First Lesson: 1.1</name>
-                <pages>
-                    <page id="3">
-                        <title>First Lession: 1.1 - lesson.xml</title>
-                        <contents>{html.escape(LESSON1_CONTENT1)}</contents>
-                        <answers>
-                            <answer_text>{html.escape(LESSON_ANSWER1)}</answer_text>
-                            <answer_text>{html.escape(LESSON_ANSWER2)}</answer_text>
-                        </answers>
-                    </page>
-                    <page id="4">
-                        <title>Second Lession: 2.1 - lesson.xml</title>
-                        <contents>{html.escape(LESSON1_CONTENT2)}</contents>
-                        <answers>
-                            <answer_text>{html.escape(LESSON_ANSWER3)}</answer_text>
-                        </answers>
-                    </page>
-                </pages>
-            </lesson>
-        </activity>
-    """.strip()
-    lesson1_dir = tmp_path / "activities/lesson_1"
-    lesson1_dir.mkdir(parents=True)
-    (lesson1_dir / "lesson.xml").write_text(lesson1_content)
-
-    page2_content = f"""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="2" modulename="page">
-            <page id="2">
-                <name>Page 2 - A Special Activity</name>
-                <content>{html.escape(PAGE2_CONTENT)}</content>
-            </page>
-        </activity>
-    """.strip()
-    page2_dir = tmp_path / "activities/page_2"
-    page2_dir.mkdir(parents=True)
-    (page2_dir / "page.xml").write_text(page2_content)
-
-    quiz3_content = """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <activity id="3" modulename="quiz">
-            <quiz id="1">
-                <name>Fist Example Quiz</name>
-                <question_instances>
-                    <question_instance id="1">
-                        <questionid>1</questionid>
-                    </question_instance>
-                    <question_instance id ="2">
-                        <questionid>2</questionid>
-                    </question_instance>
-                </question_instances>
-            </quiz>
-            <quiz id="2">
-                <name>Second Example Quiz</name>
-                <question_instances>
-                    <question_instance id="3">
-                        <questionid>3</questionid>
-                    </question_instance>
-                </question_instances>
-            </quiz>
-        </activity>
-    """.strip()
-    quiz3_dir = tmp_path / "activities/quiz_3"
-    quiz3_dir.mkdir(parents=True)
-    (quiz3_dir / "quiz.xml").write_text(quiz3_content)
-
-    question_content = f"""
-    <?xml version="1.0" encoding="UTF-8"?>
-    <question_categories>
-        <question_category id="1">
-            <name>Quiz Bank 'Algebra1.1 Check Your Readiness'</name>
-            <questions>
-                <question id="1">
-                <questiontext>{html.escape(QUESTION1_CONTENT)}</questiontext>
-                <answers>
-                    <answer id="1">
-                    <answertext>{html.escape(ANSWER1_CONTENT)}</answertext>
-                    </answer>
-                    <answer id="2">
-                    <answertext>{html.escape(ANSWER2_CONTENT)}</answertext>
-                    </answer>
-                </answers>
-                </question>
-                <question id="2">
-                <questiontext>{html.escape(QUESTION2_CONTENT)}</questiontext>
-                </question>
-                <question id="3">
-                <questiontext>{html.escape(QUESTION3_CONTENT)}</questiontext>
-                </question>
-            </questions>
-        </question_category>
-    </question_categories>
-    """.strip()
-    (tmp_path / "questions.xml").write_text(question_content)
-
-    return tmp_path
-
-
-def test_validate_all(mbz_path):
-    violations = validate_mbz_html.validate_mbz(mbz_path)
-    violation_names = [x.issue for x in violations]
-    assert set([validate_mbz_html.STYLE_VIOLATION,
-                validate_mbz_html.STYLE_VIOLATION,
-                validate_mbz_html.SOURCE_VIOLATION,
-                validate_mbz_html.SOURCE_VIOLATION,
-                validate_mbz_html.SCRIPT_VIOLATION,
-                validate_mbz_html.SCRIPT_VIOLATION,
-                validate_mbz_html.IFRAME_VIOLATION,
-                validate_mbz_html.MOODLE_VIOLATION,
-                validate_mbz_html.MOODLE_VIOLATION,
-                validate_mbz_html.HREF_VIOLATION]) == set(violation_names)
-
-
-def test_validate_output_file(mbz_path, mocker, tmp_path):
-    mocker.patch(
-        "sys.argv",
-        ["", f"{tmp_path}", f"{tmp_path}/test_output.csv"]
+def test_validate_mbz_fail_early_for_unnested_violations(
+    tmp_path, page_builder, mbz_builder
+):
+    page1 = page_builder(
+        id=1,
+        name="Page 1",
+        html_content="Page 1 unnested content"
     )
-    validate_mbz_html.main()
-    with open(f"{tmp_path}/test_output.csv", 'r') as f:
-        violations = csv.reader(f, delimiter=",")
-        next(violations)
-        violation_messages = []
-        violation_links = []
-        for row in violations:
-            violation_messages.append(row[0])
-            if row[2] != '':
-                violation_links.append(row[2])
-        assert (len(violation_messages) == 16)
-        assert set([validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.STYLE_VIOLATION,
-                    validate_mbz_html.SOURCE_VIOLATION,
-                    validate_mbz_html.SOURCE_VIOLATION,
-                    validate_mbz_html.SCRIPT_VIOLATION,
-                    validate_mbz_html.SCRIPT_VIOLATION,
-                    validate_mbz_html.IFRAME_VIOLATION,
-                    validate_mbz_html.MOODLE_VIOLATION,
-                    validate_mbz_html.MOODLE_VIOLATION,
-                    validate_mbz_html.HREF_VIOLATION]) == \
-               set(violation_messages)
-        assert set([MOODLE_VIDEO_FILE,
-                    MOODLE_TRACK_FILE,
-                    ADDITIONAL_MEDIA,
-                    ADDITIONAL_MEDIA2,
-                    ADDITIONAL_MEDIA3,
-                    ADDITIONAL_MEDIA4,
-                    "color: blue",
-                    "text-align: left; color: red;",
-                    "text-align: left",
-                    "color: green",
-                    "color: grey",
-                    "color: orange",
-                    "text-align: center"]) == set(violation_links)
+
+    page2 = page_builder(
+        id=2,
+        name="Page 2",
+        html_content="<div><script>javascript</script></div>"
+    )
+
+    mbz_path = tmp_path / "mbz"
+    mbz_builder(mbz_path, activities=[page1, page2])
+    violations = validate_mbz_html.validate_mbz(mbz_path)
+
+    assert len(violations) == 1
+    violation = violations[0]
+    assert violation.issue == validate_mbz_html.UNNESTED_VIOLATION
+    assert violation.location == "Page 1"
+    assert violation.link == "Page 1 unnested content"
 
 
-def test_string_without_html():
+def test_unnested_front():
     location = "here"
     parent = etree.fromstring("<content></content>")
-    parent.text = "Hi hello<p>actual_html</p>"
+    parent.text = 'Hi hello<p>actual_html</p>'
     elem = MoodleHtmlElement(parent, location)
-    assert (elem.tostring() == "<p>Hi hello</p><p>actual_html</p>")
-    assert len(elem.etree_fragments) == 2
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
+
+
+def test_unnested_back():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p>actual_html</p>Hi Hello'
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
+def test_unnested_middle():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p>actual_html</p>Hi Hello<p>actual_html_also</p>'
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
+def test_unnested_multiple():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = 'Front<p>actual_html</p>Middle<p>actual_html_also</p>Back'
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 3
+    for v in violations:
+        assert v.issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
+def test_unnested_different_line():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p>actual_html</p>\nHi Hello'
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
+def test_ignore_space_tail():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p>actual_html_also</p>    '
+    elem = MoodleHtmlElement(parent, location)
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 0
+
+
+def test_style_violation():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<p style="left: allign">html</p>'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_style_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.STYLE_VIOLATION
+    assert style_violations[0].link == "left: allign"
+    assert style_violations[0].location == "here"
+
+
+def test_href_violation():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<a href="something">html</a>'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_tag_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.HREF_VIOLATION
+    assert style_violations[0].link == "something"
+    assert style_violations[0].location == "here"
+
+
+def test_script_violation():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<script>javascript</script>'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_tag_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.SCRIPT_VIOLATION
+    assert style_violations[0].link is None
+    assert style_violations[0].location == "here"
+
+
+def test_iframe_violation():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<iframe src="link">something</iframe>'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_tag_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.IFRAME_VIOLATION
+    assert style_violations[0].link == "link"
+    assert style_violations[0].location == "here"
+
+
+def test_source_violation():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<img src="link">'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_source_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.SOURCE_VIOLATION
+    assert style_violations[0].link == "link"
+    assert style_violations[0].location == "here"
+
+
+def test_moodle_source_violation():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = '<img src="@@PLUGINFILE@@">'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_source_violations([elem])
+    assert len(style_violations) == 1
+    assert style_violations[0].issue == validate_mbz_html.MOODLE_VIOLATION
+    assert style_violations[0].link == "@@PLUGINFILE@@"
+    assert style_violations[0].location == "here"
+
+
+def test_valid_source_no_violation():
+    location = "here"
+    parent = etree.fromstring("<content></content>")
+    parent.text = f'<img src="{validate_mbz_html.VALID_PREFIXES[0]}">'
+    elem = MoodleHtmlElement(parent, location)
+    style_violations = validate_mbz_html.find_source_violations([elem])
+    assert len(style_violations) == 0
+
+
+def test_find_nested_ib_violations():
+    valid_content = """
+<div class="os-raise-ib-sometype">
+  <div class="os-raise-ib-sometype-somedata"></div>
+  <div class="os-raise-ib-sometype-otherdata"></div>
+</div>
+<div class="os-raise-ib-anothertype">
+<p><span class="os-raise-ib-tooltip styleclass">vocab word</span></p>
+</div>
+    """
+    bad_content = """
+<div>
+  <div class="os-raise-ib-nestedtype"></div>
+</div>
+<div class="os-raise-ib-anothertype"></div>
+<div class="os-raise-ib-sometype">
+  <div class="os-raise-ib-sometype-somedata"></div>
+  <div class="os-raise-ib-sometype-otherdata"></div>
+</div>
+    """
+    html1 = etree.fromstring("<content></content>")
+    html1.text = valid_content
+    elem1 = MoodleHtmlElement(html1, "loc1")
+    html2 = etree.fromstring("<content></content>")
+    html2.text = bad_content
+    elem2 = MoodleHtmlElement(html2, "loc2")
+    violations = validate_mbz_html.find_nested_ib_violations([elem1, elem2])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.NESTED_IB_VIOLATION
+    assert violations[0].location == "loc2"
+    assert violations[0].link == "os-raise-ib-nestedtype"
+
+
+def test_find_nested_ib_violations_mbz(
+    tmp_path, mbz_builder, page_builder, mocker
+):
+    bad_content = '<div><div class="os-raise-ib-nestedtype"></div></div>'
+    page1 = page_builder(1, "Page", bad_content)
+    mbz_builder(tmp_path / "mbz", [page1])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 1
+    assert errors[0]["issue"] == validate_mbz_html.NESTED_IB_VIOLATION
+    assert errors[0]["location"] == "Page"
+    assert errors[0]["link"] == "os-raise-ib-nestedtype"
+
+
+def test_find_tag_violations_mbz(
+    tmp_path, mbz_builder, page_builder, mocker
+):
+    bad_content = '<div><script></script></div>'
+    page1 = page_builder(1, "Page", bad_content)
+    mbz_builder(tmp_path / "mbz", [page1])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 1
+    assert errors[0]["issue"] == validate_mbz_html.SCRIPT_VIOLATION
+    assert errors[0]["location"] == "Page"
+    assert errors[0]["link"] == ""
+
+
+def test_find_style_violations_mbz(
+    tmp_path, mbz_builder, page_builder, mocker
+):
+    bad_content = '<p style="color: blue"></p>'
+    page1 = page_builder(1, "Page", bad_content)
+    mbz_builder(tmp_path / "mbz", [page1])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 1
+    assert errors[0]["issue"] == validate_mbz_html.STYLE_VIOLATION
+    assert errors[0]["location"] == "Page"
+    assert errors[0]["link"] == "color: blue"
+
+
+def test_find_source_violations_mbz(
+    tmp_path, mbz_builder, page_builder, mocker
+):
+    bad_content = '<img src="http://foobar">'
+    page1 = page_builder(1, "Page", bad_content)
+    mbz_builder(tmp_path / "mbz", [page1])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 1
+    assert errors[0]["issue"] == validate_mbz_html.SOURCE_VIOLATION
+    assert errors[0]["location"] == "Page"
+    assert errors[0]["link"] == "http://foobar"
+
+
+def test_find_multiple_activity_violations_mbz(
+    tmp_path, mbz_builder, page_builder, lesson_builder, mocker
+):
+    bad_content = '<img src="http://foobar"><script></script>'
+    page1 = page_builder(1, "Page", bad_content)
+    lesson2 = lesson_builder(
+        id=2,
+        name="Lesson 2",
+        pages=[
+            {
+                "id": 21,
+                "title": "Lesson 2 Page 1",
+                "html_content": '<img src="@@PLUGINFILE@@">'
+            },
+            {
+                "id": 21,
+                "title": "Lesson 2 Page 2",
+                "html_content": "<p></p>",
+                "answers": [
+                    {
+                        "id": 111,
+                        "html_content": '<iframe src="http://foobaz"></iframe>'
+                    }
+                ]
+            },
+        ]
+    )
+
+    mbz_builder(tmp_path / "mbz", [page1, lesson2])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 4
+    page_src_error = {
+        "issue": validate_mbz_html.SOURCE_VIOLATION,
+        "location": "Page",
+        "link": "http://foobar"
+    }
+    page_script_error = {
+        "issue": validate_mbz_html.SCRIPT_VIOLATION,
+        "location": "Page",
+        "link": ""
+    }
+    lesson_moodle_source_error = {
+        "issue": validate_mbz_html.MOODLE_VIOLATION,
+        "location": "Lesson: Lesson 2 (page id=21) "
+        "Page Title: Lesson 2 Page 1",
+        "link": "@@PLUGINFILE@@"
+    }
+    lesson_iframe_errors = {
+        "issue": validate_mbz_html.IFRAME_VIOLATION,
+        "location": "Lesson: Lesson 2 (page id=21) Page Title: Lesson 2 Page 2"
+        " (answer id: 111)",
+        "link": "http://foobaz"
+    }
+    assert page_src_error in errors
+    assert page_script_error in errors
+    assert lesson_moodle_source_error in errors
+    assert lesson_iframe_errors in errors
+
+
+def test_questionbank_validation_and_optout_flag_mbz(
+    tmp_path, mbz_builder, quiz_builder, mocker
+):
+    quiz = quiz_builder(
+        id=1,
+        name="Quiz",
+        questions=[
+            {
+                "id": 1,
+                "questionid": 2
+            }
+        ]
+    )
+    mbz_builder(
+        tmp_path / "mbz",
+        activities=[quiz],
+        questionbank_questions=[
+            {
+                "id": 1,
+                "html_content": '<img src="@@PLUGINFILE@@">',
+                "answers": [
+                    {
+                        "id": 11,
+                        "html_content": "<script></script>"
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "html_content": '<iframe src="http://foobaz"></iframe>',
+                "matches": [
+                    {
+                        "id": 2,
+                        "answer_content": "Some non-HTML content",
+                        "question_html_content": '<img src="http://foobar">'
+                    }
+                ]
+            }
+        ]
+    )
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 6
+    q1_error1 = {
+        "issue": validate_mbz_html.MOODLE_VIOLATION,
+        "location": "Question Bank, Question: 1",
+        "link": "@@PLUGINFILE@@"
+    }
+    q1_error2 = {
+        "issue": validate_mbz_html.SCRIPT_VIOLATION,
+        "location": "Question Bank, Question: 1",
+        "link": ""
+    }
+    q2_error1 = {
+        "issue": validate_mbz_html.IFRAME_VIOLATION,
+        "location": "Question Bank, Question: 2",
+        "link": "http://foobaz"
+    }
+    q2_error2 = {
+        "issue": validate_mbz_html.SOURCE_VIOLATION,
+        "location": "Question Bank, Question: 2",
+        "link": "http://foobar"
+    }
+    quiz_errror1 = {
+        "issue": validate_mbz_html.IFRAME_VIOLATION,
+        "location": "Quiz Question: 2",
+        "link": "http://foobaz"
+    }
+    quiz_errror2 = {
+        "issue": validate_mbz_html.SOURCE_VIOLATION,
+        "location": "Quiz Question: 2",
+        "link": "http://foobar"
+    }
+    assert q1_error1 in errors
+    assert q1_error2 in errors
+    assert q2_error1 in errors
+    assert q2_error2 in errors
+    assert quiz_errror1 in errors
+    assert quiz_errror2 in errors
+
+    # Run with question bank validation off
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output_noqb.csv", "--no-qb"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output_noqb.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 2
+    assert quiz_errror1 in errors
+    assert quiz_errror2 in errors
+
+
+def test_multiple_violations_on_content_with_fragments(
+    tmp_path, page_builder, mbz_builder, mocker
+):
+    bad_content = '<img src="@@PLUGINFILE@@"><p style="color: blue;"></p>'
+    page1 = page_builder(1, "Page", bad_content)
+    mbz_builder(tmp_path / "mbz", [page1])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 2
+
+    page_style_error = {
+        "issue": validate_mbz_html.STYLE_VIOLATION,
+        "location": "Page",
+        "link": "color: blue;"
+    }
+    page_moodle_error = {
+        "issue": validate_mbz_html.MOODLE_VIOLATION,
+        "location": "Page",
+        "link": "@@PLUGINFILE@@"
+    }
+
+    assert page_style_error in errors
+    assert page_moodle_error in errors
+
+
+def test_style_exclusion_from_validation_flag_mbz(
+    tmp_path, mbz_builder, page_builder, mocker
+):
+    bad_content = '<p style="color: blue"></p>'
+    page1 = page_builder(1, "Page", bad_content)
+    mbz_builder(tmp_path / "mbz", [page1])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "--no-style"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 0
