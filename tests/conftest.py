@@ -93,12 +93,16 @@ MOODLE_BACKUP_TEMPLATE = Template("""
 QUESTION_TEMPLATE = Template("""
 <question id="$id">
   <questiontext>$content</questiontext>
-  <answers>
-    $answerdata
-  </answers>
-  <matches>
-    $matchdata
-  </matches>
+  <plugin>
+    <answers>
+      $answerdata
+    </answers>
+  </plugin>
+  <plugin>
+    <matches>
+      $matchdata
+    </matches>
+  </plugin>
 </question>
 """)
 

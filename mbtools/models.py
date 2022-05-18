@@ -160,7 +160,7 @@ class MoodleQuestion:
             elements.append(
                 MoodleHtmlElement(question_html, self.location))
         answer_texts = self.etree.xpath(
-                f"//question[@id={self.id}]/answers/answer/answertext")
+                f"//question[@id={self.id}]//answers/answer/answertext")
         for answer_html in answer_texts:
             elements.append(
                 MoodleHtmlElement(answer_html, self.location))
