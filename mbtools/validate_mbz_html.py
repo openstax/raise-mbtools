@@ -46,8 +46,7 @@ class Violation:
         return dict
 
 
-def validate_mbz(mbz_path, include_questionbank=False):
-
+def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
     html_elements = utils.parse_backup_elements(mbz_path)
     if include_questionbank:
         html_elements += utils.parse_question_bank_for_html(mbz_path)
@@ -56,7 +55,8 @@ def validate_mbz(mbz_path, include_questionbank=False):
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
         return violations
-    violations.extend(find_style_violations(html_elements))
+    if include_styles:
+        violations.extend(find_style_violations(html_elements))
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
     violations.extend(find_nested_ib_violations(html_elements))
@@ -183,16 +183,22 @@ def main():
         action='store_true',
         help="Exclude question bank in validation"
     )
+    parser.add_argument(
+        '--no-style',
+        action='store_false',
+        help="Exclude style violations"
+    )
     args = parser.parse_args()
 
     mbz_path = Path(args.mbz_path).resolve(strict=True)
     output_file = Path(args.output_file)
     include_questionbank = not args.no_qb
+    include_styles = args.no_style
 
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    violations = validate_mbz(mbz_path, include_questionbank)
+    violations = validate_mbz(mbz_path, include_styles, include_questionbank)
     with open(output_file, 'w') as f:
         w = DictWriter(f, ['issue', 'location', 'link'])
         w.writeheader()

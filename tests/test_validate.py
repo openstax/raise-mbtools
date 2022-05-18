@@ -493,3 +493,22 @@ def test_multiple_violations_on_content_with_fragments(
 
     assert page_style_error in errors
     assert page_moodle_error in errors
+
+
+def test_style_exclusion_from_validation_flag_mbz(
+    tmp_path, mbz_builder, page_builder, mocker
+):
+    bad_content = '<p style="color: blue"></p>'
+    page1 = page_builder(1, "Page", bad_content)
+    mbz_builder(tmp_path / "mbz", [page1])
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "--no-style"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 0
