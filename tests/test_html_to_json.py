@@ -62,6 +62,7 @@ def test_json_content_is_valid(file_path):
     for content in content_in_json:
         assert json.loads(content)
 
+
 def test_main(file_path, mocker):
     # Test for main function called by the CLI.
     mocker.patch(

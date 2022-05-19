@@ -13,7 +13,8 @@ def create_json_content(uuid, content, variant="main"):
 def html_to_json(html_directory, json_directory):
     for file_name in glob.iglob(f'{html_directory}/*.html'):
         with open(f'{file_name}') as f:
-            new_file = open(f'{json_directory}/{Path(file_name).stem}.json', "w")
+            new_file = open(f'{json_directory}/'
+                            f'{Path(file_name).stem}.json', "w")
             new_file.write(create_json_content(Path(file_name).stem, f.read()))
             new_file.close()
 
