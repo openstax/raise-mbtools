@@ -4,6 +4,10 @@ from xml.dom import NotFoundErr
 from lxml import etree, html
 from bs4 import BeautifulSoup
 
+QUESTION_ANSWER_TEXT_IGNORE_TYPES = [
+    "plugin_qtype_numerical_question"
+]
+
 
 class MoodleBackup:
     def __init__(self, mbz_path):
@@ -162,8 +166,10 @@ class MoodleQuestion:
         answer_texts = self.etree.xpath(
                 f"//question[@id={self.id}]//answers/answer/answertext")
         for answer_html in answer_texts:
-            elements.append(
-                MoodleHtmlElement(answer_html, self.location))
+            answer_qtype = answer_html.xpath("../../..")[0]
+            if answer_qtype.tag not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
+                elements.append(
+                    MoodleHtmlElement(answer_html, self.location))
         return elements
 
 
