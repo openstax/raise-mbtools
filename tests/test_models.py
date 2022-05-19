@@ -1,5 +1,5 @@
 from lxml import etree
-from mbtools.models import MoodleHtmlElement
+from mbtools.models import MoodleHtmlElement, MoodleQuestionBank
 
 
 def test_html_element_get_elements_with_string_in_class():
@@ -39,3 +39,34 @@ def test_html_elements_element_is_fragment():
 
     bar_elems = elem.get_elements_with_string_in_class("bar")
     assert not elem.element_is_fragment(bar_elems[0])
+
+
+def test_question_answertext_filter(tmp_path):
+    question_bank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category>
+    <questions>
+      <question id="1">
+        <plugin_qtype_numerical_question>
+          <answers>
+            <answer>
+              <answertext>112</answertext>
+            </answer>
+          </answers>
+        </plugin_qtype_numerical_question>
+      </question>
+    </questions>
+  </question_category>
+</question_categories>
+    """.strip()
+
+    with open(tmp_path / "questions.xml", "w") as qb:
+        qb.write(question_bank_xml)
+
+    question_bank = MoodleQuestionBank(tmp_path)
+    question_bank_html = []
+    for question in question_bank.questions():
+        question_bank_html.extend(question.html_elements())
+
+    assert len(question_bank_html) == 0
