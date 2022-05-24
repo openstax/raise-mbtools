@@ -15,7 +15,7 @@ IGNORED_FILES = [".DS_Store"]
 def upload_resources(resource_dir, metadata_file, bucket, s3_dir, csv_file):
     """Uploads resources to s3 if they dont already exist there"""
 
-    hash_to_filename_map = new_resource_hashes(resource_dir)
+    hash_to_filename_map, duplicates = new_resource_hashes(resource_dir)
     hashes_new = list(hash_to_filename_map.keys())
 
     hashes_metadata = existing_metadata_hashes(metadata_file)
@@ -27,15 +27,17 @@ def upload_resources(resource_dir, metadata_file, bucket, s3_dir, csv_file):
     )
 
     if csv_file is not None:
-        output_hash_csv(hash_to_filename_map, csv_file)
+        output_hash_csv(hash_to_filename_map, csv_file, duplicates)
 
 
-def output_hash_csv(hash_to_filename_map, csv_file):
+def output_hash_csv(hash_to_filename_map, csv_file, duplicates):
     with open(csv_file, "w") as f:
         w = writer(f)
         w.writerow(['filename', 'hash'])
         for key in hash_to_filename_map:
             w.writerow([os.path.basename(hash_to_filename_map[key]), key])
+        for i in duplicates:
+            w.writerow([os.path.basename(i[1]), i[0]])
 
 
 def existing_metadata_hashes(dir):
@@ -51,6 +53,7 @@ def existing_metadata_hashes(dir):
 def new_resource_hashes(resource_dir):
     """Generates sha1 hashes for all the resources in a local directory"""
     sha1_map = {}
+    duplicates = []
     buff_size = io.DEFAULT_BUFFER_SIZE
     resource_files = filter(
         lambda x: x not in IGNORED_FILES,
@@ -67,8 +70,11 @@ def new_resource_hashes(resource_dir):
                 if not data:
                     break
                 sha1.update(data)
-        sha1_map[sha1.hexdigest()] = full_path
-    return sha1_map
+        if sha1.hexdigest() not in sha1_map:
+            sha1_map[sha1.hexdigest()] = full_path
+        else:
+            duplicates.append([sha1.hexdigest(), full_path])
+    return sha1_map, duplicates
 
 
 def get_mime_type(filename):
