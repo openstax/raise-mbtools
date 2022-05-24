@@ -11,10 +11,12 @@ test_dir = 'test_content/'
 f1 = 'test_content/example1.txt'
 f2 = 'test_content/example2.mp4'
 f3 = 'test_content/example3.jpeg'
+f4 = 'test_content/example4.jpeg'
 
 f1_data = {'txt_data': 2}
 f2_data = {'mp4_data': 'video'}
 f3_data = {'jpeg_data': 'picture'}
+f4_data = {'jpeg_data': 'picture'}
 
 metadata_file = 'metadata/tags.json'
 new_metadata_file = 'new_tags.json'
@@ -53,7 +55,7 @@ metadata_updates = [
     {
         'mime_type': 'application/json',
         'sha1': 'e606bc6acc83666e1d40722e9c743a01e12e65ab',
-        'original_filename': 'example3.jpeg',
+        'original_filename': 'example4.jpeg',
         's3_key': 'resources/e606bc6acc83666e1d40722e9c743a01e12e65ab'
      },
 ]
@@ -69,6 +71,8 @@ def practice_filesystem(tmp_path):
         json.dump(f2_data, f)
     with open(str(tmp_path / f3), 'w') as f:
         json.dump(f3_data, f)
+    with open(str(tmp_path / f4), 'w') as f:
+        json.dump(f4_data, f)
     with open(f"{tmp_path}/{test_dir}/.DS_Store", "w") as f:
         f.write(".DS_Store file")
 
@@ -95,7 +99,7 @@ def test_existing_metadata_hashes(practice_filesystem):
 
 def test_new_resource_hashes(practice_filesystem):
     assert(len(copy_resources_s3.new_resource_hashes(
-               practice_filesystem[test_dir])) == 3
+               practice_filesystem[test_dir])[0]) == 3
            )
     with pytest.raises(FileNotFoundError):
         copy_resources_s3.new_resource_hashes("")
@@ -110,7 +114,7 @@ def test_get_mime_type(practice_filesystem):
 def test_upload_resources(practice_filesystem, mocker):
     s3_dir = 'resources'
     bucket_name = 'test-bucket'
-    sha1_map = copy_resources_s3.new_resource_hashes(
+    sha1_map, _ = copy_resources_s3.new_resource_hashes(
                practice_filesystem[test_dir])
     hash_keys = list(sha1_map)
     s3_client = boto3.client('s3')
@@ -188,7 +192,7 @@ def test_upload_resources_no_existing_metadata_file(practice_filesystem,
                                                     mocker):
     s3_dir = 'resources'
     bucket_name = 'test-bucket'
-    sha1_map = copy_resources_s3.new_resource_hashes(
+    sha1_map, _ = copy_resources_s3.new_resource_hashes(
                practice_filesystem[test_dir])
     hash_keys = list(sha1_map)
     s3_client = boto3.client('s3')
@@ -264,7 +268,7 @@ def test_upload_resources_no_existing_metadata_file(practice_filesystem,
 def test_upload_resources_with_csv(practice_filesystem, mocker):
     s3_dir = 'resources'
     bucket_name = 'test-bucket'
-    sha1_map = copy_resources_s3.new_resource_hashes(
+    sha1_map, _ = copy_resources_s3.new_resource_hashes(
                practice_filesystem[test_dir])
     hash_keys = list(sha1_map)
     s3_client = boto3.client('s3')
@@ -345,13 +349,17 @@ def test_upload_resources_with_csv(practice_filesystem, mocker):
         {
             "filename": "example2.mp4",
             "hash": "a31e7f061d762f1e5099ecebfe6877310e5be420"
+        },
+        {
+            "filename": "example4.jpeg",
+            "hash": "e606bc6acc83666e1d40722e9c743a01e12e65ab"
         }
     ]
 
     with open(csv_path, 'r') as f:
         reader = csv.DictReader(f)
         data = [row for row in reader]
-        assert len(data) == 3
+        assert len(data) == 4
         for row in data:
             assert row in expected_csv_data
 
