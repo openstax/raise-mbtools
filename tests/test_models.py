@@ -1,5 +1,5 @@
 from lxml import etree
-from mbtools.models import MoodleHtmlElement, MoodleQuestionBank
+from mbtools.models import MoodleHtmlElement, MoodleQuestionBank, MoodleQuiz
 
 
 def test_html_element_get_elements_with_string_in_class():
@@ -70,3 +70,87 @@ def test_question_answertext_filter(tmp_path):
         question_bank_html.extend(question.html_elements())
 
     assert len(question_bank_html) == 0
+
+
+def test_quiz_question_ids(tmp_path, mbz_builder, quiz_builder):
+    quiz = quiz_builder(
+        id=1,
+        name="Quiz 1",
+        questions=[
+            {
+                "id": "31",
+                "questionid": "11"
+            },
+            {
+                "id": "32",
+                "questionid": "22"
+            }
+        ]
+    )
+
+    mbz_builder(tmp_path, activities=[quiz])
+    quiz = MoodleQuiz(
+        tmp_path / "activities/quiz_1",
+        tmp_path,
+        MoodleQuestionBank(tmp_path)
+    )
+    assert quiz.question_ids() == ["11", "22"]
+
+
+def test_questionbank_delete_unused_questions(tmp_path):
+    questionbank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category id="1">
+    <questions>
+      <question id="1">
+      </question>
+      <question id="2">
+      </question>
+    </questions>
+  </question_category>
+  <question_category id="2">
+    <questions>
+      <question id="3">
+      </question>
+      <question id="4">
+      </question>
+    </questions>
+  </question_category>
+</question_categories>
+    """
+
+    (tmp_path / "questions.xml").write_text(questionbank_xml.strip())
+    questionbank = MoodleQuestionBank(tmp_path)
+    questionbank.delete_unused_questions(["2"])
+
+    questions = questionbank.questions()
+    assert len(questions) == 1
+    assert questions[0].id == "2"
+
+
+def test_questionbank_delete_empty_categories(tmp_path):
+    questionbank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category id="1">
+    <questions>
+      <question id="1">
+      </question>
+      <question id="2">
+      </question>
+    </questions>
+  </question_category>
+  <question_category id="2">
+    <questions>
+    </questions>
+  </question_category>
+</question_categories>
+    """
+
+    (tmp_path / "questions.xml").write_text(questionbank_xml.strip())
+    questionbank = MoodleQuestionBank(tmp_path)
+    questionbank.delete_empty_categories()
+
+    question_categories = questionbank.etree.xpath("//question_category")
+    assert len(question_categories) == 1

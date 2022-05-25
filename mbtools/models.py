@@ -34,6 +34,19 @@ class MoodleBackup:
                     MoodleQuiz(activity_path, self.mbz_path, self.q_bank))
         return activities
 
+    def quizzes(self):
+        activity_elems = self.etree.xpath("//contents/activities/activity")
+        activities = []
+        for activity_elem in activity_elems:
+            activity_type = activity_elem.find("modulename").text
+            if activity_type != 'quiz':
+                continue
+            activity_path = \
+                self.mbz_path / activity_elem.find("directory").text
+            activities.append(
+                MoodleQuiz(activity_path, self.mbz_path, self.q_bank))
+        return activities
+
 
 class MoodleQuestionBank:
     def __init__(self, mbz_path):
@@ -71,6 +84,23 @@ class MoodleQuestionBank:
                                                     location))
 
         return questions
+
+    def delete_unused_questions(self, used_question_ids):
+        query = \
+            '//question_categories/question_category/questions/question'
+        elems = self.etree.xpath(query)
+        for elem in elems:
+            question_id = elem.attrib["id"]
+            if question_id not in used_question_ids:
+                elem.getparent().remove(elem)
+
+    def delete_empty_categories(self):
+        query = '//question_categories/question_category'
+        elems = self.etree.xpath(query)
+        for elem in elems:
+            questions = elem.xpath('questions/question')
+            if (len(questions)) == 0:
+                elem.getparent().remove(elem)
 
 
 class MoodleLesson:
@@ -148,6 +178,17 @@ class MoodleQuiz:
         for question in question_objs:
             elements.extend(question.html_elements())
         return elements
+
+    def question_ids(self):
+        ids = []
+        quizzes = self.etree.xpath("//quiz")
+        for quiz in quizzes:
+            questions = quiz.xpath("question_instances/question_instance")
+            for question in questions:
+                question_id = question.xpath("questionid")[0].text
+                ids.append(question_id)
+
+        return ids
 
 
 class MoodleQuestion:
