@@ -14,6 +14,17 @@ def test_parse_backup_activities(
     assert len(activities) == 3
 
 
+def test_parse_backup_quizzes(
+    tmp_path, mbz_builder, page_builder, lesson_builder, quiz_builder
+):
+    page = page_builder(id=1, name="Page 1", html_content="<p>page 1</p>")
+    lesson = lesson_builder(id=2, name="Lesson 2")
+    quiz = quiz_builder(id=3, name="Quiz 3")
+    mbz_builder(tmp_path, [page, lesson, quiz])
+    activities = utils.parse_backup_quizzes(tmp_path)
+    assert len(activities) == 1
+
+
 def test_parse_activity_html_contents(
     tmp_path, mbz_builder, page_builder, lesson_builder, quiz_builder
 ):
