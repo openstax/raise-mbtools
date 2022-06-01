@@ -16,6 +16,11 @@ BOOKS_BY_SLUG = {
         "uuid": "4664c267-cd62-4a99-8b28-1cb9b3aee347",
         "code_version": "20220228.174637",
         "book_version": "97c23b7"
+    },
+    "college-algebra-2e": {
+        "uuid": "35d7cce2-48dd-4403-b6a5-e828cb5a17da",
+        "code_version": "20220422.171947",
+        "book_version": "6a2ee83"
     }
 }
 
