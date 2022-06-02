@@ -51,13 +51,19 @@ metadata_updates = [
         'sha1': 'a31e7f061d762f1e5099ecebfe6877310e5be420',
         'original_filename': 'example2.mp4',
         's3_key': 'resources/a31e7f061d762f1e5099ecebfe6877310e5be420'
-     },
+    },
     {
         'mime_type': 'application/json',
         'sha1': 'e606bc6acc83666e1d40722e9c743a01e12e65ab',
         'original_filename': 'example4.jpeg',
         's3_key': 'resources/e606bc6acc83666e1d40722e9c743a01e12e65ab'
-     },
+    },
+    {
+        'mime_type': 'application/json',
+        'sha1': 'e606bc6acc83666e1d40722e9c743a01e12e65ab',
+        'original_filename': 'example3.jpeg',
+        's3_key': 'resources/e606bc6acc83666e1d40722e9c743a01e12e65ab'
+     }
 ]
 
 
@@ -184,8 +190,8 @@ def test_upload_resources(practice_filesystem, mocker):
     with open(metadata_path, 'r') as f:
         data = json.load(f)
     assert len(data) == 5
-    for item in metadata_updates:
-        assert item in data
+    for item in data:
+        assert item in metadata_tags or item in metadata_updates
 
 
 def test_upload_resources_no_existing_metadata_file(practice_filesystem,
@@ -261,8 +267,8 @@ def test_upload_resources_no_existing_metadata_file(practice_filesystem,
     with open(metadata_path, 'r') as f:
         data = json.load(f)
     assert len(data) == 3
-    for item in metadata_updates:
-        assert item in data
+    for item in data:
+        assert item in metadata_updates
 
 
 def test_upload_resources_with_csv(practice_filesystem, mocker):
