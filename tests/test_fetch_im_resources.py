@@ -1,4 +1,4 @@
-from mbtools import fetch_im_resources 
+from mbtools import fetch_im_resources
 import os
 
 
