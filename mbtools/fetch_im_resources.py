@@ -5,6 +5,9 @@ from mbtools.utils import parse_backup_elements
 
 IM_PREFIX = "https://s3.amazonaws.com/im-ims-export/"
 
+# Make Conditional for local instance
+CONTENT_PREFIX = "https://k12.openstax.org/contents/raise/"
+
 
 def collect_and_write_resources(resource_urls, output_dir):
     for url in resource_urls:
@@ -14,13 +17,28 @@ def collect_and_write_resources(resource_urls, output_dir):
             f.write(img_data)
 
 
+def swap_extracted_content(elem):
+    id = elem.get_attribute_values("data-content-id")[0]
+    request = CONTENT_PREFIX + f"{id}.json"
+    data = requests.get(request).json()
+    elem.replace_tag_with_content(data['content'][0]['html'])
+
+
 def get_im_resources_from_html(elem):
+    extracted_swap = False
+    if ('os-raise-content' in elem.get_attribute_values("class")):
+        swap_extracted_content(elem)
+        extracted_swap = True
+
     values = elem.get_attribute_values('src')
     values.extend(elem.get_attribute_values('href'))
     im_resources = []
     for val in values:
         if IM_PREFIX in val:
             im_resources.append(val)
+
+    if extracted_swap:
+        elem.replace_content_with_tag()
     return im_resources
 
 
