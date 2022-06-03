@@ -286,3 +286,13 @@ class MoodleHtmlElement:
     def element_is_fragment(self, elem):
         """Checks if the provided element is a fragment"""
         return elem in self.etree_fragments
+
+    def replace_attribute_values(self, attrs, mapping):
+        swaps = {}
+        for attr in attrs:
+            for elem in self.etree_fragments[0].xpath(f'//*[@{attr}]'):
+                im_filename = elem.attrib[attr]
+                if im_filename in mapping.keys():
+                    elem.attrib[attr] = mapping[im_filename]
+                    swaps[im_filename] = mapping[im_filename]
+        return swaps
