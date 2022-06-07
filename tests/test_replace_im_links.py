@@ -1,10 +1,12 @@
 from mbtools import replace_im_links
+from mbtools.fetch_im_resources import IM_PREFIX, fetch_im_resources
+from mbtools.utils import collect_resources_from_mbz
 import json
 
 
 def test_replace_im_links_regular(
     tmp_path, mbz_builder, page_builder, lesson_builder,
-    quiz_builder, mocker, requests_mock
+    quiz_builder, mocker
 ):
     media_json = [
         {
@@ -126,3 +128,7 @@ def test_replace_im_links_regular(
     )
 
     replace_im_links.main()
+
+    assert len(collect_resources_from_mbz(tmp_path, IM_PREFIX)) == 0
+    resources = collect_resources_from_mbz(tmp_path)
+    assert len(resources) == 3

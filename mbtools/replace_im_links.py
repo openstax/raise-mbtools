@@ -1,7 +1,5 @@
 import json
-
-import requests
-from mbtools.utils import parse_backup_elements
+from mbtools import utils
 import argparse
 from pathlib import Path
 
@@ -13,7 +11,7 @@ CONTENT_PREFIX = "https://k12.openstax.org/contents/raise/"
 def replace_references(elem, mapping):
     extracted_swap = False
     if ('os-raise-content' in elem.get_attribute_values("class")):
-        swap_extracted_content(elem)
+        utils.swap_tags_for_content(elem)
         extracted_swap = True
 
     replacements = elem.replace_attribute_values(['src', 'href'], mapping)
@@ -21,13 +19,6 @@ def replace_references(elem, mapping):
     if extracted_swap:
         elem.replace_content_with_tag()
     return replacements
-
-
-def swap_extracted_content(elem):
-    id = elem.get_attribute_values("data-content-id")[0]
-    request = CONTENT_PREFIX + f"{id}.json"
-    data = requests.get(request).json()
-    elem.replace_tag_with_content(data['content'][0]['html'])
 
 
 def parse_media_file(media_path, s3_prefix):
@@ -43,12 +34,15 @@ def parse_media_file(media_path, s3_prefix):
 
 def replace_im_links(mbz_path, media_path, s3_prefix):
     im_to_osx_mapping = parse_media_file(media_path, s3_prefix)
-    elems = parse_backup_elements(mbz_path)
+    activities = utils.parse_backup_activities(mbz_path)
     replacements = {}
-    for elem in elems:
-        changes = replace_references(elem, im_to_osx_mapping)
-        if len(changes) > 0:
-            replacements.update(changes)
+    for act in activities:
+        elems = act.html_elements()
+        for elem in elems:
+            changes = replace_references(elem, im_to_osx_mapping)
+            if len(changes) > 0:
+                replacements.update(changes)
+                utils.write_etree(act.activity_filename, act.etree)
     return replacements
 
 
