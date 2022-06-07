@@ -11,7 +11,7 @@ CONTENT_PREFIX = "https://k12.openstax.org/contents/raise/"
 
 def collect_and_write_resources(resource_urls, output_dir):
     for url in resource_urls:
-        img_data = requests.get(url).content
+        img_data = requests.get(url, stream=True).content
         filename = url.rsplit('/', 1)[-1]
         with open(f'{output_dir}/{filename}', 'wb') as f:
             f.write(img_data)
@@ -65,7 +65,9 @@ def main():
     if not output_dir.exists():
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    fetch_im_resources(mbz_path, output_dir)
+    replacements = fetch_im_resources(mbz_path, output_dir)
+
+    print(f'Donloaded {len(replacements)} files to {output_dir}')
 
 
 if __name__ == "__main__":
