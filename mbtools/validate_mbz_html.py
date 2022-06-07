@@ -19,7 +19,8 @@ VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
 
 VALID_IFRAME_PREFIXES = ["https://www.youtube.com"]
 
-VALID_HREF_PREFIXES = ["https://vimeo.com",
+VALID_HREF_PREFIXES = ["https://k12.openstax.org/contents/raise",
+                       "https://vimeo.com",
                        "https://player.vimeo.com",
                        "https://youtube.com",
                        "https://www.youtube.com",
