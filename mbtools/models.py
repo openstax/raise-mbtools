@@ -249,14 +249,14 @@ class MoodleHtmlElement:
                     "content": content}
         return None
 
-    def replace_tag_with_content(self, html_string):
-        if self.parent.tag in ["contet", "contents"]:
-            if "os-raise-content" in self.get_attribute_values("class"):
-                self.parent.text = html_string
-                temp = html.fragments_fromstring(html_string)
-                self.etree_fragments = []
-                for fragment in temp:
-                    self.etree_fragments.append(fragment)
+    # def replace_tag_with_content(self, html_string):
+    #     if self.parent.tag in ["contet", "contents"]:
+    #         if "os-raise-content" in self.get_attribute_values("class"):
+    #             self.parent.text = html_string
+    #             temp = html.fragments_fromstring(html_string)
+    #             self.etree_fragments = []
+    #             for fragment in temp:
+    #                 self.etree_fragments.append(fragment)
 
     def tostring(self):
         # Pass things through bs4 so we can avoid adding closing tags and
