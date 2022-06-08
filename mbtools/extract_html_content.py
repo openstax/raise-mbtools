@@ -14,7 +14,7 @@ def replace_content_tags(mbz_path, output_file_path,
         if isinstance(act, MoodleLesson) and "lesson" in filter \
                 or isinstance(act, MoodlePage) and "page" in filter:
             for html_elem in act.html_elements():
-                html_file = html_elem.replace_content_with_tag()
+                html_file = html_elem.replace_content_tag()
                 if html_file:
                     output_html_files.append(html_file)
                     utils.write_etree(act.activity_filename, act.etree)

@@ -16,27 +16,24 @@ def collect_and_write_resources(resource_urls, output_dir):
 
 
 def fetch_im_resources(content_dir, output_dir, mode):
-    elems = []
+    resource_urls = []
     if (mode == 'mbz'):
+        elems = []
         elems.extend(parse_backup_elements(content_dir))
-        resource_urls = []
         for elem in elems:
             resource_urls.extend(
                 find_references_containing(elem.etree_fragments[0], IM_PREFIX)
             )
-        collect_and_write_resources(set(resource_urls), output_dir)
-        return resource_urls
     elif(mode == 'html'):
-        resource_urls = []
         for item in content_dir.iterdir():
             with open(item, 'r') as f:
                 data = f.read()
                 tree = html.fragments_fromstring(data)[0]
                 resource_urls.extend(
                     find_references_containing(tree, IM_PREFIX)
-                    )
-        collect_and_write_resources(set(resource_urls), output_dir)
-        return resource_urls
+                )
+    collect_and_write_resources(set(resource_urls), output_dir)
+    return resource_urls
 
 
 def main():
@@ -54,10 +51,11 @@ def main():
     if not output_dir.exists():
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    replacements = fetch_im_resources(content_path, output_dir, args.mode)
+    resource_urls = fetch_im_resources(content_path, output_dir, args.mode)
 
-    print(f'Processed {len(replacements)} files to {output_dir}')
+    print(f'Processed {len(resource_urls)} URLs resulting in'
+          f'{len(set(resource_urls))} files to {output_dir}')
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

@@ -182,7 +182,7 @@ def test_fetch_im_resource_repeats(
         tmp_path,
         activities=[lesson1]
         )
-    m = requests_mock.get(
+    requests_mock.get(
         f"https://s3.amazonaws.com/im-ims-export/{filename}",
         content=resource_content
     )
@@ -195,7 +195,7 @@ def test_fetch_im_resource_repeats(
 
     fetch_im_resources.main()
 
-    assert (m.call_count == 1)
+    assert (requests_mock.call_count == 1)
     for filename in os.listdir(output_path):
         f = os.path.join(output_path, filename)
         with open(f, 'r') as file:
@@ -221,10 +221,10 @@ def test_fetch_im_resource_extracted(
 
     lesson1_page1_content = f'''
     <div><p>Lesson 1 Page 1</p>
-    <img src="{im_resource}"></img>'''
+    <img src="{im_resource}"></img></div>'''
     lesson1_page2_content = f'''
     <div><p>Lesson 1 Page 1</p>
-    <img src="{im_resource2}"></img>'''
+    <img src="{im_resource2}"></img></div>'''
 
     extracted_path = tmp_path / "extracted"
     extracted_path.mkdir(parents=True, exist_ok=True)

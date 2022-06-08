@@ -233,7 +233,7 @@ class MoodleHtmlElement:
             else:
                 self.etree_fragments.append(fragment)
 
-    def replace_content_with_tag(self):
+    def replace_content_tag(self):
         if self.parent.tag in ["content", "contents"]:
             attrib_dict = self.etree_fragments[0].attrib
             if "class" in attrib_dict.keys() and \
