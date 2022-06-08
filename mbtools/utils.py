@@ -54,3 +54,14 @@ def parse_question_bank_for_html(mbz_dir, ids=None):
         for item in question.html_elements():
             html.append(item)
     return html
+
+
+def find_references_containing(content_etree, src_content):
+    """
+    Given a etree object and a prefix for a resource, this function will
+    return the src values from the etree that contain the src_content prefix
+    """
+    matching_elems = content_etree.xpath(
+        f'//*[contains(@src, "{src_content}")]'
+    )
+    return [el.get("src") for el in matching_elems]
