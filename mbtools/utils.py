@@ -73,7 +73,7 @@ def find_references_containing(content_etree, src_content):
 def swap_tags_for_content(elem):
     """
     Given a MoodleHtmlElement, swap all of the tags that exist in the element
-    for the html it represents. 
+    for the html it represents.
     """
     id = elem.get_attribute_values("data-content-id")[0]
     request = CONTENT_PREFIX + f"{id}.json"
@@ -84,7 +84,7 @@ def swap_tags_for_content(elem):
 def get_resources_from_elem(elem, prefix=None):
     """
     Given a MoodleHtmlElement, this returns a list of strings that are the
-    references used by the HTML in the element. If a prefix is provided, it 
+    references used by the HTML in the element. If a prefix is provided, it
     will only return those references that contain the prefix
     """
     extracted_swap = False

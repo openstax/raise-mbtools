@@ -42,8 +42,18 @@ def replace_im_links(mbz_path, media_path, s3_prefix):
             changes = replace_references(elem, im_to_osx_mapping)
             if len(changes) > 0:
                 replacements.update(changes)
+                print_file_contents(act.activity_filename)
                 utils.write_etree(act.activity_filename, act.etree)
+                print_file_contents(act.activity_filename)
     return replacements
+
+
+def print_file_contents(file_path):
+    var = open(file_path, 'r')
+    data = var.read()
+    var.close()
+    print(data)
+    return data
 
 
 def main():
