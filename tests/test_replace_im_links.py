@@ -1,7 +1,7 @@
 import os
 from mbtools import replace_im_links
 from mbtools.fetch_im_resources import IM_PREFIX
-from mbtools.utils import CONTENT_PREFIX, collect_resources_from_mbz
+from mbtools.utils import collect_resources_from_mbz
 from lxml import html
 import json
 
