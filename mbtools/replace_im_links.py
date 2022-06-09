@@ -67,5 +67,5 @@ def main():
     replace_im_links(content_path, media_path, args.s3_prefix, args.mode)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
