@@ -250,19 +250,12 @@ class MoodleHtmlElement:
         return None
 
     def tostring(self):
-        # Pass things through bs4 so we can avoid adding closing tags and
-        # closing slashes that lxml may otherwise emit on void elements
-        html_content = b''.join(
-            [etree.tostring(fragment) for fragment in self.etree_fragments])
-        return BeautifulSoup(
-            html_content,
-            "html.parser"
-        ).encode(formatter="html5").decode('utf-8')
+        return html_fragments_to_string(self.etree_fragments)
 
     def remove_attr(self, attr):
         for elem in self.etree_fragments[0].xpath(f'//*[@{attr}]'):
             elem.attrib.pop(attr)
-        self.parent.text = self.tostring()
+        self.update_html()
 
     def get_attribute_values(self, attr, exception=None):
         values = []
@@ -287,15 +280,16 @@ class MoodleHtmlElement:
         """Checks if the provided element is a fragment"""
         return elem in self.etree_fragments
 
-    def replace_attribute_values(self, attrs, swap_mapping):
-        swaps = {}
-        for attr in attrs:
-            for elem in self.etree_fragments[0].xpath(f'//*[@{attr}]'):
-                im_filename = elem.attrib[attr]
-                if im_filename in swap_mapping.keys():
-                    elem.attrib[attr] = swap_mapping[im_filename]
-                    swaps[im_filename] = swap_mapping[im_filename]
-        if (len(swaps) != 0):
-            str_elem = html.tostring(self.etree_fragments[0])
-            self.parent.text = str_elem
-        return swaps
+    def update_html(self):
+        self.parent.text = self.tostring()
+
+
+def html_fragments_to_string(fragments):
+    # Pass things through bs4 so we can avoid adding closing tags and
+    # closing slashes that lxml may otherwise emit on void elements
+    html_content = b''.join(
+        [etree.tostring(fragment) for fragment in fragments])
+    return BeautifulSoup(
+        html_content,
+        "html.parser"
+    ).encode(formatter="html5").decode('utf-8')

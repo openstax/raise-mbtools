@@ -1,12 +1,30 @@
 import os
 from mbtools import replace_im_links
 from mbtools.fetch_im_resources import IM_PREFIX
-from mbtools.utils import collect_resources_from_mbz
+from mbtools import utils
 from lxml import html
 import json
 
 
-def test_replace_im_links_regular(
+def collect_resources_from_mbz(mbz_path, prefix=None):
+    """
+    Given a path to an opened mbz file, this function will return all of the
+    references to external sources referenced by the HTML within that mbz. If a
+    prefix is provided, it will return the references that contain that
+    prefix
+    """
+    elems = []
+    elems.extend(utils.parse_backup_elements(mbz_path))
+    resource_urls = []
+    for elem in elems:
+        resource_urls.extend(utils.find_references_containing(
+            elem.etree_fragments[0], prefix
+            )
+        )
+    return resource_urls
+
+
+def test_replace_im_links_mbz(
     tmp_path, mbz_builder, page_builder, lesson_builder,
     quiz_builder, mocker
 ):
@@ -137,7 +155,7 @@ def test_replace_im_links_regular(
     assert len(resources) == 3
 
 
-def test_replace_im_links_regular_no_matches(
+def test_replace_im_links_mbz_no_matches(
     tmp_path, mbz_builder, lesson_builder, mocker
 ):
     media_json = [

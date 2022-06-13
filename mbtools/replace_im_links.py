@@ -3,10 +3,8 @@ from mbtools import utils
 import argparse
 from lxml import html
 from pathlib import Path
-
-IM_PREFIX = "https://s3.amazonaws.com/im-ims-export/"
-# Make Conditional for local instance
-CONTENT_PREFIX = "https://k12.openstax.org/contents/raise/"
+from mbtools import models
+from mbtools.fetch_im_resources import IM_PREFIX
 
 
 def parse_media_file(media_path, s3_prefix):
@@ -27,27 +25,31 @@ def replace_im_links(content_path, media_path, s3_prefix, mode):
         backup = utils.parse_moodle_backup(content_path)
         activities = backup.activities()
         q_bank = backup.q_bank
+        act_updates = 0
         for act in activities:
             elems = act.html_elements()
             for elem in elems:
-                changes = elem.replace_attribute_values(
-                              ['src', 'href'], im_to_osx_mapping)
+                changes = utils.replace_attribute_values_tree(
+                            elem.etree_fragments[0],
+                            ['src', 'href'],
+                            im_to_osx_mapping)
                 if (len(changes) > 0):
+                    elem.update_html()
+                    act_updates += 1
                     replacements.update(changes)
-                    utils.write_etree(act.activity_filename, act.etree)
-                    utils.write_etree(q_bank.questionbank_path, q_bank.etree)
-        return replacements
+            if act_updates > 0:
+                utils.write_etree(act.activity_filename, act.etree)
+        utils.write_etree(q_bank.questionbank_path, q_bank.etree)
     elif (mode == 'html'):
         for item in content_path.iterdir():
-            content_tree = None
             with open(item, 'r') as f:
                 data = f.read()
-                content_tree = html.fragments_fromstring(data)[0]
+                fragments = html.fragments_fromstring(data)
                 utils.replace_attribute_values_tree(
-                    content_tree, ['src', 'href'], im_to_osx_mapping
+                    fragments[0], ['src', 'href'], im_to_osx_mapping
                     )
             with open(item, 'w') as f:
-                f.write(html.tostring(content_tree).decode())
+                f.write(models.html_fragments_to_string(fragments))
 
 
 def main():
@@ -56,15 +58,16 @@ def main():
                         help='relative path to unzipped mbz or html directory')
     parser.add_argument('media_json', type=str,
                         help='Path to where files will be output')
-    parser.add_argument('s3_prefix', type=str,
-                        help='prefix for s3 files')
+    parser.add_argument('content_url_prefix', type=str,
+                        help='prefix for content_URLS files')
     parser.add_argument('mode', choices=['mbz', 'html'])
 
     args = parser.parse_args()
     content_path = Path(args.content_path).resolve(strict=True)
     media_path = Path(args.media_json).resolve(strict=True)
 
-    replace_im_links(content_path, media_path, args.s3_prefix, args.mode)
+    replace_im_links(content_path, media_path,
+                     args.content_url_prefix, args.mode)
 
 
 if __name__ == "__main__":  # pragma: no cover
