@@ -15,13 +15,15 @@ def collect_resources_from_mbz(mbz_path, prefix=None):
     """
     elems = []
     elems.extend(utils.parse_backup_elements(mbz_path))
-    resource_urls = []
+    resource_elems = []
     for elem in elems:
-        resource_urls.extend(utils.find_references_containing(
-            elem.etree_fragments[0], prefix
-            )
-        )
-    return resource_urls
+        if prefix is None:
+            resource_elems.extend(elem.etree_fragments[0].xpath('//*[@src]'))
+        else:
+            resource_elems.extend(elem.etree_fragments[0].xpath(
+                f'//*[contains(@src, "{prefix}")]')
+                )
+    return [el.get("src") for el in resource_elems]
 
 
 def test_replace_im_links_mbz(
@@ -289,10 +291,9 @@ def test_fetch_im_resource_extracted(
         f = os.path.join(extracted_path, filename)
         with open(f, 'r') as file:
             data = file.read()
-            for attr in ['src', 'href']:
-                for elem in html.fragments_fromstring(
-                            data)[0].xpath(f'//*[@{attr}]'):
-                    resources.append(elem.attrib[attr])
+            for elem in html.fragments_fromstring(
+                        data)[0].xpath('//*[@src]'):
+                resources.append(elem.attrib['src'])
     assert len(resources) == 2
     for r in resources:
         assert new_prefix in r
@@ -352,10 +353,9 @@ def test_fetch_im_resource_extracted_no_matches(
         f = os.path.join(extracted_path, filename)
         with open(f, 'r') as file:
             data = file.read()
-            for attr in ['src', 'href']:
-                for elem in html.fragments_fromstring(
-                            data)[0].xpath(f'//*[@{attr}]'):
-                    resources.append(elem.attrib[attr])
+            for elem in html.fragments_fromstring(
+                        data)[0].xpath('//*[@src]'):
+                resources.append(elem.attrib['src'])
     assert len(resources) == 2
     for r in resources:
         assert new_prefix not in r

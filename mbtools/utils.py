@@ -18,22 +18,20 @@ def parse_moodle_backup(mbz_dir):
     return models.MoodleBackup(mbz_path)
 
 
-def parse_backup_activities(mbz_dir):
+def parse_backup_activities(mbz_path):
     """
     Given a string with path to an extracted moodle backup directory return
     model objects for course activities
     """
-    mbz_path = Path(mbz_dir).resolve(strict=True)
     moodle_backup = parse_moodle_backup(mbz_path)
     return moodle_backup.activities()
 
 
-def parse_backup_quizzes(mbz_dir):
+def parse_backup_quizzes(mbz_path):
     """
     Given a string with path to an extracted moodle backup directory return
     model objects for course quizzes
     """
-    mbz_path = Path(mbz_dir).resolve(strict=True)
     moodle_backup = parse_moodle_backup(mbz_path)
     return moodle_backup.quizzes()
 
@@ -65,29 +63,34 @@ def parse_question_bank_for_html(mbz_dir, ids=None):
     return html
 
 
-def find_references_containing(content_etree, src_content=None):
+def find_references_containing(content_etree, src_content):
     """
     Given a etree object and a prefix for a resource, this function will
     return the src values from the etree that contain the src_content prefix
     """
-    matching_elems = []
-    if src_content is None:
-        matching_elems = content_etree.xpath(
-            '//*[@src]'
-        )
-    else:
-        matching_elems = content_etree.xpath(
-            f'//*[contains(@src, "{src_content}")]'
-        )
+    matching_elems = find_elements_containing(content_etree, src_content)
     return [el.get("src") for el in matching_elems]
 
 
-def replace_attribute_values_tree(content_tree, attrs, swap_mapping):
-    swaps = {}
-    for attr in attrs:
-        for elem in content_tree.xpath(f'//*[@{attr}]'):
-            im_filename = elem.attrib[attr]
-            if im_filename in swap_mapping.keys():
-                elem.attrib[attr] = swap_mapping[im_filename]
-                swaps[im_filename] = swap_mapping[im_filename]
-    return swaps
+def find_elements_containing(content_etree, src_content):
+    """
+    Given a etree object and a prefix for a resource, this function will
+    return the elementss from the etree that contain the src_content prefix
+    """
+    return content_etree.xpath(
+        f'//*[contains(@src, "{src_content}")]'
+    )
+
+
+def replace_src_values_tree(content_tree, src_content, swap_mapping):
+    """
+    Given an etree object, a prefix, and a mapping from links with that
+    prefix to new links, swap all src values according to the mapping.
+    """
+    num_changes = 0
+    for elem in find_elements_containing(content_tree, src_content):
+        im_filename = elem.attrib["src"]
+        if im_filename in swap_mapping.keys():
+            num_changes += 1
+            elem.attrib["src"] = swap_mapping[im_filename]
+    return num_changes
