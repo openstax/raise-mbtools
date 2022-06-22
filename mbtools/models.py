@@ -224,7 +224,7 @@ class MoodleHtmlElement:
         # Catch strings that exist without html tags
         temp = html.fragments_fromstring(self.parent.text)
         for fragment in temp:
-            if type(fragment) != html.HtmlElement:
+            if type(fragment) not in [html.HtmlElement, html.HtmlComment]:
                 self.unnested_content.append(fragment)
             elif (fragment.tail is not None and fragment.tail.strip()):
                 self.unnested_content.append(fragment.tail)
