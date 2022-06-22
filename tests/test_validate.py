@@ -80,6 +80,35 @@ def test_unnested_different_line():
     assert violations[0].issue == validate_mbz_html.UNNESTED_VIOLATION
 
 
+def test_unnested_ignore_comments():
+    parent = etree.fromstring("<content></content>")
+    parent.text = '''
+    <!-- External comment -->
+    <p>Real content</p>
+    <div>
+      <!-- Internal comment -->
+    </div>
+    '''
+    elem = MoodleHtmlElement(parent, "")
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 0
+
+
+def test_unnested_text_with_comments():
+    parent = etree.fromstring("<content></content>")
+    parent.text = '''
+    <!-- External comment -->some text
+    <p>Real content</p>
+    <div>
+      <!-- Internal comment -->
+    </div>
+    '''
+    elem = MoodleHtmlElement(parent, "")
+    violations = validate_mbz_html.find_unnested_violations([elem])
+    assert len(violations) == 1
+    assert violations[0].issue == validate_mbz_html.UNNESTED_VIOLATION
+
+
 def test_ignore_space_tail():
     location = "here"
     parent = etree.fromstring("<content></content>")
