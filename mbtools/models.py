@@ -124,15 +124,16 @@ class MoodleLessonPage:
 
     def html_elements(self):
         elems = []
-        elems.append(self.html_element)
+        elems.append(self.html_element())
         for answer in self.answers():
             elems.append(answer.html_element())
+        return elems
 
 
 class MoodleLessonAnswer:
     def __init__(self, tree, location):
         self.tree = tree
-        self.location = location + f' (answer: {self.tree.attrib["id"]})'
+        self.location = location + f' (answer id: {self.tree.attrib["id"]})'
 
     def name(self):
         return self.tree.attrib["id"]
@@ -159,37 +160,11 @@ class MoodleLesson:
         page_objs.sort(key=lambda x: x.name())
         return page_objs
 
-    def html_elements_new(self):
+    def html_elements(self):
         elems = []
         for page in self.lesson_pages():
             elems.extend(page.html_elements())
         return elems
-
-    def html_elements_old(self):
-        elements = []
-        pages = self.etree.xpath("//pages/page")
-        for page in pages:
-            page_id = page.attrib["id"]
-            page_title = page.xpath("title")[0].text
-            contents = page.xpath("contents")
-
-            location = \
-                f'{self.name()} (page id={page_id}) ' \
-                f'Page Title: {page_title}'
-            elements.append(MoodleHtmlElement(contents[0], location))
-
-            for answer in page.xpath("answers/answer"):
-                answer_format = answer.xpath("answerformat")[0]
-                # We need to check the answer format to filter out things
-                # like buttons which are also serialized as answers but are
-                # not HTML
-                if answer_format.text == "1":
-                    answer_text = answer.xpath("answer_text")[0]
-                    answer_location = \
-                        f'{location} (answer id: {answer.attrib["id"]})'
-                    elements.append(
-                        MoodleHtmlElement(answer_text, answer_location))
-        return elements
 
 
 class MoodlePage:

@@ -372,14 +372,12 @@ def test_find_multiple_activity_violations_mbz(
     }
     lesson_moodle_source_error = {
         "issue": validate_mbz_html.MOODLE_VIOLATION,
-        "location": "Lesson: Lesson 2 (page id=21) "
-        "Page Title: Lesson 2 Page 1",
+        "location": "Lesson 2 (page: Lesson 2 Page 1)",
         "link": "@@PLUGINFILE@@"
     }
     lesson_iframe_errors = {
         "issue": validate_mbz_html.IFRAME_VIOLATION,
-        "location": "Lesson: Lesson 2 (page id=21) Page Title: Lesson 2 Page 2"
-        " (answer id: 111)",
+        "location": "Lesson 2 (page: Lesson 2 Page 2) (answer id: 111)",
         "link": "http://foobaz"
     }
     assert page_src_error in errors
