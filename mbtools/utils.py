@@ -48,14 +48,14 @@ def parse_backup_elements(mbz_dir):
     return html_elements
 
 
-def parse_question_bank_for_html(mbz_dir, ids=None):
+def parse_question_bank_for_html(mbz_dir):
     """
     Given a string with path to a question_bank directory from an extracted
     moodle backup, return model for a question bank
     """
 
     mbz_path = Path(mbz_dir).resolve(strict=True)
-    questions = models.MoodleQuestionBank(mbz_path).questions(ids)
+    questions = models.MoodleQuestionBank(mbz_path).questions
     html = []
     for question in questions:
         for item in question.html_elements():
