@@ -55,19 +55,25 @@ def test_generate_toc_from_mbz(
             name="Lesson",
             pages=[
                 {
-                    "id": indx,
+                    "id": 1,
                     "title": "2 Lesson Page",
-                    "html_content": lesson_html
+                    "html_content": lesson_html,
+                    "prevpageid": 0,
+                    "nextpageid": 2
                 },
                 {
-                    "id": indx,
+                    "id": 2,
                     "title": "3 Lesson Page",
-                    "html_content": lesson_html
+                    "html_content": lesson_html,
+                    "prevpageid": 1,
+                    "nextpageid": 3,
                 },
                 {
-                    "id": indx,
+                    "id": 3,
                     "title": "1 Lesson Page",
-                    "html_content": lesson_html
+                    "html_content": lesson_html,
+                    "prevpageid": 2,
+                    "nextpageid": 0,
                 }
             ]
         ))

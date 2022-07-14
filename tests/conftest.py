@@ -25,6 +25,8 @@ QUESTION_BANK_MATCH_TEXT_TEMPLATE = Template("""
 LESSON_PAGE_TEMPLATE = Template("""
 <page id="$id">
   <title>$title</title>
+  <prevpageid>$prevpageid</prevpageid>
+  <nextpageid>$nextpageid</nextpageid>
   <contents>$content</contents>
   <answers>
     $answerdata
@@ -173,7 +175,9 @@ def mbz_builder():
 
 @pytest.fixture
 def lesson_page_builder():
-    def _builder(id, title, html_content, answers=[]):
+    def _builder(
+      id, title, html_content, prevpageid=1, nextpageid=1, answers=[]
+    ):
         answerdata = ""
         for ans in answers:
             answerdata += LESSON_ANSWER_TEXT_TEMPLATE.substitute(
@@ -184,6 +188,8 @@ def lesson_page_builder():
             id=id,
             title=title,
             content=html.escape(html_content),
+            prevpageid=prevpageid,
+            nextpageid=nextpageid,
             answerdata=answerdata
         )
     return _builder
@@ -199,6 +205,8 @@ def lesson_builder(lesson_page_builder):
                 id=page["id"],
                 title=page["title"],
                 html_content=page["html_content"],
+                prevpageid=page.get("prevpageid", 1),
+                nextpageid=page.get("nextpageid", 1),
                 answers=page.get("answers", [])
             )
 

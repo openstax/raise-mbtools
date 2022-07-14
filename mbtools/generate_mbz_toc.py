@@ -1,7 +1,9 @@
 import argparse
 from pathlib import Path
 from mbtools.models import MoodleLesson, MoodlePage
-from mbtools.utils import parse_backup_activities
+from mbtools.utils import \
+    section_numbers_in_order, \
+    activity_from_activity_number
 
 
 def make_link(uuid):
@@ -16,22 +18,39 @@ def make_subheader(title):
     return f'## {title}  \n'
 
 
+def make_subsubheader(title):
+    return f'### {title}  \n'
+
+
 def create_toc(mbz_path, md_filepath):
-    activities = parse_backup_activities(mbz_path)
     with open(md_filepath, 'w') as f:
         f.write("# Table of Contents  \n")
-        for act in activities:
-            if isinstance(act, MoodlePage):
-                f.write(make_subheader(act.name()))
-                for html_elem in act.html_elements():
-                    uuid = html_elem.get_attribute_values("data-content-id")[0]
-                    f.write(make_bullet(act.name(), uuid))
-            elif isinstance(act, MoodleLesson):
-                f.write(make_subheader(act.name()))
-                for page in act.lesson_pages():
-                    html_elem = page.html_element()
-                    uuid = html_elem.get_attribute_values("data-content-id")[0]
-                    f.write(make_bullet(page.name(), uuid))
+        for section in section_numbers_in_order(mbz_path):
+            f.write(make_subheader(section.name()))
+
+            for activity_number in section.activities_in_order():
+                act = activity_from_activity_number(activity_number, mbz_path)
+                if isinstance(act, MoodlePage):
+                    f.write(make_subsubheader(act.name()))
+                    for html_elem in act.html_elements():
+                        uuid = html_elem.get_attribute_values("data-content-id")[0]
+                        f.write(make_bullet(act.name(), uuid))
+                elif isinstance(act, MoodleLesson):
+                    f.write(make_subsubheader(act.name()))
+                    id2page = {}
+                    current_page = None
+                    for page in act.lesson_pages():
+                        id2page[page.id] = page
+                        if (page.prev() == 0):
+                            current_page = page
+                    while(True):
+                        html_elem = current_page.html_element()
+                        uuid = html_elem.get_attribute_values("data-content-id")[0]
+                        f.write(make_bullet(current_page.name(), uuid))
+                        if (current_page.next() == 0):
+                            break
+                        else:
+                            current_page = id2page[current_page.next()]
 
 
 def main():
