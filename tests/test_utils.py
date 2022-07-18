@@ -178,7 +178,7 @@ def test_find_question_html(tmp_path, mbz_builder):
             }
         ]
     )
-    html_elements = utils.parse_question_bank_for_html(tmp_path)
+    html_elements = utils.parse_question_bank_latest_for_html(tmp_path)
     html = []
     for elem in html_elements:
         html.append(elem.tostring())

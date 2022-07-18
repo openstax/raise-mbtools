@@ -267,3 +267,63 @@ def test_questionbank_get_question_by_entry(tmp_path):
 
     with pytest.raises(Exception):
         questionbank.get_question_by_entry("1", "3")
+
+
+def test_questionbank_get_latest_questions(tmp_path):
+    questionbank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category id="1">
+    <question_bank_entries>
+      <question_bank_entry id="1">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question1v1">
+              </question>
+            </questions>
+          </question_versions>
+          <question_versions>
+            <version>2</version>
+            <questions>
+              <question id="question1v2">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+      <question_bank_entry id="2">
+        <question_version>
+          <question_versions>
+            <version>11</version>
+            <questions>
+              <question id="question2v11">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+        <question_version>
+          <question_versions>
+            <version>10</version>
+            <questions>
+              <question id="question2v10">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+    </question_bank_entries>
+  </question_category>
+</question_categories>
+    """
+
+    (tmp_path / "questions.xml").write_text(questionbank_xml.strip())
+    questionbank = MoodleQuestionBank(tmp_path)
+
+    assert len(questionbank.questions) == 4
+
+    latest_questions = questionbank.latest_questions
+    assert len(latest_questions) == 2
+    assert latest_questions[0].version == "2"
+    assert latest_questions[1].version == "11"

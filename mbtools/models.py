@@ -48,6 +48,8 @@ class MoodleBackup:
 
 
 class MoodleQuestionBank:
+    LATEST_VERSION_MARKER = "$@NULL@$"
+
     def __init__(self, mbz_path):
         self.mbz_path = Path(mbz_path)
         self.questionbank_path = self.mbz_path / "questions.xml"
@@ -56,6 +58,19 @@ class MoodleQuestionBank:
     @property
     def questions(self):
         return [MoodleQuestion(q) for q in self.etree.xpath("//question")]
+
+    @property
+    def latest_questions(self):
+        questions = []
+
+        for qbe in self.etree.xpath("//question_bank_entry"):
+            latest_question = self.get_question_by_entry(
+                qbe.attrib["id"],
+                self.LATEST_VERSION_MARKER
+            )
+            questions.append(latest_question)
+
+        return questions
 
     def get_question_by_entry(self, question_bank_entry_id, version):
         question_bank_entry = self.etree.xpath(
@@ -74,7 +89,8 @@ class MoodleQuestionBank:
             if (version == curr_version):
                 maybe_result = MoodleQuestion(question)
                 break
-            if (version == "$@NULL@$") and (curr_version_int > latest_version):
+            if (version == self.LATEST_VERSION_MARKER) and \
+               (curr_version_int > latest_version):
                 latest_version = curr_version_int
                 maybe_result = MoodleQuestion(question)
 
