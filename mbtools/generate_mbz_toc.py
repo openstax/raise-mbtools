@@ -1,9 +1,6 @@
 import argparse
 from pathlib import Path
-from mbtools.models import MoodleLesson, MoodlePage
-from mbtools.utils import \
-    section_numbers_in_order, \
-    activity_from_activity_number
+from mbtools.models import MoodleBackup, MoodleLesson, MoodlePage
 
 
 def make_link(uuid):
@@ -22,18 +19,22 @@ def make_subsubheader(title):
     return f'### {title}  \n'
 
 
-def create_toc(mbz_path, md_filepath):
-    with open(md_filepath, 'w') as f:
-        f.write("# Table of Contents  \n")
-        for section in section_numbers_in_order(mbz_path):
-            f.write(make_subheader(section.name()))
+def make_title():
+    return "# Table of Contents  \n"
 
-            for activity_number in section.activities_in_order():
-                act = activity_from_activity_number(activity_number, mbz_path)
+
+def create_toc(mbz_path, md_filepath):
+    moodle_backup = MoodleBackup(mbz_path)
+    with open(md_filepath, 'w') as f:
+        f.write(make_title())
+        for section in moodle_backup.sections():
+            f.write(make_subheader(section.title))
+            for act in moodle_backup.activities(section.id):
                 if isinstance(act, MoodlePage):
                     f.write(make_subsubheader(act.name()))
                     for html_elem in act.html_elements():
-                        uuid = html_elem.get_attribute_values("data-content-id")[0]
+                        uuid = html_elem.get_attribute_values(
+                            "data-content-id")[0]
                         f.write(make_bullet(act.name(), uuid))
                 elif isinstance(act, MoodleLesson):
                     f.write(make_subsubheader(act.name()))
@@ -45,7 +46,8 @@ def create_toc(mbz_path, md_filepath):
                             current_page = page
                     while(True):
                         html_elem = current_page.html_element()
-                        uuid = html_elem.get_attribute_values("data-content-id")[0]
+                        uuid = html_elem.get_attribute_values(
+                            "data-content-id")[0]
                         f.write(make_bullet(current_page.name(), uuid))
                         if (current_page.next() == 0):
                             break

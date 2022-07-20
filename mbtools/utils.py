@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from . import models
 
@@ -95,28 +94,3 @@ def replace_src_values_tree(content_tree, src_content, swap_mapping):
             num_changes += 1
             elem.attrib["src"] = swap_mapping[im_filename]
     return num_changes
-
-
-def section_numbers_in_order(mbz_dir):
-    mbz_path = Path(mbz_dir).resolve(strict=True)
-    sections = models.MoodleSections(mbz_path)
-    return sections.sections_in_order()
-
-
-def activity_from_activity_number(activity_number, mbz_dir):
-    mbz_path = Path(mbz_dir).resolve(strict=True)
-    activity_foldername = ''
-    activity_type = ''
-    for subdirs, dirs, files in os.walk(mbz_path / 'activities'):
-        for dir in dirs:
-            if str(activity_number) in dir:
-                activity_foldername = dir
-                activity_type = activity_foldername.split('_')[0]
-                activity_path = mbz_path / \
-                    f'activities/{activity_foldername}'
-                if (activity_type == 'lesson'):
-                    return models.MoodleLesson(activity_path, mbz_path)
-                elif (activity_type == 'page'):
-                    return models.MoodlePage(activity_path, mbz_path)
-                elif (activity_type == 'quiz'):
-                    return 0    # requires questionbank parsing / not needed

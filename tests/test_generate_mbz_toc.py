@@ -2,48 +2,16 @@ import mbtools.extract_html_content
 from mbtools.generate_mbz_toc import main
 
 
-# def test_make_location_to_uuid_mapping(
-#     mocker, tmp_path, page_builder, lesson_builder, mbz_builder
-# ):
-#     activities = []
-#     for indx in range(1):
-#         activities.append(page_builder(
-#             id=indx,
-#             name="Page",
-#             html_content="<div><p>Page</p></div>"
-#         ))
-
-#     for indx in range(2):
-#         activities.append(lesson_builder(
-#             id=indx,
-#             name="Lesson",
-#             pages=[
-#                 {
-#                     "id": indx,
-#                     "title": "Lesson Page",
-#                     "html_content": "<div><p>Lesson page</p></div>"
-#                 }
-#             ]
-#         ))
-
-#     mbz_path = tmp_path / "mbz"
-#     html_path = tmp_path / "html"
-#     mbz_builder(mbz_path, activities=activities)
-#     html_path.mkdir(parents=True, exist_ok=True)
-#     mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
-
-#     location2uuid_map = make_location_to_uuid_mapping(mbz_path)
-#     assert len(location2uuid_map) == 3
-
-
 def test_generate_toc_from_mbz(
     mocker, tmp_path, page_builder, lesson_builder, mbz_builder
 ):
     activities = []
+    sections = []
     page_html = "<div><p>Page</p></div>"
     lesson_html = "<div><p>Lesson page</p></div>"
     for indx in range(1):
         activities.append(page_builder(
+            section_id=1,
             id=indx,
             name="Page",
             html_content=page_html
@@ -51,6 +19,7 @@ def test_generate_toc_from_mbz(
 
     for indx in range(2):
         activities.append(lesson_builder(
+            section_id=1,
             id=indx,
             name="Lesson",
             pages=[
@@ -77,6 +46,11 @@ def test_generate_toc_from_mbz(
                 }
             ]
         ))
+
+    sections.append({
+        "id": 1,
+        "title": "First Section"
+        })
 
     mbz_path = tmp_path / "mbz"
     html_path = tmp_path / "html"

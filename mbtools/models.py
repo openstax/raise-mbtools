@@ -1,4 +1,3 @@
-import os
 import uuid
 from pathlib import Path
 from xml.dom import NotFoundErr
@@ -17,8 +16,13 @@ class MoodleBackup:
         self.etree = etree.parse(str(backup_xml_path))
         self.q_bank = MoodleQuestionBank(self.mbz_path)
 
-    def activities(self):
-        activity_elems = self.etree.xpath("//contents/activities/activity")
+    def activities(self, section_id=None):
+        if section_id is None:
+            activity_elems = self.etree.xpath("//contents/activities/activity")
+        else:
+            activity_elems = self.etree.xpath(
+                f"//contents/activities/activity[sectionid='{section_id}']"
+            )
         activities = []
         for activity_elem in activity_elems:
             activity_type = activity_elem.find("modulename").text
@@ -48,36 +52,21 @@ class MoodleBackup:
                 MoodleQuiz(activity_path, self.mbz_path, self.q_bank))
         return activities
 
-
-class MoodleSections:
-    def __init__(self, mbz_path): 
-        self.mbz_path = Path(mbz_path)
-        self.sections_path = self.mbz_path / 'sections/'
-
-    def sections_in_order(self):
-        section_objects = []
-        for subdirs, dirs, files in os.walk(self.sections_path):
-            for dir in dirs:
-                section_path = self.sections_path / dir
-                section_objects.append(MoodleSection(section_path, self.mbz_path))
-        section_objects.sort(key=lambda x: x.name())
-        return section_objects
+    def sections(self):
+        section_elements = self.etree.xpath("//contents/sections/section")
+        sections = []
+        for s in section_elements:
+            id = s.xpath("sectionid")[0].text
+            title = s.xpath("title")[0].text
+            sections.append(MoodleSection(id, title, self.mbz_path))
+        return sections
 
 
 class MoodleSection:
-    def __init__(self, section_path, mbz_path):
+    def __init__(self, id, title, mbz_path):
         self.mbz_path = Path(mbz_path)
-        self.section_path = Path(section_path)
-        self.section_filename = str(self.section_path / "section.xml")
-        self.etree = etree.parse(self.section_filename)
-
-    def name(self):
-        return self.etree.xpath("name")[0].text
-
-    def activities_in_order(self):
-        activity_string = self.etree.xpath("sequence")[0].text
-        activity_sequence = [int(i) for i in activity_string.split(',')]
-        return activity_sequence
+        self.id = id
+        self.title = title
 
 
 class MoodleQuestionBank:
