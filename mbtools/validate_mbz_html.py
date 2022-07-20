@@ -50,7 +50,7 @@ class Violation:
 def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
     html_elements = utils.parse_backup_elements(mbz_path)
     if include_questionbank:
-        html_elements += utils.parse_question_bank_for_html(mbz_path)
+        html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
 
     violations = []
     violations.extend(find_unnested_violations(html_elements))

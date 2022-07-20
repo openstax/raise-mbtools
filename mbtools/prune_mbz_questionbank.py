@@ -12,14 +12,14 @@ def main():
 
     quizzes = utils.parse_backup_quizzes(mbz_path)
 
-    used_question_ids = set()
+    used_qbank_entry_ids = set()
 
     for quiz in quizzes:
-        used_question_ids.update(quiz.question_ids())
+        used_qbank_entry_ids.update(quiz.used_qbank_entry_ids())
 
     question_bank = models.MoodleQuestionBank(mbz_path)
 
-    question_bank.delete_unused_questions(used_question_ids)
+    question_bank.delete_unused_question_bank_entries(used_qbank_entry_ids)
     question_bank.delete_empty_categories()
 
     utils.write_etree(question_bank.questionbank_path, question_bank.etree)
