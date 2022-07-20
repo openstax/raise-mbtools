@@ -1,5 +1,3 @@
-from xml.dom import NotFoundErr
-import pytest
 from mbtools import utils
 
 
@@ -180,7 +178,7 @@ def test_find_question_html(tmp_path, mbz_builder):
             }
         ]
     )
-    html_elements = utils.parse_question_bank_for_html(tmp_path)
+    html_elements = utils.parse_question_bank_latest_for_html(tmp_path)
     html = []
     for elem in html_elements:
         html.append(elem.tostring())
@@ -194,57 +192,3 @@ def test_find_question_html(tmp_path, mbz_builder):
         qb_question3_match1_question,
         qb_question3_match2_question
     ]) == set(html)
-
-
-def test_find_questions_by_id(tmp_path, mbz_builder):
-    qb_question1_content = "<p>Question 1</p>"
-    qb_question1_answer1_content = "<p>answer 1</p>"
-    qb_question1_answer2_content = "<p>answer 2</p>"
-    qb_question2_content = "<p>Question 2</p>"
-    qb_question3_content = "<p>Question 3</p>"
-
-    mbz_builder(
-        tmp_path,
-        activities=[],
-        questionbank_questions=[
-            {
-                "id": 1,
-                "html_content": qb_question1_content,
-                "answers": [
-                    {
-                        "id": 11,
-                        "html_content": qb_question1_answer1_content
-                    },
-                    {
-                        "id": 12,
-                        "html_content": qb_question1_answer2_content
-                    }
-                ]
-            },
-            {
-                "id": 2,
-                "html_content": qb_question2_content
-            },
-            {
-                "id": 3,
-                "html_content": qb_question3_content
-            }
-        ]
-    )
-    ids = ["1"]
-    html_elements = utils.parse_question_bank_for_html(tmp_path, ids)
-    html = []
-    for elem in html_elements:
-        html.append(elem.tostring())
-    assert len(html) == 3
-    assert set([qb_question1_content,
-                qb_question1_answer1_content,
-                qb_question1_answer2_content]) == set(html)
-
-    with pytest.raises(NotFoundErr):
-        ids = ["9"]
-        html = utils.parse_question_bank_for_html(tmp_path, ids)
-
-    with pytest.raises(NotFoundErr):
-        ids = ["1", "9"]
-        html = utils.parse_question_bank_for_html(tmp_path, ids)

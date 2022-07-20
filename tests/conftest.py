@@ -70,7 +70,10 @@ QUIZ_TEMPLATE = Template("""
 
 QUIZ_QUESTION_TEMPLATE = Template("""
 <question_instance id="$id">
-  <questionid>$questionid</questionid>
+  <question_reference>
+    <questionbankentryid>$questionid</questionbankentryid>
+    <version>$@NULL@$</version>
+  </question_reference>
 </question_instance>
 """)
 
@@ -104,28 +107,37 @@ MOODLE_BACKUP_TEMPLATE = Template("""
 """)
 
 QUESTION_TEMPLATE = Template("""
-<question id="$id">
-  <questiontext>$content</questiontext>
-  <plugin>
-    <answers>
-      $answerdata
-    </answers>
-  </plugin>
-  <plugin>
-    <matches>
-      $matchdata
-    </matches>
-  </plugin>
-</question>
+<question_bank_entry id="$id">
+  <question_version>
+    <question_versions>
+      <version>1</version>
+      <questions>
+        <question id="questionid$id">
+          <questiontext>$content</questiontext>
+          <plugin>
+            <answers>
+              $answerdata
+            </answers>
+          </plugin>
+          <plugin>
+            <matches>
+              $matchdata
+            </matches>
+          </plugin>
+        </question>
+    </questions>
+    </question_versions>
+  </question_version>
+</question_bank_entry>
 """)
 
 QUESTION_BANK_TEMPLATE = Template("""
 <?xml version="1.0" encoding="UTF-8"?>
 <question_categories>
   <question_category>
-    <questions>
+    <question_bank_entries>
       $questiondata
-    </questions>
+    </question_bank_entries>
   </question_category>
 </question_categories>
 """)
@@ -272,7 +284,7 @@ def quiz_builder():
     def _builder(id, name, questions=[], section_id=1):
         questiondata = ""
         for question in questions:
-            questiondata += QUIZ_QUESTION_TEMPLATE.substitute(
+            questiondata += QUIZ_QUESTION_TEMPLATE.safe_substitute(
                 id=question["id"],
                 questionid=question["questionid"]
             )

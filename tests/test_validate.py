@@ -439,32 +439,32 @@ def test_questionbank_validation_and_optout_flag_mbz(
     assert len(errors) == 6
     q1_error1 = {
         "issue": validate_mbz_html.MOODLE_VIOLATION,
-        "location": "Question Bank, Question: 1",
+        "location": "Question bank ID questionid1 version 1",
         "link": "@@PLUGINFILE@@"
     }
     q1_error2 = {
         "issue": validate_mbz_html.SCRIPT_VIOLATION,
-        "location": "Question Bank, Question: 1",
+        "location": "Question bank ID questionid1 version 1",
         "link": ""
     }
     q2_error1 = {
         "issue": validate_mbz_html.IFRAME_VIOLATION,
-        "location": "Question Bank, Question: 2",
+        "location": "Question bank ID questionid2 version 1",
         "link": "http://foobaz"
     }
     q2_error2 = {
         "issue": validate_mbz_html.SOURCE_VIOLATION,
-        "location": "Question Bank, Question: 2",
+        "location": "Question bank ID questionid2 version 1",
         "link": "http://foobar"
     }
     quiz_errror1 = {
         "issue": validate_mbz_html.IFRAME_VIOLATION,
-        "location": "Quiz Question: 2",
+        "location": "Question bank ID questionid2 version 1",
         "link": "http://foobaz"
     }
     quiz_errror2 = {
         "issue": validate_mbz_html.SOURCE_VIOLATION,
-        "location": "Quiz Question: 2",
+        "location": "Question bank ID questionid2 version 1",
         "link": "http://foobar"
     }
     assert q1_error1 in errors

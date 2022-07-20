@@ -1,3 +1,4 @@
+import pytest
 from lxml import etree
 from mbtools.models import MoodleHtmlElement, MoodleQuestionBank, MoodleQuiz
 
@@ -46,17 +47,20 @@ def test_question_answertext_filter(tmp_path):
 <?xml version="1.0" encoding="UTF-8"?>
 <question_categories>
   <question_category>
-    <questions>
-      <question id="1">
-        <plugin_qtype_numerical_question>
-          <answers>
-            <answer>
-              <answertext>112</answertext>
-            </answer>
-          </answers>
-        </plugin_qtype_numerical_question>
-      </question>
-    </questions>
+    <question_versions>
+      <version>1</version>
+      <questions>
+        <question id="1">
+          <plugin_qtype_numerical_question>
+            <answers>
+              <answer>
+                <answertext>112</answertext>
+              </answer>
+            </answers>
+          </plugin_qtype_numerical_question>
+        </question>
+      </questions>
+    </question_versions>
   </question_category>
 </question_categories>
     """.strip()
@@ -66,13 +70,13 @@ def test_question_answertext_filter(tmp_path):
 
     question_bank = MoodleQuestionBank(tmp_path)
     question_bank_html = []
-    for question in question_bank.questions():
+    for question in question_bank.questions:
         question_bank_html.extend(question.html_elements())
 
     assert len(question_bank_html) == 0
 
 
-def test_quiz_question_ids(tmp_path, mbz_builder, quiz_builder):
+def test_quiz_used_qbank_entry_ids(tmp_path, mbz_builder, quiz_builder):
     quiz = quiz_builder(
         id=1,
         name="Quiz 1",
@@ -94,39 +98,75 @@ def test_quiz_question_ids(tmp_path, mbz_builder, quiz_builder):
         tmp_path,
         MoodleQuestionBank(tmp_path)
     )
-    assert quiz.question_ids() == ["11", "22"]
+    assert quiz.used_qbank_entry_ids() == ["11", "22"]
 
 
-def test_questionbank_delete_unused_questions(tmp_path):
+def test_questionbank_delete_unused_question_bank_entries(tmp_path):
     questionbank_xml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <question_categories>
   <question_category id="1">
-    <questions>
-      <question id="1">
-      </question>
-      <question id="2">
-      </question>
-    </questions>
+    <question_bank_entries>
+      <question_bank_entry id="1">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question1">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+      <question_bank_entry id="2">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question2">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+    </question_bank_entries>
   </question_category>
   <question_category id="2">
-    <questions>
-      <question id="3">
-      </question>
-      <question id="4">
-      </question>
-    </questions>
+    <question_bank_entries>
+      <question_bank_entry id="3">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question3">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+      <question_bank_entry id="4">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question4">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+    </question_bank_entries>
   </question_category>
 </question_categories>
     """
 
     (tmp_path / "questions.xml").write_text(questionbank_xml.strip())
     questionbank = MoodleQuestionBank(tmp_path)
-    questionbank.delete_unused_questions(["2"])
+    questionbank.delete_unused_question_bank_entries(["2"])
 
-    questions = questionbank.questions()
+    questions = questionbank.questions
     assert len(questions) == 1
-    assert questions[0].id == "2"
+    assert questions[0].id == "question2"
 
 
 def test_questionbank_delete_empty_categories(tmp_path):
@@ -134,16 +174,34 @@ def test_questionbank_delete_empty_categories(tmp_path):
 <?xml version="1.0" encoding="UTF-8"?>
 <question_categories>
   <question_category id="1">
-    <questions>
-      <question id="1">
-      </question>
-      <question id="2">
-      </question>
-    </questions>
+    <question_bank_entries>
+      <question_bank_entry id="1">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question1">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+      <question_bank_entry id="2">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question2">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+    </question_bank_entries>
   </question_category>
   <question_category id="2">
-    <questions>
-    </questions>
+    <question_bank_entries>
+    </question_bank_entries>
   </question_category>
 </question_categories>
     """
@@ -154,3 +212,118 @@ def test_questionbank_delete_empty_categories(tmp_path):
 
     question_categories = questionbank.etree.xpath("//question_category")
     assert len(question_categories) == 1
+
+
+def test_questionbank_get_question_by_entry(tmp_path):
+    questionbank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category id="1">
+    <question_bank_entries>
+      <question_bank_entry id="1">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question1">
+              </question>
+            </questions>
+          </question_versions>
+          <question_versions>
+            <version>2</version>
+            <questions>
+              <question id="question1">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+      <question_bank_entry id="2">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question2">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+    </question_bank_entries>
+  </question_category>
+</question_categories>
+    """
+
+    (tmp_path / "questions.xml").write_text(questionbank_xml.strip())
+    questionbank = MoodleQuestionBank(tmp_path)
+
+    assert questionbank.get_question_by_entry("1", "1") is not None
+
+    question1_latest = questionbank.get_question_by_entry("1", "$@NULL@$")
+    assert question1_latest.version == "2"
+
+    question2 = questionbank.get_question_by_entry("2", "1")
+    assert question2.id == "question2"
+
+    with pytest.raises(Exception):
+        questionbank.get_question_by_entry("1", "3")
+
+
+def test_questionbank_get_latest_questions(tmp_path):
+    questionbank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category id="1">
+    <question_bank_entries>
+      <question_bank_entry id="1">
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question1v1">
+              </question>
+            </questions>
+          </question_versions>
+          <question_versions>
+            <version>2</version>
+            <questions>
+              <question id="question1v2">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+      <question_bank_entry id="2">
+        <question_version>
+          <question_versions>
+            <version>11</version>
+            <questions>
+              <question id="question2v11">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+        <question_version>
+          <question_versions>
+            <version>10</version>
+            <questions>
+              <question id="question2v10">
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+    </question_bank_entries>
+  </question_category>
+</question_categories>
+    """
+
+    (tmp_path / "questions.xml").write_text(questionbank_xml.strip())
+    questionbank = MoodleQuestionBank(tmp_path)
+
+    assert len(questionbank.questions) == 4
+
+    latest_questions = questionbank.latest_questions
+    assert len(latest_questions) == 2
+    assert latest_questions[0].version == "2"
+    assert latest_questions[1].version == "11"

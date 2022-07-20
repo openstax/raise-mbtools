@@ -1,6 +1,5 @@
 import uuid
 from pathlib import Path
-from xml.dom import NotFoundErr
 from lxml import etree, html
 from bs4 import BeautifulSoup
 
@@ -70,56 +69,74 @@ class MoodleSection:
 
 
 class MoodleQuestionBank:
+    LATEST_VERSION_MARKER = "$@NULL@$"
+
     def __init__(self, mbz_path):
         self.mbz_path = Path(mbz_path)
         self.questionbank_path = self.mbz_path / "questions.xml"
         self.etree = etree.parse(str(self.questionbank_path))
 
-    def questions(self, ids=None, locations=None):
+    @property
+    def questions(self):
+        return [MoodleQuestion(q) for q in self.etree.xpath("//question")]
+
+    @property
+    def latest_questions(self):
         questions = []
-        if ids is None:
-            query = \
-                '//question_categories/question_category/questions/question'
-            elems = self.etree.xpath(query)
-            for elem in elems:
-                location = "Question Bank, Question: " + elem.attrib['id']
-                questions.append(
-                    MoodleQuestion(elem,
-                                   elem.attrib['id'],
-                                   location))
-        else:
-            for i in range(0, len(ids)):
-                query = \
-                    '//question_categories/question_category/questions/'\
-                    f'question[@id={ids[i]}]'
-                elems = self.etree.xpath(query)
-                if len(elems) == 0:
-                    raise(NotFoundErr)
-                else:
-                    if locations is None:
-                        location = f'Question Bank id={ids[i]}'
-                    else:
-                        location = locations[i]
-                    questions.append(MoodleQuestion(elems[0],
-                                                    ids[i],
-                                                    location))
+
+        for qbe in self.etree.xpath("//question_bank_entry"):
+            latest_question = self.get_question_by_entry(
+                qbe.attrib["id"],
+                self.LATEST_VERSION_MARKER
+            )
+            questions.append(latest_question)
 
         return questions
 
-    def delete_unused_questions(self, used_question_ids):
+    def get_question_by_entry(self, question_bank_entry_id, version):
+        question_bank_entry = self.etree.xpath(
+            f'//question_bank_entry[@id="{question_bank_entry_id}"]'
+        )[0]
+
+        # The reference may have a specific ID or a marker to indicate latest
+        maybe_result = None
+        latest_version = 0
+        question_versions = question_bank_entry.xpath(".//question_versions")
+
+        for question_version in question_versions:
+            curr_version = question_version.xpath("./version")[0].text
+            curr_version_int = int(curr_version)
+            question = question_version.xpath(".//question")[0]
+            if (version == curr_version):
+                maybe_result = MoodleQuestion(question)
+                break
+            if (version == self.LATEST_VERSION_MARKER) and \
+               (curr_version_int > latest_version):
+                latest_version = curr_version_int
+                maybe_result = MoodleQuestion(question)
+
+        if maybe_result is None:
+            raise Exception(
+                f"Could not find question entry {question_bank_entry_id} "
+                f"version {version} in bank"
+            )
+        return maybe_result
+
+    def delete_unused_question_bank_entries(self, used_question_entry_ids):
         query = \
-            '//question_categories/question_category/questions/question'
+            '//question_bank_entry'
         elems = self.etree.xpath(query)
         for elem in elems:
-            question_id = elem.attrib["id"]
-            if question_id not in used_question_ids:
+            question_bank_entry_id = elem.attrib["id"]
+            if question_bank_entry_id not in used_question_entry_ids:
                 elem.getparent().remove(elem)
 
     def delete_empty_categories(self):
-        query = '//question_categories/question_category'
-        elems = self.etree.xpath(query)
+        elems = self.etree.xpath('//question_categories/question_category')
         for elem in elems:
-            questions = elem.xpath('questions/question')
+            questions = elem.xpath(
+                './question_bank_entries/question_bank_entry'
+            )
             if (len(questions)) == 0:
                 elem.getparent().remove(elem)
 
@@ -218,52 +235,70 @@ class MoodleQuiz:
         self.etree = etree.parse(self.activity_filename)
         self.question_bank = question_bank
 
-    def html_elements(self):
-        ids = []
-        locations = []
-        quizes = self.etree.xpath("//quiz")
-        for quiz in quizes:
-            name = quiz.xpath("name")[0].text
-            questions = quiz.xpath("question_instances/question_instance")
+    @property
+    def quiz_questions(self):
+        results = []
+        quizzes = self.etree.xpath("//quiz")
+        for quiz in quizzes:
+            questions = quiz.xpath("./question_instances/question_instance")
             for question in questions:
-                question_id = question.xpath("questionid")[0].text
-                location = f'{name} Question: {question_id}'
-                ids.append(question_id)
-                locations.append(location)
-        question_objs = self.question_bank.questions(ids, locations)
+                results.append(MoodleQuizQuestion(question))
+        return results
+
+    def html_elements(self):
+        qbank_questions = []
+        for question in self.quiz_questions:
+            qbank_questions.append(
+                self.question_bank.get_question_by_entry(
+                    question.qbank_entry_id,
+                    question.version
+                )
+            )
 
         elements = []
-        for question in question_objs:
+        for question in qbank_questions:
             elements.extend(question.html_elements())
         return elements
 
-    def question_ids(self):
-        ids = []
-        quizzes = self.etree.xpath("//quiz")
-        for quiz in quizzes:
-            questions = quiz.xpath("question_instances/question_instance")
-            for question in questions:
-                question_id = question.xpath("questionid")[0].text
-                ids.append(question_id)
+    def used_qbank_entry_ids(self):
+        return [
+            question.qbank_entry_id for question in self.quiz_questions
+        ]
 
-        return ids
+
+class MoodleQuizQuestion:
+    """This class models a <question_instance> inside of quiz.xml"""
+    def __init__(self, question_elem):
+        self.etree = question_elem
+        self.qbank_entry_id = \
+            self.etree.xpath(
+                "./question_reference/questionbankentryid"
+            )[0].text
+        self.version = self.etree.xpath("./question_reference/version")[0].text
 
 
 class MoodleQuestion:
-    def __init__(self, question_elm, id, location):
+    """This class models a <question> from a <question_bank_entry> in
+    questions.xml
+    """
+    def __init__(self, question_elm):
         self.etree = question_elm
-        self.location = location
-        self.id = id
+        self.id = self.etree.attrib['id']
+        self.version = self.etree.xpath("../../version")[0].text
+
+    @property
+    def location(self):
+        return f"Question bank ID {self.id} version {self.version}"
 
     def html_elements(self):
         elements = []
         question_texts = self.etree.xpath(
-                f"//question[@id={self.id}]//questiontext")
+                f'//question[@id="{self.id}"]//questiontext')
         for question_html in question_texts:
             elements.append(
                 MoodleHtmlElement(question_html, self.location))
         answer_texts = self.etree.xpath(
-                f"//question[@id={self.id}]//answers/answer/answertext")
+                f'//question[@id="{self.id}"]//answers/answer/answertext')
         for answer_html in answer_texts:
             answer_qtype = answer_html.xpath("../../..")[0]
             if answer_qtype.tag not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
