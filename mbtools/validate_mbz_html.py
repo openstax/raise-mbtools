@@ -26,7 +26,8 @@ VALID_HREF_PREFIXES = ["https://k12.openstax.org/contents/raise",
                        "https://www.youtube.com",
                        "https://youtu.be",
                        "https://characterlab.org/",
-                       "https://digitalpromise.org"]
+                       "https://digitalpromise.org",
+                       "https://www.doe.virginia.gov"]
 
 VALID_STYLES = []
 
