@@ -147,7 +147,7 @@ class MoodleLessonAnswer:
 
     @property
     def location(self):
-        return self.lesson_page.location
+        return f"{self.lesson_page.location}: Answer Value"
 
     def html_element(self):
         answer_text = self.etree.xpath("answer_text")[0]
