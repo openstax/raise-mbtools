@@ -377,7 +377,7 @@ def test_find_multiple_activity_violations_mbz(
     }
     lesson_iframe_errors = {
         "issue": validate_mbz_html.IFRAME_VIOLATION,
-        "location": "Lesson 2 (page: Lesson 2 Page 2) (answer id: 111)",
+        "location": "Lesson 2 (page: Lesson 2 Page 2)",
         "link": "http://foobaz"
     }
     assert page_src_error in errors

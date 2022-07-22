@@ -2,6 +2,8 @@ import pytest
 import html
 from string import Template
 
+DEFAULT_SECTION = {"id": "DEFAULT", "title": "Default Section"}
+
 LESSON_ANSWER_TEXT_TEMPLATE = Template("""
 <answer id="$id">
   <answerformat>1</answerformat>
@@ -145,7 +147,10 @@ QUESTION_BANK_TEMPLATE = Template("""
 
 @pytest.fixture
 def mbz_builder():
-    def _builder(tmp_path, activities, sections=[], questionbank_questions=[]):
+    def _builder(
+        tmp_path, activities, sections=[DEFAULT_SECTION],
+        questionbank_questions=[]
+    ):
         tmp_path.mkdir(parents=True, exist_ok=True)
         activitydata = ""
         section_data = ""
@@ -232,16 +237,30 @@ def lesson_page_builder():
 
 @pytest.fixture
 def lesson_builder(lesson_page_builder):
-    def _builder(id, name, pages=[], section_id=1):
+    def _builder(id, name, pages=[], section_id=DEFAULT_SECTION["id"]):
         pagedata = ""
+
+        llist = {}
+        for idx in range(0, len(pages)):
+            next = ""
+            prev = ""
+            if idx == len(pages) - 1:
+                next = "0"
+            if idx == 0:
+                prev = "0"
+            if next == "":
+                next = pages[idx + 1]["id"]
+            if prev == "":
+                prev = pages[idx - 1]["id"]
+            llist[pages[idx]["id"]] = {"next": next, "prev": prev}
 
         for page in pages:
             pagedata += lesson_page_builder(
                 id=page["id"],
                 title=page["title"],
                 html_content=page["html_content"],
-                prevpageid=page.get("prevpageid", 1),
-                nextpageid=page.get("nextpageid", 1),
+                prevpageid=llist[page["id"]]["prev"],
+                nextpageid=llist[page["id"]]["next"],
                 answers=page.get("answers", [])
             )
 
@@ -262,7 +281,7 @@ def lesson_builder(lesson_page_builder):
 
 @pytest.fixture
 def page_builder():
-    def _builder(id, name, html_content, section_id=1):
+    def _builder(id, name, html_content, section_id=DEFAULT_SECTION["id"]):
         page_content = PAGE_TEMPLATE.substitute(
             id=id,
             name=name,
@@ -281,7 +300,7 @@ def page_builder():
 
 @pytest.fixture
 def quiz_builder():
-    def _builder(id, name, questions=[], section_id=1):
+    def _builder(id, name, questions=[], section_id=DEFAULT_SECTION["id"]):
         questiondata = ""
         for question in questions:
             questiondata += QUIZ_QUESTION_TEMPLATE.safe_substitute(

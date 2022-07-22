@@ -55,17 +55,15 @@ class MoodleBackup:
         section_elements = self.etree.xpath("//contents/sections/section")
         sections = []
         for s in section_elements:
-            id = s.xpath("sectionid")[0].text
-            title = s.xpath("title")[0].text
-            sections.append(MoodleSection(id, title, self.mbz_path))
+            sections.append(MoodleSection(s))
         return sections
 
 
 class MoodleSection:
-    def __init__(self, id, title, mbz_path):
-        self.mbz_path = Path(mbz_path)
-        self.id = id
-        self.title = title
+    def __init__(self, section_elem):
+        self.etree = section_elem
+        self.id = self.etree.xpath("./sectionid")[0].text
+        self.title = self.etree.xpath("./title")[0].text
 
 
 class MoodleQuestionBank:
@@ -141,31 +139,52 @@ class MoodleQuestionBank:
                 elem.getparent().remove(elem)
 
 
+class MoodleLessonAnswer:
+    def __init__(self, etree, lesson_page):
+        self.etree = etree
+        self.lesson_page = lesson_page
+        self.answer_format = etree.xpath("answerformat")[0].text
+
+    @property
+    def location(self):
+        return self.lesson_page.location
+
+    def html_element(self):
+        answer_text = self.etree.xpath("answer_text")[0]
+        return MoodleHtmlElement(answer_text, self.location)
+
+
 class MoodleLessonPage:
-    def __init__(self, tree, location):
-        self.tree = tree
-        self.location = location + f' (page: {self.name()})'
-        self.id = int(self.tree.attrib['id'])
+    def __init__(self, etree):
+        self.etree = etree
+        self.id = self.etree.attrib['id']
+        self.name = self.etree.xpath("title")[0].text
+        self.next = self.etree.xpath("nextpageid")[0].text
+        self.prev = self.etree.xpath("prevpageid")[0].text
 
-    def name(self):
-        return self.tree.xpath("title")[0].text
-
-    def next(self):
-        return int(self.tree.xpath("nextpageid")[0].text)
-
-    def prev(self):
-        return int(self.tree.xpath("prevpageid")[0].text)
+    @property
+    def location(self):
+        lesson_name = self.etree.xpath("../../name")[0].text
+        return f"{lesson_name} (page: {self.name})"
 
     def answers(self):
         answer_objs = []
-        for answer in self.tree.xpath("answers/answer"):
-            answer_objs.append(
-                MoodleLessonAnswer(answer, self.location)
-            )
+        for answer in self.etree.xpath("answers/answer"):
+            answer_format = answer.xpath("answerformat")[0]
+            # We need to check the answer format to filter out things
+            # like buttons which are also serialized as answers but are
+            # not HTML
+            if answer_format.text == "1":
+                answer_objs.append(
+                    MoodleLessonAnswer(answer, self)
+                )
         return answer_objs
 
     def html_element(self):
-        return MoodleHtmlElement(self.tree.xpath("contents")[0], self.location)
+        return MoodleHtmlElement(
+            self.etree.xpath("contents")[0],
+            self.location
+        )
 
     def html_elements(self):
         elems = []
@@ -175,33 +194,18 @@ class MoodleLessonPage:
         return elems
 
 
-class MoodleLessonAnswer:
-    def __init__(self, tree, location):
-        self.tree = tree
-        self.location = location + f' (answer id: {self.tree.attrib["id"]})'
-
-    def name(self):
-        return self.tree.attrib["id"]
-
-    def html_element(self):
-        answer_text = self.tree.xpath("answer_text")[0]
-        return MoodleHtmlElement(answer_text, self.location)
-
-
 class MoodleLesson:
     def __init__(self, activity_path, mbz_path):
         self.mbz_path = Path(mbz_path)
         self.activity_path = activity_path
         self.activity_filename = str(self.activity_path / "lesson.xml")
         self.etree = etree.parse(self.activity_filename)
-
-    def name(self):
-        return self.etree.xpath("//name")[0].text
+        self.name = self.etree.xpath("//name")[0].text
 
     def lesson_pages(self):
         page_objs = []
         for page in self.etree.xpath("//pages/page"):
-            page_objs.append(MoodleLessonPage(page, self.name()))
+            page_objs.append(MoodleLessonPage(page))
         return page_objs
 
     def html_elements(self):
@@ -217,14 +221,12 @@ class MoodlePage:
         self.activity_path = activity_path
         self.activity_filename = str(self.activity_path / "page.xml")
         self.etree = etree.parse(self.activity_filename)
-
-    def name(self):
-        return self.etree.xpath("//page/name")[0].text
+        self.name = self.etree.xpath("//page/name")[0].text
 
     def html_elements(self):
         xpath_query = "//page/content"
         elements = self.etree.xpath(xpath_query)
-        return [MoodleHtmlElement(el, self.name()) for el in elements]
+        return [MoodleHtmlElement(el, self.name) for el in elements]
 
 
 class MoodleQuiz:

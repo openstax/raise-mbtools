@@ -3,20 +3,12 @@ from pathlib import Path
 from mbtools.models import MoodleBackup, MoodleLesson, MoodlePage
 
 
-def make_link(uuid):
-    return "./html/" + uuid + ".html"
+def make_link(name, uuid):
+    return f'[{name}](./html/{uuid}.html)'
 
 
-def make_bullet(name, uuid):
-    return f'* [{name}]({make_link(uuid)})\n'
-
-
-def make_subheader(title):
-    return f'## {title}  \n'
-
-
-def make_subsubheader(title):
-    return f'### {title}  \n'
+def make_nested_bullet(level, content):
+    return f"{' '*(level-1)*4}* {content}\n"
 
 
 def make_title():
@@ -28,31 +20,32 @@ def create_toc(mbz_path, md_filepath):
     with open(md_filepath, 'w') as f:
         f.write(make_title())
         for section in moodle_backup.sections():
-            f.write(make_subheader(section.title))
+            f.write(make_nested_bullet(1, section.title))
             for act in moodle_backup.activities(section.id):
                 if isinstance(act, MoodlePage):
-                    f.write(make_subsubheader(act.name()))
                     for html_elem in act.html_elements():
                         uuid = html_elem.get_attribute_values(
                             "data-content-id")[0]
-                        f.write(make_bullet(act.name(), uuid))
+                        f.write(make_nested_bullet(
+                            2, make_link(act.name, uuid)))
                 elif isinstance(act, MoodleLesson):
-                    f.write(make_subsubheader(act.name()))
+                    f.write(make_nested_bullet(2, act.name))
                     id2page = {}
                     current_page = None
                     for page in act.lesson_pages():
                         id2page[page.id] = page
-                        if (page.prev() == 0):
+                        if (page.prev == "0"):
                             current_page = page
                     while(True):
                         html_elem = current_page.html_element()
                         uuid = html_elem.get_attribute_values(
                             "data-content-id")[0]
-                        f.write(make_bullet(current_page.name(), uuid))
-                        if (current_page.next() == 0):
+                        f.write(make_nested_bullet(
+                            3, make_link(current_page.name, uuid)))
+                        if (current_page.next == "0"):
                             break
                         else:
-                            current_page = id2page[current_page.next()]
+                            current_page = id2page[current_page.next]
 
 
 def main():

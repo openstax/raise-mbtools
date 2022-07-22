@@ -1,6 +1,40 @@
 import pytest
 from lxml import etree
-from mbtools.models import MoodleHtmlElement, MoodleQuestionBank, MoodleQuiz
+from mbtools.models import MoodleHtmlElement, MoodleLessonPage, \
+    MoodleQuestionBank, MoodleQuiz
+
+
+def test_answerformat_filter(tmp_path):
+    lesson_page_xml = """
+<lesson>
+  <name>Lesson name</name>
+  <pages>
+    <page id="0">
+      <prevpageid>0</prevpageid>
+      <nextpageid>0</nextpageid>
+      <contents>Lesson content</contents>
+      <title>Lesson page title</title>
+      <answers>
+        <answer id="1">
+          <answerformat>0</answerformat>
+          <answer_text>Not HTML answer content</answer_text>
+        </answer>
+        <answer id="2">
+          <answerformat>1</answerformat>
+          <answer_text>HTML answer content</answer_text>
+        </answer>
+      </answers>
+    </page>
+  </pages>
+</lesson>
+  """
+
+    lesson_page_etree = etree.fromstring(lesson_page_xml).xpath("//page")[0]
+    lesson_page = MoodleLessonPage(lesson_page_etree)
+    html_elems = lesson_page.html_elements()
+    assert len(html_elems) == 2
+    assert "Not HTML answer content" not in \
+        [elem.parent.text for elem in html_elems]
 
 
 def test_html_element_get_elements_with_string_in_class():
