@@ -1,4 +1,5 @@
 import csv
+import os
 from lxml import etree
 from mbtools import validate_mbz_html
 from mbtools.models import MoodleHtmlElement
@@ -241,7 +242,7 @@ def test_find_nested_ib_violations_mbz(
 
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
     )
 
     validate_mbz_html.main()
@@ -263,7 +264,7 @@ def test_find_tag_violations_mbz(
 
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
     )
 
     validate_mbz_html.main()
@@ -285,7 +286,7 @@ def test_find_style_violations_mbz(
 
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
     )
 
     validate_mbz_html.main()
@@ -307,7 +308,7 @@ def test_find_source_violations_mbz(
 
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
     )
 
     validate_mbz_html.main()
@@ -352,7 +353,7 @@ def test_find_multiple_activity_violations_mbz(
 
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
     )
 
     validate_mbz_html.main()
@@ -429,7 +430,7 @@ def test_questionbank_validation_and_optout_flag_mbz(
 
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
     )
 
     validate_mbz_html.main()
@@ -477,7 +478,8 @@ def test_questionbank_validation_and_optout_flag_mbz(
     # Run with question bank validation off
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output_noqb.csv", "--no-qb"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output_noqb.csv",
+         "mbz", "--no-qb"]
     )
 
     validate_mbz_html.main()
@@ -498,7 +500,7 @@ def test_multiple_violations_on_content_with_fragments(
 
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
     )
 
     validate_mbz_html.main()
@@ -531,7 +533,8 @@ def test_style_exclusion_from_validation_flag_mbz(
 
     mocker.patch(
         "sys.argv",
-        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "--no-style"]
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv",
+         "mbz", "--no-style"]
     )
 
     validate_mbz_html.main()
@@ -539,3 +542,201 @@ def test_style_exclusion_from_validation_flag_mbz(
     reader = csv.DictReader(open(tmp_path / "test_output.csv"))
     errors = [row for row in reader]
     assert len(errors) == 0
+
+
+def test_single_html_file_unested_violation(tmp_path, mocker):
+    html = 'Hi Hello<p>Content</p>'
+    html_path = str(tmp_path) + "/html/"
+    os.mkdir(html_path)
+    file_path = html_path + "123.html"
+    with open(file_path, 'w') as f:
+        f.write(html)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    assert len(errors) == 1
+
+    assert validate_mbz_html.UNNESTED_VIOLATION in errors[0]["issue"]
+    assert '/html/123.html' in errors[0]["location"]
+
+
+def test_multiple_html_file_unnested_violations(tmp_path, mocker):
+    html_1 = 'Hi Hello<p>Content</p>'
+    html_2 = 'Hi Hello 2<p>Content</p>'
+    html_path = str(tmp_path) + "/html/"
+    os.mkdir(html_path)
+    file_path_1 = html_path + "123.html"
+    file_path_2 = html_path + "456.html"
+    with open(file_path_1, 'w') as f:
+        f.write(html_1)
+    with open(file_path_2, 'w') as f:
+        f.write(html_2)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    issues = [row["issue"] for row in errors]
+    locations = [row["location"] for row in errors]
+    assert len(errors) == 2
+
+    for issue in issues:
+        assert validate_mbz_html.UNNESTED_VIOLATION in issue
+    for location in locations:
+        assert ('/html/123.html' in location or '/html/456.html' in location)
+
+
+def test_single_html_file_each_violation(
+    tmp_path, mocker
+):
+    html = '''<div>
+  <p style="left: allign">Content</p>
+  <img src="link"></img>
+  <iframe src="link"></iframe>
+  <script>javascript</script>
+  <img src="@@PLUGINFILE@@"></img>
+  <a href="link"></a>
+</div>'''
+
+    html_path = str(tmp_path) + "/html/"
+    os.mkdir(html_path)
+    file_path = html_path + "123.html"
+    with open(file_path, 'w') as f:
+        f.write(html)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    issues = [row["issue"] for row in errors]
+    locations = [row["location"] for row in errors]
+    assert len(errors) == 6
+
+    assert validate_mbz_html.SOURCE_VIOLATION in issues
+    assert validate_mbz_html.IFRAME_VIOLATION in issues
+    assert validate_mbz_html.HREF_VIOLATION in issues
+    assert validate_mbz_html.STYLE_VIOLATION in issues
+    assert validate_mbz_html.SCRIPT_VIOLATION in issues
+    assert validate_mbz_html.MOODLE_VIOLATION in issues
+
+    for location in locations:
+        assert '/html/123.html' in location
+
+
+def test_multiple_html_files_style_violation_in_each(
+    tmp_path, mocker
+):
+    html_1 = '<p style="align: left>Content</p>'
+    html_2 = '<iframe src="link">Content</iframe>'
+    html_path = str(tmp_path) + "/html/"
+    os.mkdir(html_path)
+    file_path_1 = html_path + "123.html"
+    file_path_2 = html_path + "456.html"
+
+    with open(file_path_1, 'w') as f:
+        f.write(html_1)
+    with open(file_path_2, 'w') as f:
+        f.write(html_2)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    issues = [row["issue"] for row in errors]
+    locations = [row["location"] for row in errors]
+    assert len(errors) == 2
+
+    assert validate_mbz_html.IFRAME_VIOLATION in issues
+    assert validate_mbz_html.STYLE_VIOLATION in issues
+
+    for location in locations:
+        assert ('/html/123.html' in location or '/html/456.html' in location)
+
+
+def test_multiple_html_files_style_violations_ignored(
+    tmp_path, mocker
+):
+    html = '<p style="left: allign">Content</p>'
+
+    html_path = str(tmp_path) + "/html/"
+    os.mkdir(html_path)
+    file_path = html_path + "123.html"
+    with open(file_path, 'w') as f:
+        f.write(html)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html", "--no-style"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    assert len(errors) == 0
+
+
+def test_nested_html_directory_violations(
+    tmp_path, mocker
+):
+    html_1 = '<p style="align: left>Content</p>'
+    html_2 = '<iframe src="link">Content</iframe>'
+    html_path = str(tmp_path) + "/html/"
+    os.mkdir(html_path)
+    file_path_1 = html_path + "123.html"
+    html_subdir = html_path + "/subsubdir/"
+    os.mkdir(html_subdir)
+    file_path_2 = html_subdir + "456.html"
+
+    with open(file_path_1, 'w') as f:
+        f.write(html_1)
+    with open(file_path_2, 'w') as f:
+        f.write(html_2)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    issues = [row["issue"] for row in errors]
+    locations = [row["location"] for row in errors]
+    assert len(errors) == 2
+
+    assert validate_mbz_html.IFRAME_VIOLATION in issues
+    assert validate_mbz_html.STYLE_VIOLATION in issues
+
+    for location in locations:
+        assert ('/html/123.html' in location or
+                '/html/subsubdir/456.html' in location)
