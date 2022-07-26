@@ -1,6 +1,9 @@
 import argparse
+from lxml import etree
 from csv import DictWriter
 from pathlib import Path
+
+from mbtools.models import MoodleHtmlElement
 from . import utils
 
 STYLE_VIOLATION = "ERROR: Uses In-Line Styles"
@@ -53,6 +56,27 @@ def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
     if include_questionbank:
         html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
 
+    return run_validations(html_elements, include_styles)
+
+
+def validate_html(html_dir, include_styles=True):
+    all_files = []
+    for path in Path(html_dir).rglob('*.html'):
+        all_files.append(path)
+
+    html_elements = []
+    for file_path in all_files:
+        with open(file_path, 'r') as f:
+            parent_string = '<content></content>'
+            parent_element = etree.fromstring(parent_string)
+            parent_element.text = f.read()
+            html_elements.append(
+                MoodleHtmlElement(parent_element, str(file_path))
+            )
+    return run_validations(html_elements, include_styles)
+
+
+def run_validations(html_elements, include_styles):
     violations = []
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
@@ -180,6 +204,7 @@ def main():
                         help='relative path to unzipped mbz')
     parser.add_argument('output_file', type=str,
                         help='Path to a file where flags will be outputted')
+    parser.add_argument('mode', choices=['mbz', 'html'])
     parser.add_argument(
         '--no-qb',
         action='store_true',
@@ -194,13 +219,19 @@ def main():
 
     mbz_path = Path(args.mbz_path).resolve(strict=True)
     output_file = Path(args.output_file)
+    mode = args.mode
     include_questionbank = not args.no_qb
     include_styles = args.no_style
 
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    violations = validate_mbz(mbz_path, include_styles, include_questionbank)
+    violations = []
+    if mode == "html":
+        violations = validate_html(mbz_path, include_styles)
+    elif mode == "mbz":
+        violations = validate_mbz(mbz_path, include_styles,
+                                  include_questionbank)
     with open(output_file, 'w') as f:
         w = DictWriter(f, ['issue', 'location', 'link'])
         w.writeheader()
