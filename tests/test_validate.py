@@ -708,17 +708,23 @@ def test_nested_html_directory_violations(
 ):
     html_1 = '<p style="align: left>Content</p>'
     html_2 = '<iframe src="link">Content</iframe>'
+    html_3 = '<script>javascript</script>'
     html_path = str(tmp_path) + "/html/"
     os.mkdir(html_path)
     file_path_1 = html_path + "123.html"
-    html_subdir = html_path + "/subsubdir/"
+    html_subdir = html_path + "/subdir/"
     os.mkdir(html_subdir)
     file_path_2 = html_subdir + "456.html"
+    html_subsubdir = html_subdir + "/subsubdir/"
+    os.mkdir(html_subsubdir)
+    file_path_3 = html_subsubdir + "789.html"
 
     with open(file_path_1, 'w') as f:
         f.write(html_1)
     with open(file_path_2, 'w') as f:
         f.write(html_2)
+    with open(file_path_3, 'w') as f:
+        f.write(html_3)
 
     output_filepath = f"{tmp_path}/test_output.csv"
     mocker.patch(
@@ -732,11 +738,14 @@ def test_nested_html_directory_violations(
     errors = [row for row in reader]
     issues = [row["issue"] for row in errors]
     locations = [row["location"] for row in errors]
-    assert len(errors) == 2
+    assert len(errors) == 3
 
     assert validate_mbz_html.IFRAME_VIOLATION in issues
     assert validate_mbz_html.STYLE_VIOLATION in issues
+    assert validate_mbz_html.SCRIPT_VIOLATION in issues
 
     for location in locations:
         assert ('/html/123.html' in location or
-                '/html/subsubdir/456.html' in location)
+                '/html/subdir/456.html' in location or
+                '/html/subdir/subsubdir/789.html' in location
+                )

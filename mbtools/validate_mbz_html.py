@@ -1,7 +1,6 @@
 import argparse
-from lxml import html
+from lxml import html, etree
 from csv import DictWriter
-import os
 from pathlib import Path
 
 from mbtools.models import MoodleHtmlElement
@@ -57,35 +56,27 @@ def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
     if include_questionbank:
         html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
 
-    violations = []
-    violations.extend(find_unnested_violations(html_elements))
-    if len(violations) > 0:
-        return violations
-    if include_styles:
-        violations.extend(find_style_violations(html_elements))
-    violations.extend(find_source_violations(html_elements))
-    violations.extend(find_tag_violations(html_elements))
-    violations.extend(find_nested_ib_violations(html_elements))
-
-    return violations
+    return run_validations(html_elements, include_styles)
 
 
 def validate_html(html_dir, include_styles=True):
     all_files = []
-    for path, dirs, files in os.walk(html_dir):
-        for file in files:
-            all_files.append(os.path.join(path, file))
+    for path in Path(html_dir).rglob('*.html'):
+        all_files.append(path)
+
     html_elements = []
     for file_path in all_files:
         with open(file_path, 'r') as f:
             parent_string = '<content></content>'
-            parent_element = html.fragments_fromstring(parent_string)[0]
-            print(file_path)
+            parent_element = etree.fromstring(parent_string)
             parent_element.text = f.read()
             html_elements.append(
                 MoodleHtmlElement(parent_element, str(file_path))
             )
+    return run_validations(html_elements, include_styles)
 
+
+def run_validations(html_elements, include_styles):
     violations = []
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
