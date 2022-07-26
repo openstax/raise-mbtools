@@ -342,7 +342,9 @@ def test_find_multiple_activity_violations_mbz(
                 "answers": [
                     {
                         "id": 111,
-                        "html_content": '<iframe src="http://foobaz"></iframe>'
+                        "html_content":
+                            '<iframe src="http://foobaz"></iframe>',
+                        "response": '<p style="left: align">response</p>'
                     }
                 ]
             },
@@ -360,7 +362,7 @@ def test_find_multiple_activity_violations_mbz(
 
     reader = csv.DictReader(open(tmp_path / "test_output.csv"))
     errors = [row for row in reader]
-    assert len(errors) == 4
+    assert len(errors) == 5
     page_src_error = {
         "issue": validate_mbz_html.SOURCE_VIOLATION,
         "location": "Page",
@@ -381,10 +383,17 @@ def test_find_multiple_activity_violations_mbz(
         "location": "Lesson 2 (page: Lesson 2 Page 2): Answer Value",
         "link": "http://foobaz"
     }
+    lesson_style_errors = {
+        "issue": validate_mbz_html.STYLE_VIOLATION,
+        "location": "Lesson 2 (page: Lesson 2 Page 2): Answer Value",
+        "link": "left: align"
+    }
+
     assert page_src_error in errors
     assert page_script_error in errors
     assert lesson_moodle_source_error in errors
     assert lesson_iframe_errors in errors
+    assert lesson_style_errors in errors
 
 
 def test_questionbank_validation_and_optout_flag_mbz(

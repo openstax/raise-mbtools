@@ -149,9 +149,26 @@ class MoodleLessonAnswer:
     def location(self):
         return f"{self.lesson_page.location}: Answer Value"
 
-    def html_element(self):
+    def answer_text_html(self):
         answer_text = self.etree.xpath("answer_text")[0]
         return MoodleHtmlElement(answer_text, self.location)
+
+    def response_html(self):
+        if self.etree.xpath("responseformat")[0].text == "1":
+            response = self.etree.xpath("response")[0]
+            if response.text is not None:
+                return MoodleHtmlElement(response, self.location)
+            else:
+                return None
+        else:
+            return None
+
+    def html_elements(self):
+        elems = [self.answer_text_html()]
+        response_html = self.response_html()
+        if response_html is not None:
+            elems.append(response_html)
+        return elems
 
 
 class MoodleLessonPage:
@@ -190,7 +207,7 @@ class MoodleLessonPage:
         elems = []
         elems.append(self.html_element())
         for answer in self.answers():
-            elems.append(answer.html_element())
+            elems.extend(answer.html_elements())
         return elems
 
 

@@ -18,10 +18,13 @@ def test_answerformat_filter(tmp_path):
         <answer id="1">
           <answerformat>0</answerformat>
           <answer_text>Not HTML answer content</answer_text>
+          <responseformat>0</responseformat>
         </answer>
         <answer id="2">
           <answerformat>1</answerformat>
           <answer_text>HTML answer content</answer_text>
+          <response>correct!</response>
+          <responseformat>1</responseformat>
         </answer>
       </answers>
     </page>
@@ -32,7 +35,7 @@ def test_answerformat_filter(tmp_path):
     lesson_page_etree = etree.fromstring(lesson_page_xml).xpath("//page")[0]
     lesson_page = MoodleLessonPage(lesson_page_etree)
     html_elems = lesson_page.html_elements()
-    assert len(html_elems) == 2
+    assert len(html_elems) == 3
     assert "Not HTML answer content" not in \
         [elem.parent.text for elem in html_elems]
 
