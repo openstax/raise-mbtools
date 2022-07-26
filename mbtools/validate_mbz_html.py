@@ -1,5 +1,5 @@
 import argparse
-from lxml import html, etree
+from lxml import etree
 from csv import DictWriter
 from pathlib import Path
 
