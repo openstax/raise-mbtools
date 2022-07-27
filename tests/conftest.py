@@ -8,6 +8,8 @@ LESSON_ANSWER_TEXT_TEMPLATE = Template("""
 <answer id="$id">
   <answerformat>1</answerformat>
   <answer_text>$content</answer_text>
+  <response>$response</response>
+  <responseformat>1</responseformat>
 </answer>
 """)
 
@@ -222,7 +224,8 @@ def lesson_page_builder():
         for ans in answers:
             answerdata += LESSON_ANSWER_TEXT_TEMPLATE.substitute(
                 id=ans["id"],
-                content=html.escape(ans["html_content"])
+                content=html.escape(ans["html_content"]),
+                response=html.escape(ans["response"])
             )
         return LESSON_PAGE_TEMPLATE.substitute(
             id=id,

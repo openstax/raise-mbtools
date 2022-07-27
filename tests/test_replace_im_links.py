@@ -48,6 +48,12 @@ def test_replace_im_links_mbz(
             'sha1': 'e606bc6acc83666e1d40722e9c743a01e12e65ab',
             'original_filename': 'ijkl.json',
             's3_key': 'resources/e606bc6acc83666e1d40722e9c743a01e12e65ab'
+        },
+        {
+            'mime_type': 'application/json',
+            'sha1': 'aabcds6acc83666e1d40722e9c743a01e12e65ab',
+            'original_filename': 'mnop.json',
+            's3_key': 'resources/aabcds6acc83666e1d40722e9c743a01e12e65ab'
         }
     ]
     json_object = json.dumps(media_json, indent=4)
@@ -58,14 +64,18 @@ def test_replace_im_links_mbz(
     filename1 = "abcd.json"
     filename2 = "efgh.json"
     filename3 = "ijkl.json"
+    filename4 = "mnop.json"
     im_resource1 = f"https://s3.amazonaws.com/im-ims-export/{filename1}"
     im_resource2 = f"https://s3.amazonaws.com/im-ims-export/{filename2}"
     im_resource3 = f"https://s3.amazonaws.com/im-ims-export/{filename3}"
+    im_resource4 = f"https://s3.amazonaws.com/im-ims-export/{filename4}"
 
     lesson1_page1_content = "<div><p>Lesson 1 Page 1</p></div>"
     lesson1_page2_content = "<div><p>Lesson 1 Page 2</p></div>"
     lesson1_page2_answer1_content = "<p>L1 P2 A1</p>"
     lesson1_page2_answer2_content = f'<img src="{im_resource2}"></img>'
+    lesson1_page2_answer1_response = ""
+    lesson1_page2_answer2_response = f'<img src="{im_resource4}"></img>'
     page2_content = f'<div><img src="{im_resource1}">Page 2</p></div>'
     qb_question1_content = "<p>Question 1</p>"
     qb_question1_answer1_content = "<p>answer 1</p>"
@@ -89,11 +99,13 @@ def test_replace_im_links_mbz(
                 "answers": [
                     {
                         "id": 111,
-                        "html_content": lesson1_page2_answer1_content
+                        "html_content": lesson1_page2_answer1_content,
+                        "response": lesson1_page2_answer1_response
                     },
                     {
                         "id": 112,
-                        "html_content": lesson1_page2_answer2_content
+                        "html_content": lesson1_page2_answer2_content,
+                        "response": lesson1_page2_answer2_response
                     }
                 ]
             }
@@ -154,7 +166,7 @@ def test_replace_im_links_mbz(
     resources = collect_resources_from_mbz(tmp_path, IM_PREFIX)
     assert len(resources) == 0
     resources = collect_resources_from_mbz(tmp_path, replacing_prefix)
-    assert len(resources) == 3
+    assert len(resources) == 4
 
 
 def test_replace_im_links_mbz_no_matches(
@@ -208,11 +220,13 @@ def test_replace_im_links_mbz_no_matches(
                 "answers": [
                     {
                         "id": 111,
-                        "html_content": lesson1_page2_answer1_content
+                        "html_content": lesson1_page2_answer1_content,
+                        "response": ""
                     },
                     {
                         "id": 112,
-                        "html_content": lesson1_page2_answer2_content
+                        "html_content": lesson1_page2_answer2_content,
+                        "response": ""
                     }
                 ]
             }

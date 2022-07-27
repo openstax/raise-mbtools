@@ -25,11 +25,13 @@ def test_remove_styles_from_main(
                 "answers": [
                     {
                         "id": 221,
-                        "html_content": content_with_styles
+                        "html_content": content_with_styles,
+                        "response": content_with_styles
                     },
                     {
                         "id": 222,
-                        "html_content": content_with_styles
+                        "html_content": content_with_styles,
+                        "response": content_with_styles
                     }
                 ]
             }

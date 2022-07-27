@@ -9,9 +9,11 @@ def test_fetch_im_resources_main(
     filename1 = "abcd.img"
     filename2 = "efgh.img"
     filename3 = "ijkl.mp4"
+    filename4 = "mnop.txt"
     im_resource1 = f"https://s3.amazonaws.com/im-ims-export/{filename1}"
     im_resource2 = f"https://s3.amazonaws.com/im-ims-export/{filename2}"
     im_resource3 = f"https://s3.amazonaws.com/im-ims-export/{filename3}"
+    im_resource4 = f"https://s3.amazonaws.com/im-ims-export/{filename4}"
     resource_content = b"123456789abcdef"
     requests_mock.get(
         f"https://s3.amazonaws.com/im-ims-export/{filename1}",
@@ -25,11 +27,17 @@ def test_fetch_im_resources_main(
         f"https://s3.amazonaws.com/im-ims-export/{filename3}",
         content=resource_content
     )
+    requests_mock.get(
+        f"https://s3.amazonaws.com/im-ims-export/{filename4}",
+        content=resource_content
+    )
 
     lesson1_page1_content = "<div><p>Lesson 1 Page 1</p></div>"
     lesson1_page2_content = "<div><p>Lesson 1 Page 2</p></div>"
     lesson1_page2_answer1_content = "<p>L1 P2 A1</p>"
     lesson1_page2_answer2_content = "<p>L1 P2 A2</p>"
+    lesson1_page2_answer1_response = f'<img src="{im_resource4}"></img>'
+    lesson1_page2_answer2_response = '<p>response</p>'
     page2_content = f'<div><img src="{im_resource1}">Page 2</p></div>'
     qb_question1_content = "<p>Question 1</p>"
     qb_question1_answer1_content = "<p>answer 1</p>"
@@ -53,11 +61,13 @@ def test_fetch_im_resources_main(
                 "answers": [
                     {
                         "id": 111,
-                        "html_content": lesson1_page2_answer1_content
+                        "html_content": lesson1_page2_answer1_content,
+                        "response": lesson1_page2_answer1_response
                     },
                     {
                         "id": 112,
-                        "html_content": lesson1_page2_answer2_content
+                        "html_content": lesson1_page2_answer2_content,
+                        "response": lesson1_page2_answer2_response
                     }
                 ]
             }
@@ -116,7 +126,7 @@ def test_fetch_im_resources_main(
 
     fetch_im_resources.main()
 
-    assert(len(os.listdir(output_path)) == 3)
+    assert(len(os.listdir(output_path)) == 4)
     for filename in os.listdir(output_path):
         f = os.path.join(output_path, filename)
         with open(f, 'r') as file:

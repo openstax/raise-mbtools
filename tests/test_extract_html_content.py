@@ -54,6 +54,8 @@ def test_html_files_content(
     lesson1_page2_content = "<div><p>Lesson 1 Page 2</p></div>"
     lesson1_page2_answer1_content = "<p>L1 P2 A1</p>"
     lesson1_page2_answer2_content = "<p>L1 P2 A2</p>"
+    lesson1_page2_answer1_response = "<p>L1 P2 A1 R</p>"
+    lesson1_page2_answer2_response = "<p>L1 P2 A2 R</p>"
     page2_content = "<div><p>Page 2</p></div>"
 
     lesson1 = lesson_builder(
@@ -72,11 +74,13 @@ def test_html_files_content(
                 "answers": [
                     {
                         "id": 111,
-                        "html_content": lesson1_page2_answer1_content
+                        "html_content": lesson1_page2_answer1_content,
+                        "response": lesson1_page2_answer1_response
                     },
                     {
                         "id": 112,
-                        "html_content": lesson1_page2_answer2_content
+                        "html_content": lesson1_page2_answer2_content,
+                        "response": lesson1_page2_answer2_response
                     }
                 ]
             }
