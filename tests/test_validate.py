@@ -385,7 +385,7 @@ def test_find_multiple_activity_violations_mbz(
     }
     lesson_style_errors = {
         "issue": validate_mbz_html.STYLE_VIOLATION,
-        "location": "Lesson 2 (page: Lesson 2 Page 2): Answer Value",
+        "location": "Lesson 2 (page: Lesson 2 Page 2): Answer Value Response",
         "link": "left: align"
     }
 

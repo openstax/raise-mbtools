@@ -157,7 +157,8 @@ class MoodleLessonAnswer:
         if self.etree.xpath("responseformat")[0].text == "1":
             response = self.etree.xpath("response")[0]
             if response.text is not None:
-                return MoodleHtmlElement(response, self.location)
+                response_location = self.location + " Response"
+                return MoodleHtmlElement(response, response_location)
             else:
                 return None
         else:
