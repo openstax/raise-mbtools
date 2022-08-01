@@ -22,7 +22,10 @@ VALID_PREFIXES = [
     "https://digitalpromise.org"
 ]
 
-VALID_IFRAME_PREFIXES = ["https://www.youtube.com"]
+VALID_IFRAME_PREFIXES = [
+    "https://www.youtube.com",
+    "https://player.vimeo.com"
+]
 
 VALID_HREF_PREFIXES = [
     "https://k12.openstax.org/contents/raise",
