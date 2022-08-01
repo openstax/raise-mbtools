@@ -205,9 +205,9 @@ def test_ignore_extracted_content(tmp_path, page_builder, mbz_builder):
     assert len(html_files_inmbz_first_run) == len(html_files_inmbz_second_run)
 
     # First run of extract content should return 3 files
-    assert(len(html_files_list_first_run) == 3)
+    assert (len(html_files_list_first_run) == 3)
     # Second run of the extract content should not return files.
-    assert(len(html_files_list_second_run) == 0)
+    assert (len(html_files_list_second_run) == 0)
 
 
 def test_main_no_filter(

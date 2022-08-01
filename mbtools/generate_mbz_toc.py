@@ -36,7 +36,7 @@ def create_toc(mbz_path, md_filepath):
                         id2page[page.id] = page
                         if (page.prev == "0"):
                             current_page = page
-                    while(True):
+                    while (True):
                         html_elem = current_page.html_element()
                         uuid = html_elem.get_attribute_values(
                             "data-content-id")[0]

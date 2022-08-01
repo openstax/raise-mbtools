@@ -15,22 +15,37 @@ HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
 UNNESTED_VIOLATION = "ERROR: Contains content not nested in HTML Element"
 NESTED_IB_VIOLATION = "ERROR: Interactive block nested within HTML"
 
-VALID_PREFIXES = ["https://s3.amazonaws.com/im-ims-export/",
-                  "https://k12.openstax.org/contents/raise",
-                  "https://www.youtube.com/",
-                  "https://digitalpromise.org"]
+VALID_PREFIXES = [
+    "https://s3.amazonaws.com/im-ims-export/",
+    "https://k12.openstax.org/contents/raise",
+    "https://www.youtube.com/",
+    "https://digitalpromise.org"
+]
 
-VALID_IFRAME_PREFIXES = ["https://www.youtube.com"]
+VALID_IFRAME_PREFIXES = [
+    "https://www.youtube.com",
+    "https://player.vimeo.com"
+]
 
-VALID_HREF_PREFIXES = ["https://k12.openstax.org/contents/raise",
-                       "https://vimeo.com",
-                       "https://player.vimeo.com",
-                       "https://youtube.com",
-                       "https://www.youtube.com",
-                       "https://youtu.be",
-                       "https://characterlab.org/",
-                       "https://digitalpromise.org",
-                       "https://www.doe.virginia.gov"]
+VALID_HREF_PREFIXES = [
+    "https://k12.openstax.org/contents/raise",
+    "https://vimeo.com",
+    "https://player.vimeo.com",
+    "https://youtube.com",
+    "https://www.youtube.com",
+    "https://youtu.be",
+    "https://characterlab.org/",
+    "https://digitalpromise.org",
+    "https://www.doe.virginia.gov",
+    "https://tea.texas.gov",
+    "https://www.sfusdmath.org"
+]
+
+VALID_HREF_VALUES = [
+    "https://illustrativemathematics.org/",
+    "https://openstax.org/",
+    "https://www.wisewire.com/"
+]
 
 VALID_STYLES = []
 
@@ -124,7 +139,7 @@ def find_tag_violations(html_elements):
         for hit in hits:
             link = hit.attrib['src']
             if len([prefix for prefix in VALID_IFRAME_PREFIXES
-                    if(prefix in link)]) == 0:
+                    if (prefix in link)]) == 0:
                 violations.append(Violation(IFRAME_VIOLATION,
                                             elem.location,
                                             link))
@@ -132,8 +147,10 @@ def find_tag_violations(html_elements):
         for hit in hits:
             if "href" in hit.attrib.keys():
                 link = hit.attrib["href"]
-                if len([prefix for prefix in VALID_HREF_PREFIXES
-                        if(prefix in link)]) == 0:
+                prefix_match = [
+                    pfx for pfx in VALID_HREF_PREFIXES if (pfx in link)
+                ]
+                if len(prefix_match) == 0 and link not in VALID_HREF_VALUES:
                     violations.append(Violation(HREF_VIOLATION,
                                                 elem.location,
                                                 link))
@@ -145,7 +162,7 @@ def find_source_violations(html_elements):
     for elem in html_elements:
         links = elem.get_attribute_values('src', exception='iframe')
         for link in links:
-            if len([prefix for prefix in VALID_PREFIXES if(prefix in link)]) \
+            if len([prefix for prefix in VALID_PREFIXES if (prefix in link)]) \
                     > 0:    # check if link contains a valid prefix
                 continue
             elif "@@PLUGINFILE@@" in link:
