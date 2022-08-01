@@ -104,9 +104,9 @@ def test_existing_metadata_hashes(practice_filesystem):
 
 
 def test_new_resource_hashes(practice_filesystem):
-    assert(len(copy_resources_s3.new_resource_hashes(
+    assert (len(copy_resources_s3.new_resource_hashes(
                practice_filesystem[test_dir])[0]) == 3
-           )
+            )
     with pytest.raises(FileNotFoundError):
         copy_resources_s3.new_resource_hashes("")
 

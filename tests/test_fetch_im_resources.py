@@ -126,7 +126,7 @@ def test_fetch_im_resources_main(
 
     fetch_im_resources.main()
 
-    assert(len(os.listdir(output_path)) == 4)
+    assert (len(os.listdir(output_path)) == 4)
     for filename in os.listdir(output_path):
         f = os.path.join(output_path, filename)
         with open(f, 'r') as file:

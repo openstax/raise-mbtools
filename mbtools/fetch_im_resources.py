@@ -24,7 +24,7 @@ def fetch_im_resources(content_dir, output_dir, mode):
             resource_urls.extend(
                 find_references_containing(elem.etree_fragments[0], IM_PREFIX)
             )
-    elif(mode == 'html'):
+    elif (mode == 'html'):
         for item in content_dir.iterdir():
             with open(item, 'r') as f:
                 data = f.read()

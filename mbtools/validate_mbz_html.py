@@ -136,7 +136,7 @@ def find_tag_violations(html_elements):
         for hit in hits:
             link = hit.attrib['src']
             if len([prefix for prefix in VALID_IFRAME_PREFIXES
-                    if(prefix in link)]) == 0:
+                    if (prefix in link)]) == 0:
                 violations.append(Violation(IFRAME_VIOLATION,
                                             elem.location,
                                             link))
@@ -145,7 +145,7 @@ def find_tag_violations(html_elements):
             if "href" in hit.attrib.keys():
                 link = hit.attrib["href"]
                 prefix_match = [
-                    prefix for prefix in VALID_HREF_PREFIXES if(prefix in link)
+                    pfx for pfx in VALID_HREF_PREFIXES if (pfx in link)
                 ]
                 if len(prefix_match) == 0 and link not in VALID_HREF_VALUES:
                     violations.append(Violation(HREF_VIOLATION,
@@ -159,7 +159,7 @@ def find_source_violations(html_elements):
     for elem in html_elements:
         links = elem.get_attribute_values('src', exception='iframe')
         for link in links:
-            if len([prefix for prefix in VALID_PREFIXES if(prefix in link)]) \
+            if len([prefix for prefix in VALID_PREFIXES if (prefix in link)]) \
                     > 0:    # check if link contains a valid prefix
                 continue
             elif "@@PLUGINFILE@@" in link:

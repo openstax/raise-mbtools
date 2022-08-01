@@ -43,8 +43,8 @@ def get_json_content(file_path):
 
 def test_json_file_created(file_path):
     html_to_json(f'{file_path}/html_directory', f'{file_path}/json_directory')
-    assert("fragment.json" in os.listdir(f'{file_path}/json_directory'))
-    assert("fragment2.json" in os.listdir(f'{file_path}/json_directory'))
+    assert ("fragment.json" in os.listdir(f'{file_path}/json_directory'))
+    assert ("fragment2.json" in os.listdir(f'{file_path}/json_directory'))
 
 
 def test_html_in_json(file_path):
