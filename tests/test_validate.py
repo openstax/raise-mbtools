@@ -134,12 +134,13 @@ def test_style_violation():
 def test_href_violation():
     location = "here"
     parent = etree.fromstring("<content></content>")
-    parent.text = '<a href="something">html</a>'
+    parent.text = '<a href="https://openstax.org/apps/archive">html</a>'
+    parent.text += '<a href="https://openstax.org/">html</a>'
     elem = MoodleHtmlElement(parent, location)
     style_violations = validate_mbz_html.find_tag_violations([elem])
     assert len(style_violations) == 1
     assert style_violations[0].issue == validate_mbz_html.HREF_VIOLATION
-    assert style_violations[0].link == "something"
+    assert style_violations[0].link == "https://openstax.org/apps/archive"
     assert style_violations[0].location == "here"
 
 
