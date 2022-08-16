@@ -1,10 +1,38 @@
+import hashlib
+from http.client import InvalidURL
 import json
+import requests
 from mbtools import utils
 import argparse
 from lxml import html
 from pathlib import Path
 from mbtools import models
 from mbtools.fetch_im_resources import IM_PREFIX
+
+
+def replace_src_values_tree(content_tree, src_content, swap_mapping):
+    """
+    Given an etree object, a prefix, and a mapping from links with that
+    prefix to new links, swap all src values according to the mapping.
+    """
+    num_changes = 0
+    for elem in utils.find_elements_containing(content_tree, src_content):
+        im_filename = elem.attrib["src"]
+        if im_filename in swap_mapping.keys():
+            num_changes += 1
+            elem.attrib["src"] = swap_mapping[im_filename]
+        else:
+            # Fetch link, calculate sha1, and replace link anyway.
+            data = requests.get(im_filename).content
+            sha1 = hashlib.sha1(data).hexdigest()
+            found = False
+            for key in swap_mapping.keys():
+                if sha1 in swap_mapping[key]:
+                    elem.attrib["src"] = swap_mapping[key]
+                    found = True
+            if found is False:
+                raise InvalidURL
+    return num_changes
 
 
 def parse_media_file(media_path, s3_prefix):
@@ -28,7 +56,7 @@ def replace_im_links(content_path, media_path, s3_prefix, mode):
         for act in activities:
             elems = act.html_elements()
             for elem in elems:
-                num_changes = utils.replace_src_values_tree(
+                num_changes = replace_src_values_tree(
                     elem.etree_fragments[0], IM_PREFIX, im_to_osx_mapping
                     )
                 if (num_changes > 0):
@@ -43,7 +71,7 @@ def replace_im_links(content_path, media_path, s3_prefix, mode):
             with open(item, 'r') as f:
                 data = f.read()
                 fragments = html.fragments_fromstring(data)
-                num_changes = utils.replace_src_values_tree(
+                num_changes = replace_src_values_tree(
                     fragments[0], IM_PREFIX, im_to_osx_mapping
                     )
             if num_changes > 0:

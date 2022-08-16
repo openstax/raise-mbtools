@@ -1,5 +1,8 @@
+import botocore.stub
+import boto3
 import os
-from mbtools import replace_im_links
+from mbtools import copy_resources_s3, replace_im_links
+from mbtools import fetch_im_resources
 from mbtools.fetch_im_resources import IM_PREFIX
 from mbtools import utils
 from lxml import html
@@ -251,7 +254,7 @@ def test_replace_im_links_mbz_no_matches(
     assert len(resources) == 0
 
 
-def test_fetch_im_resource_extracted(
+def test_replace_im_resource_extracted(
     tmp_path, mocker
 ):
     media_json = [
@@ -275,8 +278,8 @@ def test_fetch_im_resource_extracted(
 
     filename = "abcd.json"
     filename2 = "efgh.json"
-    im_resource = f"https://s3.amazonaws.com/im-ims-export/{filename}"
-    im_resource2 = f"https://s3.amazonaws.com/im-ims-export/{filename2}"
+    im_resource = f"{IM_PREFIX}{filename}"
+    im_resource2 = f"{IM_PREFIX}{filename2}"
 
     lesson1_page1_content = f'''
     <div><p>Lesson 1 Page 1</p>
@@ -313,7 +316,7 @@ def test_fetch_im_resource_extracted(
         assert new_prefix in r
 
 
-def test_fetch_im_resource_extracted_no_matches(
+def test_replace_im_resource_extracted_no_matches(
     tmp_path, mocker
 ):
     media_json = [
@@ -373,3 +376,157 @@ def test_fetch_im_resource_extracted_no_matches(
     assert len(resources) == 2
     for r in resources:
         assert new_prefix not in r
+
+
+def test_replace_im_resources_html_overlapping_filenames(
+    tmp_path, mocker, requests_mock
+):
+    media_json = [
+        {
+            'mime_type': 'application/json',
+            'sha1': 'c527d2ba1d2dbcefb509822abb0bf2ab04457a2c',
+            'original_filename': 'abcd.json',
+            's3_key': 'resources/c527d2ba1d2dbcefb509822abb0bf2ab04457a2c'
+        }
+    ]
+    json_object = json.dumps(media_json, indent=4)
+    media_path = tmp_path / "media.json"
+    with open(media_path, "w") as outfile:
+        outfile.write(json_object)
+
+    filename = "abcd.json"
+    filename2 = "efgh.json"
+    im_resource = f"{IM_PREFIX}{filename}"
+    im_resource2 = f"{IM_PREFIX}{filename2}"
+
+    resource_content = b"123456789abcdef"
+    requests_mock.get(
+        im_resource2,
+        content=resource_content
+    )
+
+    lesson1_page1_content = f'''
+    <div><p>Lesson 1 Page 1</p>
+    <img src="{im_resource}"></img></div>
+    <img src="{im_resource2}"></img></div>'''
+
+    extracted_path = tmp_path / "extracted"
+    extracted_path.mkdir(parents=True, exist_ok=True)
+    extracted_filename = extracted_path / "lesson1page1.html"
+    extracted_filename.write_text(lesson1_page1_content)
+
+    new_prefix = "k12"
+    mocker.patch(
+        "sys.argv",
+        ["", f"{extracted_path}", f"{media_path}", f"{new_prefix}", "html"]
+    )
+    replace_im_links.main()
+
+    resources = []
+    for filename in os.listdir(extracted_path):
+        f = os.path.join(extracted_path, filename)
+        with open(f, 'r') as file:
+            data = file.read()
+            for elem in html.fragments_fromstring(
+                        data)[0].xpath('//*[@src]'):
+                resources.append(elem.attrib['src'])
+    assert len(resources) == 2
+    for r in resources:
+        assert new_prefix in r
+
+
+def test_fetch_and_replace_im_resources_html_overlapping_filenames(
+    tmp_path, mocker, requests_mock
+):
+    filename_1 = "abcd.json"
+    filename_2 = "efgh.json"
+    im_resource = f"{IM_PREFIX}{filename_1}"
+    im_resource2 = f"{IM_PREFIX}{filename_2}"
+    resource_content = b"123456789abcdef"
+    requests_mock.get(
+        im_resource,
+        content=resource_content
+    )
+    requests_mock.get(
+        im_resource2,
+        content=resource_content
+    )
+
+    lesson1_page1_content = f'''
+    <div><p>Lesson 1 Page 1</p>
+    <img src="{im_resource}"></img></div>
+    <img src="{im_resource2}"></img></div>'''
+
+    extracted_path = tmp_path / "extracted"
+    extracted_path.mkdir(parents=True, exist_ok=True)
+    extracted_filename = extracted_path / "lesson1page1.html"
+    extracted_filename.write_text(lesson1_page1_content)
+
+    # STEP 1 FETCH IMAGES
+    output_path = tmp_path / "im_resources"
+    mocker.patch(
+        "sys.argv",
+        ["", f"{extracted_path}", f"{output_path}", "html"]
+    )
+    fetch_im_resources.main()
+
+    # STEP 2 UPLOAD RESOURCES S3
+    # Build the stubber for s3 call
+    s3_client = boto3.client('s3')
+    stubber = botocore.stub.Stubber(s3_client)
+    # Get the hash of the IM file - needed for the stub
+    sha1_map, _ = copy_resources_s3.new_resource_hashes(output_path)
+    hash_keys = list(sha1_map)
+    s3_dir = 'resources'
+    full_key = s3_dir + '/' + hash_keys[0]
+    bucket_name = 'favorite_bucket'
+    stubber.add_client_error('head_object',
+                             service_error_meta={'Code': '404'},
+                             expected_params={
+                                'Bucket': bucket_name,
+                                'Key': full_key
+                                }
+                             )
+    stubber.add_response('put_object', {},
+                         expected_params={
+                            'Body': botocore.stub.ANY,
+                            'Bucket': bucket_name,
+                            'Key': full_key,
+                            'ContentType': 'text/plain'
+                            }
+                         )
+    stubber.activate()
+    mocker.patch('boto3.client', lambda service: s3_client)
+
+    # Initialize a media.json file
+    json_object = json.dumps([], indent=4)
+    metadata_path = tmp_path / "media.json"
+    with open(metadata_path, "w") as outfile:
+        outfile.write(json_object)
+
+    resource_dir = output_path
+    mocker.patch(
+        "sys.argv",
+        ["", str(resource_dir), str(metadata_path), bucket_name, s3_dir]
+    )
+    copy_resources_s3.main()
+
+    # STEP 3 REPLACE IMAGES
+    new_prefix = "k12"
+    mocker.patch(
+        "sys.argv",
+        ["", f"{extracted_path}", f"{metadata_path}", f"{new_prefix}", "html"]
+    )
+    replace_im_links.main()
+
+    resources = []
+    for filename in os.listdir(extracted_path):
+        f = os.path.join(extracted_path, filename)
+        with open(f, 'r') as file:
+            data = file.read()
+            for elem in html.fragments_fromstring(
+                        data)[0].xpath('//*[@src]'):
+                resources.append(elem.attrib['src'])
+    assert len(resources) == 2
+    for r in resources:
+        assert new_prefix in r

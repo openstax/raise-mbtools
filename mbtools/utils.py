@@ -80,17 +80,3 @@ def find_elements_containing(content_etree, src_content):
     return content_etree.xpath(
         f'//*[contains(@src, "{src_content}")]'
     )
-
-
-def replace_src_values_tree(content_tree, src_content, swap_mapping):
-    """
-    Given an etree object, a prefix, and a mapping from links with that
-    prefix to new links, swap all src values according to the mapping.
-    """
-    num_changes = 0
-    for elem in find_elements_containing(content_tree, src_content):
-        im_filename = elem.attrib["src"]
-        if im_filename in swap_mapping.keys():
-            num_changes += 1
-            elem.attrib["src"] = swap_mapping[im_filename]
-    return num_changes
