@@ -1,5 +1,4 @@
 import hashlib
-from http.client import InvalidURL
 import json
 import requests
 from mbtools import utils
@@ -25,13 +24,9 @@ def replace_src_values_tree(content_tree, src_content, swap_mapping):
             # Fetch link, calculate sha1, and replace link anyway.
             data = requests.get(im_filename).content
             sha1 = hashlib.sha1(data).hexdigest()
-            found = False
             for key in swap_mapping.keys():
                 if sha1 in swap_mapping[key]:
                     elem.attrib["src"] = swap_mapping[key]
-                    found = True
-            if found is False:
-                raise InvalidURL
     return num_changes
 
 
