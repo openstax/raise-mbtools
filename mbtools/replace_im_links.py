@@ -10,10 +10,6 @@ from mbtools.fetch_im_resources import IM_PREFIX
 
 
 def replace_src_values_tree(content_tree, src_content, swap_mapping):
-    """
-    Given an etree object, a prefix, and a mapping from links with that
-    prefix to new links, swap all src values according to the mapping.
-    """
     num_changes = 0
     for elem in utils.find_elements_containing(content_tree, src_content):
         im_filename = elem.attrib["src"]
@@ -27,6 +23,7 @@ def replace_src_values_tree(content_tree, src_content, swap_mapping):
             for key in swap_mapping.keys():
                 if sha1 in swap_mapping[key]:
                     elem.attrib["src"] = swap_mapping[key]
+                    num_changes += 1
     return num_changes
 
 
