@@ -1,4 +1,6 @@
+import hashlib
 import json
+import requests
 from mbtools import utils
 import argparse
 from lxml import html
@@ -7,19 +9,40 @@ from mbtools import models
 from mbtools.fetch_im_resources import IM_PREFIX
 
 
+def replace_src_values_tree(
+    content_tree, src_content, im_to_osx_mapping, hash_to_im_mapping
+):
+    num_changes = 0
+    for elem in utils.find_elements_containing(content_tree, src_content):
+        im_filename = elem.attrib["src"]
+        if im_filename in im_to_osx_mapping.keys():
+            num_changes += 1
+            elem.attrib["src"] = im_to_osx_mapping[im_filename]
+        else:
+            # Fetch link, calculate sha1, and replace link anyway.
+            data = requests.get(im_filename).content
+            sha1 = hashlib.sha1(data).hexdigest()
+            elem.attrib["src"] = hash_to_im_mapping[sha1]
+            num_changes += 1
+    return num_changes
+
+
 def parse_media_file(media_path, s3_prefix):
-    mapping = {}
+    hash_to_im_mapping = {}
+    im_to_osx_mapping = {}
     with open(media_path) as f:
         data = json.load(f)
         for entry in data:
             im_url = IM_PREFIX + entry['original_filename']
             s3_url = s3_prefix + '/' + entry['s3_key']
-            mapping[im_url] = s3_url
-    return mapping
+            hash_to_im_mapping[entry['sha1']] = s3_url
+            im_to_osx_mapping[im_url] = s3_url
+    return im_to_osx_mapping, hash_to_im_mapping
 
 
 def replace_im_links(content_path, media_path, s3_prefix, mode):
-    im_to_osx_mapping = parse_media_file(media_path, s3_prefix)
+    im_to_osx_mapping, hash_to_im_mapping = \
+        parse_media_file(media_path, s3_prefix)
     if (mode == 'mbz'):
         backup = utils.parse_moodle_backup(content_path)
         activities = backup.activities()
@@ -28,8 +51,11 @@ def replace_im_links(content_path, media_path, s3_prefix, mode):
         for act in activities:
             elems = act.html_elements()
             for elem in elems:
-                num_changes = utils.replace_src_values_tree(
-                    elem.etree_fragments[0], IM_PREFIX, im_to_osx_mapping
+                num_changes = replace_src_values_tree(
+                    elem.etree_fragments[0],
+                    IM_PREFIX,
+                    im_to_osx_mapping,
+                    hash_to_im_mapping
                     )
                 if (num_changes > 0):
                     elem.update_html()
@@ -43,8 +69,11 @@ def replace_im_links(content_path, media_path, s3_prefix, mode):
             with open(item, 'r') as f:
                 data = f.read()
                 fragments = html.fragments_fromstring(data)
-                num_changes = utils.replace_src_values_tree(
-                    fragments[0], IM_PREFIX, im_to_osx_mapping
+                num_changes = replace_src_values_tree(
+                    fragments[0],
+                    IM_PREFIX,
+                    im_to_osx_mapping,
+                    hash_to_im_mapping
                     )
             if num_changes > 0:
                 with open(item, 'w') as f:
