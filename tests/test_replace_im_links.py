@@ -1,8 +1,7 @@
 import botocore.stub
 import boto3
 import os
-from mbtools import copy_resources_s3, replace_im_links
-from mbtools import fetch_im_resources
+from mbtools import copy_resources_s3, replace_im_links, fetch_im_resources
 from mbtools.fetch_im_resources import IM_PREFIX
 from mbtools import utils
 from lxml import html
