@@ -1,22 +1,48 @@
 import argparse
-import glob
+import os
 import json
 from pathlib import Path
 
 
-def create_json_content(uuid, content, variant="main"):
+def create_json_content(uuid, content):
+
     json_content = {"id": uuid, "content":
-                    [{"variant": variant, "html": content}]}
+                                content}
     return json.dumps(json_content, indent=2)
 
 
 def html_to_json(html_directory, json_directory):
-    for file_name in glob.iglob(f'{html_directory}/*.html'):
-        with open(f'{file_name}') as f:
-            new_file = open(f'{json_directory}/'
-                            f'{Path(file_name).stem}.json', "w")
-            new_file.write(create_json_content(Path(file_name).stem, f.read()))
-            new_file.close()
+
+    for file_name in os.listdir(html_directory):
+        if os.path.isfile(f'{html_directory}/{file_name}'):
+
+            file_uuid = f'{Path(file_name).stem}'
+            file_content = ''
+
+            with open(f'{html_directory}/{file_name}') as f:
+                file_content = f.read()
+
+            with open(f'{json_directory}/'
+                      f'{Path(file_name).stem}.json', "w") as new_file:
+                new_file.write(create_json_content(
+                    file_uuid, [{"variant": file_uuid, "html": file_content}]))
+
+        else:
+            variant_list = []
+            for f_name in os.listdir(f'{html_directory}/{file_name}'):
+                with open(f'{html_directory}/'
+                          f'{file_name}/{f_name}') as varient_file:
+
+                    variant_list.append(
+                        {"variant": f'{Path(f_name).stem}',
+                         "html": varient_file.read()})
+            if variant_list:
+
+                with open(f'{json_directory}/'
+                          f'{Path(file_name).stem}.json', "w") as new_file:
+
+                    new_file.write(create_json_content(
+                        Path(file_name).stem, variant_list))
 
 
 def main():
