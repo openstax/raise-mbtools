@@ -31,17 +31,18 @@ HTML_VARIANT2 = (
 )
 
 
-
 @pytest.fixture
 def file_path(tmp_path):
     (tmp_path / 'html_directory').mkdir()
-    (tmp_path / 'html_directory'/ 'variantdir').mkdir()
+    (tmp_path / 'html_directory' / 'variantdir').mkdir()
 
     (tmp_path / 'json_directory').mkdir()
     (tmp_path / 'html_directory' / "fragment.html").write_text(HTML_FRAGMENT1)
     (tmp_path / 'html_directory' / "fragment2.html").write_text(HTML_FRAGMENT2)
-    (tmp_path / 'html_directory' / 'variantdir' / 'variant1.html').write_text(HTML_VARIANT1)
-    (tmp_path / 'html_directory' / 'variantdir' / 'variant2.html').write_text(HTML_VARIANT2)
+    (tmp_path / 'html_directory' / 'variantdir' /
+     'variant1.html').write_text(HTML_VARIANT1)
+    (tmp_path / 'html_directory' / 'variantdir' /
+     'variant2.html').write_text(HTML_VARIANT2)
 
     return tmp_path
 
@@ -60,7 +61,6 @@ def test_json_file_created(file_path):
     assert ("fragment.json" in os.listdir(f'{file_path}/json_directory'))
     assert ("fragment2.json" in os.listdir(f'{file_path}/json_directory'))
     assert ("variantdir.json" in os.listdir(f'{file_path}/json_directory'))
-
 
 
 def test_html_in_json(file_path):
