@@ -25,7 +25,7 @@ def html_to_json(html_directory, json_directory):
             with open(f'{json_directory}/'
                       f'{Path(file_name).stem}.json', "w") as new_file:
                 new_file.write(create_json_content(
-                    file_uuid, [{"variant": file_uuid, "html": file_content}]))
+                    file_uuid, [{"variant": "main", "html": file_content}]))
 
         else:
             variant_list = []
