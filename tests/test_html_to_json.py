@@ -20,14 +20,28 @@ HTML_FRAGMENT2 = (
     '<h1>Some Header</h1>'
     '<p>Some text</p>'
 )
+HTML_VARIANT1 = (
+    '<h1>no video</h1>'
+    '<p>Some text</p>'
+)
+
+HTML_VARIANT2 = (
+    '<h1>no interactive</h1>'
+    '<p>Some text</p>'
+)
+
 
 
 @pytest.fixture
 def file_path(tmp_path):
     (tmp_path / 'html_directory').mkdir()
+    (tmp_path / 'html_directory'/ 'variantdir').mkdir()
+
     (tmp_path / 'json_directory').mkdir()
     (tmp_path / 'html_directory' / "fragment.html").write_text(HTML_FRAGMENT1)
     (tmp_path / 'html_directory' / "fragment2.html").write_text(HTML_FRAGMENT2)
+    (tmp_path / 'html_directory' / 'variantdir' / 'variant1.html').write_text(HTML_VARIANT1)
+    (tmp_path / 'html_directory' / 'variantdir' / 'variant2.html').write_text(HTML_VARIANT2)
 
     return tmp_path
 
@@ -45,6 +59,8 @@ def test_json_file_created(file_path):
     html_to_json(f'{file_path}/html_directory', f'{file_path}/json_directory')
     assert ("fragment.json" in os.listdir(f'{file_path}/json_directory'))
     assert ("fragment2.json" in os.listdir(f'{file_path}/json_directory'))
+    assert ("variantdir.json" in os.listdir(f'{file_path}/json_directory'))
+
 
 
 def test_html_in_json(file_path):
@@ -53,6 +69,8 @@ def test_html_in_json(file_path):
     # json dumps to escape html content
     assert any(json.dumps(HTML_FRAGMENT1) in s for s in content_in_json)
     assert any(json.dumps(HTML_FRAGMENT2) in s for s in content_in_json)
+    assert any(json.dumps(HTML_VARIANT1) in s for s in content_in_json)
+    assert any(json.dumps(HTML_VARIANT2) in s for s in content_in_json)
 
 
 def test_json_content_is_valid(file_path):
@@ -74,4 +92,4 @@ def test_main(file_path, mocker):
     for file in os.listdir(f"{file_path}/json_directory"):
         if file.endswith(".json"):
             json_files.append(Path(file).stem)
-    assert len(json_files) == 2
+    assert len(json_files) == 3
