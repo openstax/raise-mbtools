@@ -38,7 +38,8 @@ VALID_HREF_PREFIXES = [
     "https://digitalpromise.org",
     "https://www.doe.virginia.gov",
     "https://tea.texas.gov",
-    "https://www.sfusdmath.org"
+    "https://www.sfusdmath.org",
+    "https://www.engageny.org"
 ]
 
 VALID_HREF_VALUES = [
