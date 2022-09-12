@@ -46,6 +46,22 @@ def file_path(tmp_path):
 
     return tmp_path
 
+@pytest.fixture
+def correct_file_path(tmp_path):
+    (tmp_path / 'html_directory').mkdir()
+    (tmp_path / 'html_directory' / 'variantdir').mkdir()
+
+    (tmp_path / 'json_directory').mkdir()
+    (tmp_path / 'html_directory' / "fragment.html").write_text(HTML_FRAGMENT1)
+    (tmp_path / 'html_directory' / "variant.html").write_text(HTML_FRAGMENT1)
+
+    (tmp_path / 'html_directory' / "fragment2.html").write_text(HTML_FRAGMENT2)
+    (tmp_path / 'html_directory' / 'variant' /
+     'variant1.html').write_text(HTML_VARIANT1)
+    (tmp_path / 'html_directory' / 'variant' /
+     'variant2.html').write_text(HTML_VARIANT2)
+
+    return tmp_path
 
 def get_json_content(file_path):
     content_in_json = []
