@@ -25,7 +25,7 @@ VALID_PREFIXES = [
 VALID_IFRAME_PREFIXES = [
     "https://www.youtube.com",
     "https://player.vimeo.com",
-    "https://www.geogebra.org"
+    "https://www.geogebra.org/material/iframe/id"
 ]
 
 VALID_HREF_PREFIXES = [
