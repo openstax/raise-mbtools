@@ -63,5 +63,4 @@ def main():
 
 
 if __name__ == "__main__":  # pragma: no cover
-    # main()
-    html_to_json('./html', './json')
+    main()
