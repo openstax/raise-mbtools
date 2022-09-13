@@ -24,7 +24,8 @@ VALID_PREFIXES = [
 
 VALID_IFRAME_PREFIXES = [
     "https://www.youtube.com",
-    "https://player.vimeo.com"
+    "https://player.vimeo.com",
+    "https://www.geogebra.org/material/iframe/id"
 ]
 
 VALID_HREF_PREFIXES = [
@@ -38,7 +39,8 @@ VALID_HREF_PREFIXES = [
     "https://digitalpromise.org",
     "https://www.doe.virginia.gov",
     "https://tea.texas.gov",
-    "https://www.sfusdmath.org"
+    "https://www.sfusdmath.org",
+    "https://www.engageny.org"
 ]
 
 VALID_HREF_VALUES = [
