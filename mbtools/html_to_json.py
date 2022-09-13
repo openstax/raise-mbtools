@@ -7,7 +7,9 @@ from pathlib import Path
 def create_json_content(uuid, content, json_path):
     if not Path(json_path).exists():
 
-        json_content = {"id": uuid, "content": content}
+        json_content = {
+            "id": uuid,
+            "content": content}
 
         with open(json_path, "w") as new_file:
             new_file.write(json.dumps(json_content, indent=2))
