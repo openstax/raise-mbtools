@@ -31,12 +31,12 @@ def html_to_json(html_directory, json_directory):
             if Path(f'{html_directory}/{file.stem}').is_dir():
                 for f_name in Path(f"{html_directory}/{file.stem}").iterdir():
                     with open(f"{html_directory}/"
-                              f"{file.stem}/{f_name.name}") as varient_file:
+                              f"{file.stem}/{f_name.name}") as variant_file:
 
                         variant_list.append(
                             {
                                 "variant": f"{Path(f_name.name).stem}",
-                                "html": varient_file.read()
+                                "html": variant_file.read()
                             }
                         )
             create_json_content(
