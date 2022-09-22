@@ -11,7 +11,7 @@ def fix_html(html_directory):
         with open(f"{html_directory}/{html_file.name}") as f:
             soup = BeautifulSoup(f.read(), 'html.parser')
             for link in soup.find_all(tag_allow_list):
-                if len(link.get_text(strip=True)) == 0:
+                if len(link.get_text(strip=True)) == 0 and len(link) == 0:
                     link.extract()
 
         with open(f"{html_directory}/{html_file.name}", 'w') as f:
