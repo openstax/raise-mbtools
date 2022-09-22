@@ -12,14 +12,23 @@ HTML = (
     '<br>'
     '<br><a>hello</a></br>'
     '<img src="w3html.gif" alt="W3Schools.com" width="100" height="132"/>'
+    '<p><img src="w3html.gif" alt="W3Schools.com"\
+     width="100" height="132"/></p>'
+
 )
 
 output_html = (
     '<h1>Header tag</h1>'
+    '<p></p>'
+    '<p></p>'
+    '<p><span lang="EN"> </span></p>'
     '<br/>'
     '<br/>'
     '<br/><a>hello</a>'
     '<img alt="W3Schools.com" height="132" src="w3html.gif" width="100"/>'
+    '<p><img alt="W3Schools.com" height="132" src="w3html.gif"\
+         width="100"/></p>'
+
 )
 
 
@@ -50,4 +59,4 @@ def test_main(file_path, mocker):
     main()
     with open(f"{file_path}/html_directory/htmlfile.html", 'r') as f:
         file = f.read()
-        assert ('<p></p>' not in file)
+        assert ('<h2></h2>' not in file)
