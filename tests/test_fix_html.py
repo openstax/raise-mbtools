@@ -11,9 +11,8 @@ HTML = (
     '<br>'
     '<br>'
     '<br><a>hello</a></br>'
-    '<img src="w3html.gif" alt="W3Schools.com" width="100" height="132"/>'
-    '<p><img src="w3html.gif" alt="W3Schools.com"\
-     width="100" height="132"/></p>'
+    '<img src="w3html.gif" alt="W3Schools.com" width="100" />'
+    '<p><img src="w3html.gif" alt="W3Schools.com" /></p>'
 
 )
 
@@ -25,9 +24,8 @@ output_html = (
     '<br/>'
     '<br/>'
     '<br/><a>hello</a>'
-    '<img alt="W3Schools.com" height="132" src="w3html.gif" width="100"/>'
-    '<p><img alt="W3Schools.com" height="132" src="w3html.gif"\
-         width="100"/></p>'
+    '<img alt="W3Schools.com" src="w3html.gif" width="100"/>'
+    '<p><img alt="W3Schools.com" src="w3html.gif"/></p>'
 
 )
 
