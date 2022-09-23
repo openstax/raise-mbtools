@@ -4,15 +4,18 @@ from pathlib import Path
 
 
 def fix_html(html_directory):
-
-    tag_allow_list = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span']
+    inline_tags = ['span']
+    block_tags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
     soup = None
+
     for html_file in Path(html_directory).iterdir():
         with open(f"{html_directory}/{html_file.name}") as f:
             soup = BeautifulSoup(f.read(), 'html.parser')
-            for link in soup.find_all(tag_allow_list):
-                if len(link.get_text(strip=True)) == 0 and len(link) == 0:
-                    link.extract()
+            for tags in [inline_tags, block_tags]:
+                for elem in soup.find_all(tags):
+                    if len(elem.get_text(strip=True)) == 0\
+                         and len(elem.find_all()) == 0:
+                        elem.extract()
 
         with open(f"{html_directory}/{html_file.name}", 'w') as f:
             f.write(str(soup))

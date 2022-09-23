@@ -18,15 +18,11 @@ HTML = (
 
 output_html = (
     '<h1>Header tag</h1>'
-    '<p></p>'
-    '<p></p>'
-    '<p><span lang="EN"> </span></p>'
     '<br/>'
     '<br/>'
     '<br/><a>hello</a>'
     '<img alt="W3Schools.com" src="w3html.gif" width="100"/>'
     '<p><img alt="W3Schools.com" src="w3html.gif"/></p>'
-
 )
 
 
