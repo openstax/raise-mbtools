@@ -18,7 +18,7 @@ def fix_html(html_directory):
                         elem.extract()
 
         with open(f"{html_directory}/{html_file.name}", 'w') as f:
-            f.write(str(soup))
+            f.write(soup.encode(formatter="html5").decode('utf-8'))
 
 
 def main():

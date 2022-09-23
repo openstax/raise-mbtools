@@ -17,12 +17,13 @@ HTML = (
 )
 
 output_html = (
-    '<h1>Header tag</h1>'
-    '<br/>'
-    '<br/>'
-    '<br/><a>hello</a>'
-    '<img alt="W3Schools.com" src="w3html.gif" width="100"/>'
-    '<p><img alt="W3Schools.com" src="w3html.gif"/></p>'
+'<h1>Header tag</h1>'
+'<br>'
+'<br>'
+'<br><a>hello</a>'
+'<img alt="W3Schools.com" src="w3html.gif" width="100">'
+'<p><img alt="W3Schools.com" src="w3html.gif"></p>'
+
 )
 
 
