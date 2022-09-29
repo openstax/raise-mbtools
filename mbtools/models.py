@@ -318,14 +318,12 @@ class MoodleQuestion:
     def html_elements(self):
         elements = []
         question_type = self.etree.xpath('./qtype')[0].text
-        question_texts = self.etree.xpath(
-                f'//question[@id="{self.id}"]//questiontext')
+        question_texts = self.etree.xpath('.//questiontext')
         for question_html in question_texts:
             if question_type not in QUESTION_TEXT_IGNORE_TYPES:
                 elements.append(
                     MoodleHtmlElement(question_html, self.location))
-        answer_texts = self.etree.xpath(
-                f'//question[@id="{self.id}"]//answers/answer/answertext')
+        answer_texts = self.etree.xpath('.//answers/answer/answertext')
         for answer_html in answer_texts:
             if question_type not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
                 elements.append(
