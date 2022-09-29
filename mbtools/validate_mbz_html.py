@@ -40,7 +40,9 @@ VALID_HREF_PREFIXES = [
     "https://www.doe.virginia.gov",
     "https://tea.texas.gov",
     "https://www.sfusdmath.org",
-    "https://www.engageny.org"
+    "https://www.engageny.org",
+    "https://www.khanacademy.org",
+    "https://teacher.desmos.com"
 ]
 
 VALID_HREF_VALUES = [
