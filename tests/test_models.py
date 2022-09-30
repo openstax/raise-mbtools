@@ -94,6 +94,7 @@ def test_question_answertext_filter(tmp_path):
       <version>1</version>
       <questions>
         <question id="1">
+          <qtype>numerical</qtype>
           <plugin_qtype_numerical_question>
             <answers>
               <answer>
@@ -101,6 +102,35 @@ def test_question_answertext_filter(tmp_path):
               </answer>
             </answers>
           </plugin_qtype_numerical_question>
+        </question>
+      </questions>
+    </question_versions>
+  </question_category>
+</question_categories>
+    """.strip()
+
+    with open(tmp_path / "questions.xml", "w") as qb:
+        qb.write(question_bank_xml)
+
+    question_bank = MoodleQuestionBank(tmp_path)
+    question_bank_html = []
+    for question in question_bank.questions:
+        question_bank_html.extend(question.html_elements())
+
+    assert len(question_bank_html) == 0
+
+
+def test_question_text_filter(tmp_path):
+    question_bank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category>
+    <question_versions>
+      <version>1</version>
+      <questions>
+        <question id="1">
+          <qtype>shortanswer</qtype>
+          <questiontext>{1:SHORTANSWER:%100%2#Congratulations!}</questiontext>
         </question>
       </questions>
     </question_versions>
