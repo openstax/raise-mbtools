@@ -64,7 +64,7 @@ def replace_im_links(content_path, media_path, s3_prefix, mode):
                 utils.write_etree(act.activity_filename, act.etree)
         utils.write_etree(q_bank.questionbank_path, q_bank.etree)
     elif (mode == 'html'):
-        for item in content_path.iterdir():
+        for item in content_path.rglob('*.html'):
             num_changes = 0
             with open(item, 'r') as f:
                 data = f.read()
