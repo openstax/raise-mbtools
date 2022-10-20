@@ -42,13 +42,17 @@ VALID_HREF_PREFIXES = [
     "https://www.sfusdmath.org",
     "https://www.engageny.org",
     "https://www.khanacademy.org",
-    "https://teacher.desmos.com"
+    "https://teacher.desmos.com",
+    "https://help.desmos.com"
 ]
 
 VALID_HREF_VALUES = [
     "https://illustrativemathematics.org/",
     "https://openstax.org/",
-    "https://www.wisewire.com/"
+    "https://www.wisewire.com/",
+    "https://student.desmos.com",
+    "https://desmos.com/calculator",
+    "https://geogebra.org/graphing"
 ]
 
 VALID_STYLES = []
