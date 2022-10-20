@@ -45,7 +45,7 @@ VALID_HREF_PREFIXES = [
     "https://teacher.desmos.com",
     "https://help.desmos.com",
     "https://student.desmos.com",
-    "https://desmos.com/calculator"
+    "https://desmos.com/calculator",
     "https://geogebra.org/graphing"
 ]
 
