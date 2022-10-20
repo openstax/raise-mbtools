@@ -8,8 +8,8 @@ def fix_html(html_directory):
     block_tags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
     soup = None
 
-    for html_file in Path(html_directory).iterdir():
-        with open(f"{html_directory}/{html_file.name}") as f:
+    for html_file in Path(html_directory).rglob('*.html'):
+        with open(html_file) as f:
             soup = BeautifulSoup(f.read(), 'html.parser')
             for tags in [inline_tags, block_tags]:
                 for elem in soup.find_all(tags):
@@ -17,7 +17,7 @@ def fix_html(html_directory):
                          and len(elem.find_all()) == 0:
                         elem.extract()
 
-        with open(f"{html_directory}/{html_file.name}", 'w') as f:
+        with open(html_file, 'w') as f:
             f.write(soup.encode(formatter="html5").decode('utf-8'))
 
 

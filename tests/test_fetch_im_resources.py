@@ -235,6 +235,9 @@ def test_fetch_im_resource_extracted(
     lesson1_page2_content = f'''
     <div><p>Lesson 1 Page 1</p>
     <img src="{im_resource2}"></img></div>'''
+    lesson1_page2_variant_content = f'''
+    <div><p>Lesson 1 Page 1 Variant</p>
+    <img src="{im_resource2}"></img></div>'''
 
     extracted_path = tmp_path / "extracted"
     extracted_path.mkdir(parents=True, exist_ok=True)
@@ -242,6 +245,10 @@ def test_fetch_im_resource_extracted(
     extracted_filename.write_text(lesson1_page1_content)
     extracted_filename2 = extracted_path / "lesson1page2.html"
     extracted_filename2.write_text(lesson1_page2_content)
+    extracted_filename2_variant_dir = extracted_path / "lesson1page2"
+    extracted_filename2_variant_dir.mkdir()
+    extracted_filename2_variant = extracted_filename2_variant_dir / "foo.html"
+    extracted_filename2_variant.write_text(lesson1_page2_variant_content)
 
     output_path = tmp_path / "im_resources"
     mocker.patch(

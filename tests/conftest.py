@@ -118,6 +118,7 @@ QUESTION_TEMPLATE = Template("""
       <questions>
         <question id="questionid$id">
           <questiontext>$content</questiontext>
+          <qtype>multichoice</qtype>
           <plugin>
             <answers>
               $answerdata

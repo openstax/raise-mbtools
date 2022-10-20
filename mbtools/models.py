@@ -3,8 +3,13 @@ from pathlib import Path
 from lxml import etree, html
 from bs4 import BeautifulSoup
 
+QUESTION_TEXT_IGNORE_TYPES = [
+    "shortanswer"
+]
+
 QUESTION_ANSWER_TEXT_IGNORE_TYPES = [
-    "plugin_qtype_numerical_question"
+    "numerical",
+    "shortanswer"
 ]
 
 
@@ -312,16 +317,15 @@ class MoodleQuestion:
 
     def html_elements(self):
         elements = []
-        question_texts = self.etree.xpath(
-                f'//question[@id="{self.id}"]//questiontext')
+        question_type = self.etree.xpath('./qtype')[0].text
+        question_texts = self.etree.xpath('.//questiontext')
         for question_html in question_texts:
-            elements.append(
-                MoodleHtmlElement(question_html, self.location))
-        answer_texts = self.etree.xpath(
-                f'//question[@id="{self.id}"]//answers/answer/answertext')
+            if question_type not in QUESTION_TEXT_IGNORE_TYPES:
+                elements.append(
+                    MoodleHtmlElement(question_html, self.location))
+        answer_texts = self.etree.xpath('.//answers/answer/answertext')
         for answer_html in answer_texts:
-            answer_qtype = answer_html.xpath("../../..")[0]
-            if answer_qtype.tag not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
+            if question_type not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
                 elements.append(
                     MoodleHtmlElement(answer_html, self.location))
         return elements

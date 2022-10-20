@@ -25,7 +25,7 @@ def fetch_im_resources(content_dir, output_dir, mode):
                 find_references_containing(elem.etree_fragments[0], IM_PREFIX)
             )
     elif (mode == 'html'):
-        for item in content_dir.iterdir():
+        for item in content_dir.rglob('*.html'):
             with open(item, 'r') as f:
                 data = f.read()
                 tree = html.fragments_fromstring(data)[0]

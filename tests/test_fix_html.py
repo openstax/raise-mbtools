@@ -30,16 +30,18 @@ output_html = (
 @pytest.fixture
 def file_path(tmp_path):
 
-    (tmp_path / 'html_directory').mkdir()
-    (tmp_path / 'html_directory' / "htmlfile.html").write_text(HTML)
+    html_directory = tmp_path / 'html_directory'
 
-    return tmp_path
+    html_directory.mkdir()
+    (html_directory / "htmlfile.html").write_text(HTML)
+
+    return html_directory
 
 
-def test_json_file_created(file_path):
-    fix_html(f'{file_path}/html_directory')
+def test_remove_empty_elems(file_path):
+    fix_html(str(file_path))
     content = ''
-    with open(f'{file_path}/html_directory/htmlfile.html') as f:
+    with open(f'{file_path}/htmlfile.html') as f:
         content = f.read()
 
     assert (content == output_html)
@@ -49,9 +51,25 @@ def test_main(file_path, mocker):
     # Test for main function called by the CLI.
     mocker.patch(
         "sys.argv",
-        ["", f"{file_path}/html_directory"]
+        ["", str(file_path)]
     )
     main()
-    with open(f"{file_path}/html_directory/htmlfile.html", 'r') as f:
+    with open(f"{file_path}/htmlfile.html", 'r') as f:
         file = f.read()
         assert ('<h2></h2>' not in file)
+
+
+def test_directories(file_path):
+    (file_path / 'htmldir').mkdir()
+    (file_path / 'htmldir' / 'content.html').write_text(HTML)
+    fix_html(str(file_path))
+
+    with open(f'{file_path}/htmlfile.html') as f:
+        content = f.read()
+
+    assert (content == output_html)
+
+    with open(f'{file_path}/htmldir/content.html') as f:
+        content = f.read()
+
+    assert (content == output_html)
