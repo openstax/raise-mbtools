@@ -52,6 +52,7 @@ VALID_HREF_VALUES = [
     "https://www.wisewire.com/",
     "https://student.desmos.com",
     "https://desmos.com/calculator",
+    "https://www.desmos.com/calculator",
     "https://geogebra.org/graphing"
 ]
 
