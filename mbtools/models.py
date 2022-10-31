@@ -125,6 +125,14 @@ class MoodleQuestionBank:
             )
         return maybe_result
 
+    def get_entry_id_by_question_id(self, question_id):
+        question_from_question_id = self.etree.xpath(
+            f'//question[@id="{question_id}"]'
+        )[0]
+        return question_from_question_id.xpath(
+            "../../../.."
+        )[0].attrib["id"]
+
     def delete_unused_question_bank_entries(self, used_question_entry_ids):
         query = \
             '//question_bank_entry'
@@ -286,9 +294,23 @@ class MoodleQuiz:
         return elements
 
     def used_qbank_entry_ids(self):
-        return [
+        entry_ids = [
             question.qbank_entry_id for question in self.quiz_questions
         ]
+        for question in self.quiz_questions:
+            entry_id = question.qbank_entry_id
+            version = question.version
+            moodle_question = self.question_bank\
+                .get_question_by_entry(entry_id, version)
+
+            children_question_ids = moodle_question.child_question_ids()
+            for id in children_question_ids:
+                entry_ids.append(
+                    self.question_bank
+                        .get_entry_id_by_question_id(id)
+                )
+
+        return entry_ids
 
 
 class MoodleQuizQuestion:
@@ -329,6 +351,14 @@ class MoodleQuestion:
                 elements.append(
                     MoodleHtmlElement(answer_html, self.location))
         return elements
+
+    def child_question_ids(self):
+        maybe_child_ids = self.etree.xpath(
+            "./plugin_qtype_multianswer_question/multianswer/sequence"
+        )
+        if maybe_child_ids:
+            return maybe_child_ids[0].text.split(',')
+        return []
 
 
 class MoodleHtmlElement:
