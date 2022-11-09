@@ -165,7 +165,20 @@ def test_quiz_used_qbank_entry_ids(tmp_path, mbz_builder, quiz_builder):
         ]
     )
 
-    mbz_builder(tmp_path, activities=[quiz])
+    mbz_builder(
+        tmp_path,
+        activities=[quiz],
+        questionbank_questions=[
+            {
+                "id": 11,
+                "html_content": "<p>Question 1</p>"
+            },
+            {
+                "id": 22,
+                "html_content": "<p>Question 2</p>"
+            }
+        ]
+    )
     quiz = MoodleQuiz(
         tmp_path / "activities/quiz_1",
         tmp_path,
@@ -400,3 +413,86 @@ def test_questionbank_get_latest_questions(tmp_path):
     assert len(latest_questions) == 2
     assert latest_questions[0].version == "2"
     assert latest_questions[1].version == "11"
+
+
+def test_find_multianswer_child_question(tmp_path):
+    question_bank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category>
+    <question_bank_entry id="123">
+      <question_version>
+        <question_versions>
+          <version>1</version>
+          <questions>
+            <question id="1">
+              <plugin_qtype_multianswer_question>
+                <multianswer>
+                  <sequence>20,21</sequence>
+                </multianswer>
+              </plugin_qtype_multianswer_question>
+              <questiontext></questiontext>
+            </question>
+          </questions>
+        </question_versions>
+      </question_version>
+    </question_bank_entry>
+    <question_bank_entry id="124">
+      <question_version>
+        <question_versions>
+          <version>1</version>
+          <questions>
+            <question id="20">
+              <questiontext></questiontext>
+            </question>
+          </questions>
+        </question_versions>
+      </question_version>
+    </question_bank_entry>
+    <question_bank_entry id="125">
+      <question_version>
+        <question_versions>
+          <version>1</version>
+          <questions>
+            <question id="21">
+              <questiontext></questiontext>
+            </question>
+          </questions>
+        </question_versions>
+      </question_version>
+    </question_bank_entry>
+  </question_category>
+</question_categories>
+    """.strip()
+
+    quiz_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<activity id="1" modulename="quiz">
+  <quiz id="2">
+    <name>My Quiz</name>
+    <question_instances>
+      <question_instance id="123">
+        <question_reference>
+          <questionbankentryid>123</questionbankentryid>
+          <version>$@NULL@$</version>
+        </question_reference>
+      </question_instance>
+    </question_instances>
+  </quiz>
+</activity>
+    """.strip()
+
+    with open(tmp_path / "questions.xml", "w") as qb:
+        qb.write(question_bank_xml)
+    (tmp_path / "activities").mkdir()
+    with open(tmp_path / "activities" / "quiz.xml", "w") as qb:
+        qb.write(quiz_xml)
+
+    question_bank = MoodleQuestionBank(tmp_path)
+    quiz = MoodleQuiz((tmp_path / "activities"), tmp_path, question_bank)
+
+    results = quiz.used_qbank_entry_ids()
+    assert len(results) == 3
+    assert "123" in results
+    assert "124" in results
+    assert "125" in results
