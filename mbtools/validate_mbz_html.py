@@ -53,7 +53,8 @@ VALID_HREF_VALUES = [
     "https://student.desmos.com",
     "https://desmos.com/calculator",
     "https://www.desmos.com/calculator",
-    "https://geogebra.org/graphing"
+    "https://geogebra.org/graphing",
+    "https://student.desmos.com/"
 ]
 
 VALID_STYLES = []
