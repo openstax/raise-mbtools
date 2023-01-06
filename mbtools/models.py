@@ -1,3 +1,4 @@
+import string
 import uuid
 from pathlib import Path
 from lxml import etree, html
@@ -267,6 +268,7 @@ class MoodleQuiz:
         self.activity_filename = str(self.activity_path / "quiz.xml")
         self.etree = etree.parse(self.activity_filename)
         self.question_bank = question_bank
+        self.name = self.etree.xpath("//activity/quiz/name")[0].text
 
     @property
     def quiz_questions(self):
@@ -322,6 +324,8 @@ class MoodleQuizQuestion:
                 "./question_reference/questionbankentryid"
             )[0].text
         self.version = self.etree.xpath("./question_reference/version")[0].text
+        self.page = self.etree.xpath("./page")[0].text
+        self.slot = self.etree.xpath("./slot")[0].text
 
 
 class MoodleQuestion:
@@ -332,6 +336,8 @@ class MoodleQuestion:
         self.etree = question_elm
         self.id = self.etree.attrib['id']
         self.version = self.etree.xpath("../../version")[0].text
+        self.id_number = self.etree.xpath('../../../../idnumber')[0].text
+        self.question_type = self.etree.xpath('./qtype')[0].text
 
     @property
     def location(self):
@@ -339,15 +345,14 @@ class MoodleQuestion:
 
     def html_elements(self):
         elements = []
-        question_type = self.etree.xpath('./qtype')[0].text
         question_texts = self.etree.xpath('.//questiontext')
         for question_html in question_texts:
-            if question_type not in QUESTION_TEXT_IGNORE_TYPES:
+            if self.question_type not in QUESTION_TEXT_IGNORE_TYPES:
                 elements.append(
                     MoodleHtmlElement(question_html, self.location))
         answer_texts = self.etree.xpath('.//answers/answer/answertext')
         for answer_html in answer_texts:
-            if question_type not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
+            if self.question_type not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
                 elements.append(
                     MoodleHtmlElement(answer_html, self.location))
         return elements
@@ -359,6 +364,34 @@ class MoodleQuestion:
         if maybe_child_ids:
             return maybe_child_ids[0].text.split(',')
         return []
+
+    def multichoice_answers(self):
+        answers = self.etree.xpath('.//answers/answer')
+        answer_objs = []
+        for answer in answers:
+            answer_objs.append(MoodleMultichoiceAnswer(answer, self.location))
+        return answer_objs
+
+
+class MoodleMultichoiceAnswer:
+    """This class models an <answer> from the <answers> under a 
+    MoodleQuestion"""
+    def __init__(self, answer, location):
+        self.etree = answer
+        self.location = location
+        self.grade = float(self.etree.xpath('./fraction')[0].text)
+
+    def answer_html_element(self):
+        answer_html = self.etree.xpath('./answertext')[0]
+        return MoodleHtmlElement(answer_html, self.location)
+
+    def feedback_html_element(self):
+        if len(self.etree.xpath('./feedback')) == 0:
+            return None
+        feedback_html = self.etree.xpath('./feedback')[0]
+        if (type(feedback_html.text) != string):
+            return None
+        return MoodleHtmlElement(feedback_html, self.location)
 
 
 class MoodleHtmlElement:

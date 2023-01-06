@@ -80,10 +80,14 @@ def test_fetch_im_resources_main(
         questions=[
             {
                 "id": 31,
+                "slot": 1,
+                "page": 1,
                 "questionid": 1
             },
             {
                 "id": 32,
+                "slot": 1,
+                "page": 2,
                 "questionid": 2
             }
         ]
@@ -94,24 +98,29 @@ def test_fetch_im_resources_main(
         questionbank_questions=[
             {
                 "id": 1,
+                "idnumber": 1234,
                 "html_content": qb_question1_content,
                 "answers": [
                     {
                         "id": 11,
+                        "grade": 1,
                         "html_content": qb_question1_answer1_content
                     },
                     {
                         "id": 12,
+                        "grade": 0,
                         "html_content": qb_question1_answer2_content
                     }
                 ]
             },
             {
                 "id": 2,
+                "idnumber": 1235,
                 "html_content": qb_question2_content
             },
             {
                 "id": 3,
+                "idnumber": 1236,
                 "html_content": qb_question3_content
             }
         ]
