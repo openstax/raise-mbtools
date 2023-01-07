@@ -301,9 +301,9 @@ def test_generate_quiz_data_with_answer_feedback(tmp_path, mocker):
         all_rows = []
         for line in csvFile:
             all_rows.append(line)
-        assert (all_rows ==\
-               ['id', 'question_id', 'text', 'grade', 'feedback'],
-                ['0', '1234', '<p>Answ 1 Text</p>', '0.0', '<p>Wrong</p>'],
-                ['1', '1234', '<p>Answ 2 Text</p>', '1.0', '<p>Correct</p>'],
-                ['2', '1234', '<p>Answ 3 Text</p>', '0.0', '<p>Wrong</p>'],
-                ['3', '1234', '<p>Answ 4 Text</p>', '0.0', '<p>Wrong</p>']])
+        assert (all_rows ==
+                [['id', 'question_id', 'text', 'grade', 'feedback'],
+                 ['0', '1234', '<p>Answ 1 Text</p>', '0.0', '<p>Wrong</p>'],
+                 ['1', '1234', '<p>Answ 2 Text</p>', '1.0', '<p>Correct</p>'],
+                 ['2', '1234', '<p>Answ 3 Text</p>', '0.0', '<p>Wrong</p>'],
+                 ['3', '1234', '<p>Answ 4 Text</p>', '0.0', '<p>Wrong</p>']])
