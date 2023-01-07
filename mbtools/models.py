@@ -1,4 +1,3 @@
-import string
 import uuid
 from pathlib import Path
 from lxml import etree, html
@@ -374,7 +373,7 @@ class MoodleQuestion:
 
 
 class MoodleMultichoiceAnswer:
-    """This class models an <answer> from the <answers> under a 
+    """This class models an <answer> from the <answers> under a
     MoodleQuestion"""
     def __init__(self, answer, location):
         self.etree = answer
@@ -389,7 +388,7 @@ class MoodleMultichoiceAnswer:
         if len(self.etree.xpath('./feedback')) == 0:
             return None
         feedback_html = self.etree.xpath('./feedback')[0]
-        if (type(feedback_html.text) != string):
+        if (type(feedback_html.text) != str):
             return None
         return MoodleHtmlElement(feedback_html, self.location)
 
