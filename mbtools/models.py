@@ -388,8 +388,6 @@ class MoodleMultichoiceAnswer:
         if len(self.etree.xpath('./feedback')) == 0:
             return None
         feedback_html = self.etree.xpath('./feedback')[0]
-        if (type(feedback_html.text) != str):
-            return None
         return MoodleHtmlElement(feedback_html, self.location)
 
 
