@@ -385,10 +385,11 @@ class MoodleMultichoiceAnswer:
         return MoodleHtmlElement(answer_html, self.location)
 
     def feedback_html_element(self):
-        if len(self.etree.xpath('./feedback')) == 0:
+        feedback_html_elem = self.etree.xpath('./feedback')[0]
+        if (len(self.etree.xpath('./feedback')) == 0
+           or feedback_html_elem.text is None):
             return None
-        feedback_html = self.etree.xpath('./feedback')[0]
-        return MoodleHtmlElement(feedback_html, self.location)
+        return MoodleHtmlElement(feedback_html_elem, self.location)
 
 
 class MoodleHtmlElement:
@@ -397,7 +398,6 @@ class MoodleHtmlElement:
         self.location = location
         self.etree_fragments = []
         self.unnested_content = []
-
         # Catch strings that exist without html tags
         temp = html.fragments_fromstring(self.parent.text)
         for fragment in temp:
