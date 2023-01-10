@@ -1,3 +1,4 @@
+from uuid import UUID
 import pytest
 from lxml import etree
 from mbtools.models import MoodleHtmlElement, MoodleLessonPage, \
@@ -89,6 +90,7 @@ def test_question_answertext_filter(tmp_path):
     question_bank_xml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <question_categories>
+  <idnumber>1234</idnumber>
   <question_category>
     <question_versions>
       <version>1</version>
@@ -124,6 +126,7 @@ def test_question_text_filter(tmp_path):
     question_bank_xml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <question_categories>
+  <idnumber>1234</idnumber>
   <question_category>
     <question_versions>
       <version>1</version>
@@ -156,10 +159,14 @@ def test_quiz_used_qbank_entry_ids(tmp_path, mbz_builder, quiz_builder):
         questions=[
             {
                 "id": "31",
+                "slot": 1,
+                "page": 1,
                 "questionid": "11"
             },
             {
                 "id": "32",
+                "slot": 1,
+                "page": 2,
                 "questionid": "22"
             }
         ]
@@ -171,10 +178,12 @@ def test_quiz_used_qbank_entry_ids(tmp_path, mbz_builder, quiz_builder):
         questionbank_questions=[
             {
                 "id": 11,
+                "idnumber": 1234,
                 "html_content": "<p>Question 1</p>"
             },
             {
                 "id": 22,
+                "idnumber": 1235,
                 "html_content": "<p>Question 2</p>"
             }
         ]
@@ -194,22 +203,26 @@ def test_questionbank_delete_unused_question_bank_entries(tmp_path):
   <question_category id="1">
     <question_bank_entries>
       <question_bank_entry id="1">
+        <idnumber>1231</idnumber>
         <question_version>
           <question_versions>
             <version>1</version>
             <questions>
               <question id="question1">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
         </question_version>
      </question_bank_entry>
       <question_bank_entry id="2">
+        <idnumber>1232</idnumber>
         <question_version>
           <question_versions>
             <version>1</version>
             <questions>
               <question id="question2">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
@@ -220,22 +233,26 @@ def test_questionbank_delete_unused_question_bank_entries(tmp_path):
   <question_category id="2">
     <question_bank_entries>
       <question_bank_entry id="3">
+        <idnumber>1233</idnumber>
         <question_version>
           <question_versions>
             <version>1</version>
             <questions>
               <question id="question3">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
         </question_version>
      </question_bank_entry>
       <question_bank_entry id="4">
+      <idnumber>1234</idnumber>
         <question_version>
           <question_versions>
             <version>1</version>
             <questions>
               <question id="question4">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
@@ -307,11 +324,13 @@ def test_questionbank_get_question_by_entry(tmp_path):
   <question_category id="1">
     <question_bank_entries>
       <question_bank_entry id="1">
+        <idnumber>1234</idnumber>
         <question_version>
           <question_versions>
             <version>1</version>
             <questions>
               <question id="question1">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
@@ -319,17 +338,20 @@ def test_questionbank_get_question_by_entry(tmp_path):
             <version>2</version>
             <questions>
               <question id="question1">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
         </question_version>
      </question_bank_entry>
       <question_bank_entry id="2">
+        <idnumber>1235</idnumber>
         <question_version>
           <question_versions>
             <version>1</version>
             <questions>
               <question id="question2">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
@@ -362,11 +384,13 @@ def test_questionbank_get_latest_questions(tmp_path):
   <question_category id="1">
     <question_bank_entries>
       <question_bank_entry id="1">
+        <idnumber>1234</idnumber>
         <question_version>
           <question_versions>
             <version>1</version>
             <questions>
               <question id="question1v1">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
@@ -374,17 +398,20 @@ def test_questionbank_get_latest_questions(tmp_path):
             <version>2</version>
             <questions>
               <question id="question1v2">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
         </question_version>
      </question_bank_entry>
       <question_bank_entry id="2">
+      <idnumber>1235</idnumber>
         <question_version>
           <question_versions>
             <version>11</version>
             <questions>
               <question id="question2v11">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
@@ -394,6 +421,7 @@ def test_questionbank_get_latest_questions(tmp_path):
             <version>10</version>
             <questions>
               <question id="question2v10">
+                <qtype></qtype>
               </question>
             </questions>
           </question_versions>
@@ -421,11 +449,13 @@ def test_find_multianswer_child_question(tmp_path):
 <question_categories>
   <question_category>
     <question_bank_entry id="123">
+      <idnumber>1234</idnumber>
       <question_version>
         <question_versions>
           <version>1</version>
           <questions>
             <question id="1">
+              <qtype>multianswer</qtype>
               <plugin_qtype_multianswer_question>
                 <multianswer>
                   <sequence>20,21</sequence>
@@ -438,11 +468,13 @@ def test_find_multianswer_child_question(tmp_path):
       </question_version>
     </question_bank_entry>
     <question_bank_entry id="124">
+      <idnumber>1234</idnumber>
       <question_version>
         <question_versions>
           <version>1</version>
           <questions>
             <question id="20">
+              <qtype></qtype>
               <questiontext></questiontext>
             </question>
           </questions>
@@ -450,11 +482,13 @@ def test_find_multianswer_child_question(tmp_path):
       </question_version>
     </question_bank_entry>
     <question_bank_entry id="125">
+      <idnumber>1234</idnumber>
       <question_version>
         <question_versions>
           <version>1</version>
           <questions>
             <question id="21">
+              <qtype></qtype>
               <questiontext></questiontext>
             </question>
           </questions>
@@ -472,6 +506,8 @@ def test_find_multianswer_child_question(tmp_path):
     <name>My Quiz</name>
     <question_instances>
       <question_instance id="123">
+        <slot>1</slot>
+        <page>1</page>
         <question_reference>
           <questionbankentryid>123</questionbankentryid>
           <version>$@NULL@$</version>
@@ -496,3 +532,84 @@ def test_find_multianswer_child_question(tmp_path):
     assert "123" in results
     assert "124" in results
     assert "125" in results
+
+def validate_uuid4(uuid_string):
+    try:
+        val = UUID(uuid_string, version=4)
+        return True
+
+    except ValueError:
+        return False
+
+def test_inject_uuids(tmp_path):
+    questionbank_xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<question_categories>
+  <question_category id="1">
+  <idnumber>$@NULL@$</idnumber>
+    <question_bank_entries>
+      <question_bank_entry id="1">
+        <idnumber>$@NULL@$</idnumber>
+        <question_version>
+          <question_versions>
+            <version>1</version>
+            <questions>
+              <question id="question1v1">
+                <qtype></qtype>
+              </question>
+            </questions>
+          </question_versions>
+          <question_versions>
+            <version>2</version>
+            <questions>
+              <question id="question1v2">
+                <qtype></qtype>
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+      <idnumber>$@NULL@$</idnumber>
+      <question_bank_entry id="2">
+      <idnumber>$@NULL@$</idnumber>
+        <question_version>
+          <question_versions>
+            <version>11</version>
+            <questions>
+              <question id="question2v11">
+                <qtype></qtype>
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+        <question_version>
+          <question_versions>
+            <version>10</version>
+            <questions>
+              <question id="question2v10">
+                <qtype></qtype>
+              </question>
+            </questions>
+          </question_versions>
+        </question_version>
+     </question_bank_entry>
+    </question_bank_entries>
+  </question_category>
+</question_categories>
+    """
+
+    (tmp_path / "questions.xml").write_text(questionbank_xml.strip())
+    questionbank = MoodleQuestionBank(tmp_path)
+    questionbank.inject_question_uuids()
+    elems = questionbank.etree.xpath('//question_categories/question_category')
+    for elem in elems:
+        questions = elem.xpath(
+            './question_bank_entries/question_bank_entry'
+        )
+
+        for question in questions:
+            id_number =  question.findall(
+            './/idnumber'
+        )
+            assert(validate_uuid4(id_number[0].text))
+    print(etree.tostring(questionbank.etree))

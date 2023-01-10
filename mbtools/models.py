@@ -154,16 +154,13 @@ class MoodleQuestionBank:
     def validate_uuid4(self, uuid_string):
         try:
             val = UUID(uuid_string, version=4)
-            print('Good uuid')
             return True
 
         except ValueError:
-            print('Invalid uuid')
             return False
 
     def inject_question_uuids(self):
         elems = self.etree.xpath('//question_categories/question_category')
-        index = 0
         for elem in elems:
             questions = elem.xpath(
                 './question_bank_entries/question_bank_entry'
@@ -172,17 +169,9 @@ class MoodleQuestionBank:
             for question in questions:
                 id_number =  question.findall(
                 './/idnumber'
-            )
-                index += 1
-                # print('toString',(id_number[0].text))
-                
+            )                
                 if not self.validate_uuid4(id_number[0].text):
-                    print('Bad uuid')
                     id_number[0].text = str(uuid4())
-
-                # print('Question after change', id_number[0].text)
-            # print('Index = ', index)
-
 
 class MoodleLessonAnswer:
     def __init__(self, etree, lesson_page):
