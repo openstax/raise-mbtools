@@ -36,14 +36,6 @@ def parse_backup_quizzes(mbz_path):
     return moodle_backup.quizzes()
 
 
-def parse_moodle_questionbank(mbz_path):
-    """
-    Given a string with path to a question_bank directory from an extracted
-    moodle backup, return model for a question bank
-    """
-    return models.MoodleQuestionBank(mbz_path)
-
-
 def parse_backup_elements(mbz_dir):
     """
     Given a string with path to an extracted moodle backup directory return

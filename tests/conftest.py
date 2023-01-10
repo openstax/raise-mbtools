@@ -109,11 +109,11 @@ QUESTION_TEMPLATE = Template("""
         <question id="questionid$id">
           <questiontext>$content</questiontext>
           <qtype>multichoice</qtype>
-          <plugin>
+          <plugin_qtype_multichoice_question>
             <answers>
               $answerdata
             </answers>
-          </plugin>
+          </plugin_qtype_multichoice_question>
           <plugin>
             <matches>
               $matchdata

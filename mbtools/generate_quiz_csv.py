@@ -1,75 +1,58 @@
 import argparse
-from collections import defaultdict
 import os
 import csv
 from mbtools import utils
 from pathlib import Path
+from mbtools import models
 
 
 def write_quiz_csvs(
-    quizzes_csv, quiz_questions_csv, quiz_multichoice_answers_csv, output_path
+    quiz_questions_csv,
+    quiz_question_contents_csv,
+    quiz_multichoice_answers_csv,
+    output_path
 ):
-    with open(output_path / "quizzes.csv", "w") as outfile:
-        writer = csv.writer(outfile)
-        writer = csv.writer(outfile)
-        writer.writerow(quizzes_csv.keys())
-        writer.writerows(zip(*quizzes_csv.values()))
-
     with open(output_path / "quiz_questions.csv", "w") as outfile:
-        writer = csv.writer(outfile)
-        writer = csv.writer(outfile)
-        writer.writerow(quiz_questions_csv.keys())
-        writer.writerows(zip(*quiz_questions_csv.values()))
+        headers = quiz_questions_csv[0].keys()
+        result = csv.DictWriter(outfile, fieldnames=headers)
+        result.writeheader()
+        result.writerows(quiz_questions_csv)
+
+    with open(output_path / "quiz_question_contents.csv", "w") as outfile:
+        headers = quiz_question_contents_csv[0].keys()
+        result = csv.DictWriter(outfile, fieldnames=headers)
+        result.writeheader()
+        result.writerows(quiz_question_contents_csv)
 
     with open(output_path / "quiz_multichoice_answers.csv", "w") as outfile:
-        writer = csv.writer(outfile)
-        writer = csv.writer(outfile)
-        writer.writerow(quiz_multichoice_answers_csv.keys())
-        writer.writerows(zip(*quiz_multichoice_answers_csv.values()))
+        if len(quiz_multichoice_answers_csv) != 0:
+            headers = quiz_multichoice_answers_csv[0].keys()
+        else:
+            headers = ["question_id", "text", "grade", "feedback"]
+        result = csv.DictWriter(outfile, fieldnames=headers)
+        result.writeheader()
+        result.writerows(quiz_multichoice_answers_csv)
 
 
 def order_questions(quiz):
     # Organize Questions by Order
-    pages = defaultdict(list)
-    for question in quiz.quiz_questions:
-        pages[question.page].append(question)
-    for page in pages.values():
-        page.sort(key=lambda h: h.slot)
-    ordered_questions = []
-    ordered_keys = list(pages.keys())
-    ordered_keys.sort()
-    for key in ordered_keys:
-        ordered_questions.extend(pages[key])
-    return ordered_questions
+    questions = quiz.quiz_questions
+    return sorted(questions, key=lambda q: q.slot)
 
 
 def generate_quiz_data(mbz_path, output_path):
-    question_bank = utils.parse_moodle_questionbank(mbz_path)
+    question_bank = models.MoodleQuestionBank(mbz_path)
     quizzes = utils.parse_backup_quizzes(mbz_path)
 
-    quizzes_csv = {
-        "quiz_name": [],
-        "question_number": [],
-        "question_id": []
-    }
-    quiz_questions_csv = {
-        "id": [],
-        "text": [],
-        "type": []
-    }
-    quiz_multichoice_answers_csv = {
-        "id": [],
-        "question_id": [],
-        "text": [],
-        "grade": [],
-        "feedback": []
-    }
+    quiz_questions_csv = []
+    quiz_question_contents_csv = []
+    quiz_multichoice_answers_csv = []
 
-    answer_number = 0
+    moodle_questions = []
     for quiz in quizzes:
         ordered_questions = order_questions(quiz)
 
-        question_number = 0
+        question_number = 1
 
         for moodle_question in ordered_questions:
             q_bank_question = \
@@ -79,43 +62,45 @@ def generate_quiz_data(mbz_path, output_path):
                 )
 
             id_number = q_bank_question.id_number
-            text = q_bank_question.etree.xpath('./questiontext')[0].text
+            text = q_bank_question.text
             question_type = q_bank_question.question_type
+            quiz_questions_csv.append(
+                {"quiz_name": quiz.name,
+                 "question_number": question_number,
+                 "question_id": id_number
+                 })
 
-            quizzes_csv["quiz_name"].append(quiz.name)
-            quizzes_csv["question_number"].append(question_number)
-            quizzes_csv["question_id"].append(id_number)
-
-            if id_number not in quiz_questions_csv["id"]:
-                quiz_questions_csv["id"].append(id_number)
-                quiz_questions_csv["text"].append(text)
-                quiz_questions_csv["type"].append(question_type)
+            entry_id_version = \
+                (moodle_question.qbank_entry_id,
+                 moodle_question.version)
+            if entry_id_version in moodle_questions:
+                print("Warning: duplicate question. \
+                    Not appending to quiz_question_contents")
+            else:
+                moodle_questions.append(entry_id_version)
+                quiz_question_contents_csv.append({
+                    "id": id_number,
+                    "text": text,
+                    "type": question_type
+                    })
 
                 if question_type == 'multichoice':
                     for answer in q_bank_question.multichoice_answers():
-                        answer_text = answer.answer_html_element().tostring()
-                        feedback = ""
-                        if answer.feedback_html_element() is not None:
-                            feedback = \
-                                answer.feedback_html_element().tostring()
+                        answer_text = answer.text
+                        feedback = answer.feedback
                         grade = answer.grade
 
-                        quiz_multichoice_answers_csv["id"].append(
-                            answer_number)
-                        quiz_multichoice_answers_csv["question_id"].append(
-                            id_number)
-                        quiz_multichoice_answers_csv["text"].append(
-                            answer_text)
-                        quiz_multichoice_answers_csv["grade"].append(
-                            grade)
-                        quiz_multichoice_answers_csv["feedback"].append(
-                            feedback)
-                        answer_number += 1
+                        quiz_multichoice_answers_csv.append({
+                            "question_id": id_number,
+                            "text": answer_text,
+                            "grade": grade,
+                            "feedback": feedback
+                        })
             question_number += 1
 
     write_quiz_csvs(
-        quizzes_csv,
         quiz_questions_csv,
+        quiz_question_contents_csv,
         quiz_multichoice_answers_csv,
         output_path
     )

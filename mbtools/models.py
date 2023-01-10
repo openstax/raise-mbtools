@@ -323,7 +323,6 @@ class MoodleQuizQuestion:
                 "./question_reference/questionbankentryid"
             )[0].text
         self.version = self.etree.xpath("./question_reference/version")[0].text
-        self.page = self.etree.xpath("./page")[0].text
         self.slot = self.etree.xpath("./slot")[0].text
 
 
@@ -337,6 +336,10 @@ class MoodleQuestion:
         self.version = self.etree.xpath("../../version")[0].text
         self.id_number = self.etree.xpath('../../../../idnumber')[0].text
         self.question_type = self.etree.xpath('./qtype')[0].text
+
+    @property
+    def text(self):
+        return self.etree.xpath('./questiontext')[0].text
 
     @property
     def location(self):
@@ -365,31 +368,26 @@ class MoodleQuestion:
         return []
 
     def multichoice_answers(self):
-        answers = self.etree.xpath('.//answers/answer')
+        answers = self.etree.xpath(
+            './/plugin_qtype_multichoice_question/answers/answer')
         answer_objs = []
         for answer in answers:
-            answer_objs.append(MoodleMultichoiceAnswer(answer, self.location))
+            answer_objs.append(MoodleMultichoiceAnswer(answer))
         return answer_objs
 
 
 class MoodleMultichoiceAnswer:
     """This class models an <answer> from the <answers> under a
     MoodleQuestion"""
-    def __init__(self, answer, location):
+    def __init__(self, answer):
         self.etree = answer
-        self.location = location
         self.grade = float(self.etree.xpath('./fraction')[0].text)
-
-    def answer_html_element(self):
-        answer_html = self.etree.xpath('./answertext')[0]
-        return MoodleHtmlElement(answer_html, self.location)
-
-    def feedback_html_element(self):
-        feedback_html_elem = self.etree.xpath('./feedback')[0]
-        if (len(self.etree.xpath('./feedback')) == 0
-           or feedback_html_elem.text is None):
-            return None
-        return MoodleHtmlElement(feedback_html_elem, self.location)
+        self.text = self.etree.xpath('./answertext')[0].text
+        if (len(self.etree.xpath('./feedback')) > 0 and
+           self.etree.xpath('./feedback')[0].text is not None):
+            self.feedback = self.etree.xpath('./feedback')[0].text
+        else:
+            self.feedback = ""
 
 
 class MoodleHtmlElement:
