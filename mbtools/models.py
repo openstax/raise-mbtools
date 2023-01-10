@@ -383,11 +383,7 @@ class MoodleMultichoiceAnswer:
         self.etree = answer
         self.grade = float(self.etree.xpath('./fraction')[0].text)
         self.text = self.etree.xpath('./answertext')[0].text
-        if (len(self.etree.xpath('./feedback')) > 0 and
-           self.etree.xpath('./feedback')[0].text is not None):
-            self.feedback = self.etree.xpath('./feedback')[0].text
-        else:
-            self.feedback = ""
+        self.feedback = self.etree.xpath('./feedback')[0].text
 
 
 class MoodleHtmlElement:

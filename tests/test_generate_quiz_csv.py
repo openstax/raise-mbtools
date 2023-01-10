@@ -146,11 +146,11 @@ def test_generate_quiz_csv(
         assert (all_rows ==
                [['quiz_name', 'question_number', 'question_id'],
                 ['Quiz 1', '1', '1234'],
-                ['Quiz 2', '1', '1236'],
                 ['Quiz 2', '2', '1235'],
-                ['Quiz 3', '1', '1236'],
+                ['Quiz 2', '1', '1236'],
                 ['Quiz 3', '2', '1234'],
-                ['Quiz 3', '3', '1235']])
+                ['Quiz 3', '3', '1235'],
+                ['Quiz 3', '1', '1236']])
 
     with open(f"{output_dir}/quiz_question_contents.csv", mode='r')as file:
         csvFile = csv.reader(file)
@@ -160,8 +160,8 @@ def test_generate_quiz_csv(
         assert (all_rows ==
                [['id', 'text', 'type'],
                 ['1234', '<p>Question 1 Content</p>', 'multichoice'],
-                ['1236', '<p>Question 3 Content</p>', 'multichoice'],
-                ['1235', '<p>Question 2 Content</p>', 'multichoice']])
+                ['1235', '<p>Question 2 Content</p>', 'multichoice'],
+                ['1236', '<p>Question 3 Content</p>', 'multichoice']])
 
     with open(f"{output_dir}/quiz_multichoice_answers.csv", mode='r')as file:
         csvFile = csv.reader(file)
@@ -172,10 +172,10 @@ def test_generate_quiz_csv(
                [['question_id', 'text', 'grade', 'feedback'],
                 ['1234', '<p>q1 answer 1</p>', '1.0', ''],
                 ['1234', '<p>q1 answer 2</p>', '0.0', ''],
-                ['1236', '<p>q3 answer 1</p>', '0.0', ''],
-                ['1236', '<p>q3 answer 2</p>', '1.0', ''],
                 ['1235', '<p>q2 answer 1</p>', '0.0', ''],
-                ['1235', '<p>q2 answer 2</p>', '1.0', '']])
+                ['1235', '<p>q2 answer 2</p>', '1.0', ''],
+                ['1236', '<p>q3 answer 1</p>', '0.0', ''],
+                ['1236', '<p>q3 answer 2</p>', '1.0', '']])
 
 
 def test_generate_quiz_data_with_answer_feedback(tmp_path, mocker):

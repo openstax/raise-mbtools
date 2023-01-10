@@ -141,6 +141,7 @@ QUESTION_BANK_ANSWER_TEXT_TEMPLATE = Template("""
 <answer id="$id">
   <answertext>$content</answertext>
   <fraction>$grade</fraction>
+  <feedback></feedback>
 </answer>
 """)
 
