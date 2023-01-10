@@ -1,4 +1,4 @@
-import uuid
+from uuid import UUID, uuid4
 from pathlib import Path
 from lxml import etree, html
 from bs4 import BeautifulSoup
@@ -150,6 +150,38 @@ class MoodleQuestionBank:
             )
             if (len(questions)) == 0:
                 elem.getparent().remove(elem)
+
+    def validate_uuid4(self, uuid_string):
+        try:
+            val = UUID(uuid_string, version=4)
+            print('Good uuid')
+            return True
+
+        except ValueError:
+            print('Invalid uuid')
+            return False
+
+    def inject_question_uuids(self):
+        elems = self.etree.xpath('//question_categories/question_category')
+        index = 0
+        for elem in elems:
+            questions = elem.xpath(
+                './question_bank_entries/question_bank_entry'
+            )
+
+            for question in questions:
+                id_number =  question.findall(
+                './/idnumber'
+            )
+                index += 1
+                # print('toString',(id_number[0].text))
+                
+                if not self.validate_uuid4(id_number[0].text):
+                    print('Bad uuid')
+                    id_number[0].text = str(uuid4())
+
+                # print('Question after change', id_number[0].text)
+            # print('Index = ', index)
 
 
 class MoodleLessonAnswer:
@@ -332,6 +364,7 @@ class MoodleQuestion:
         self.etree = question_elm
         self.id = self.etree.attrib['id']
         self.version = self.etree.xpath("../../version")[0].text
+        self.id_number = self.etree.xpath('../../../../idnumber')[0].text
 
     @property
     def location(self):
