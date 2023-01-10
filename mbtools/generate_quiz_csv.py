@@ -12,26 +12,26 @@ def write_quiz_csvs(
     quiz_multichoice_answers_csv,
     output_path
 ):
-    with open(output_path / "quiz_questions.csv", "w") as outfile:
-        headers = quiz_questions_csv[0].keys()
-        result = csv.DictWriter(outfile, fieldnames=headers)
-        result.writeheader()
-        result.writerows(quiz_questions_csv)
+    if (len(quiz_questions_csv) !=0 ):
+        with open(output_path / "quiz_questions.csv", "w") as outfile:
+            headers = quiz_questions_csv[0].keys()
+            result = csv.DictWriter(outfile, fieldnames=headers)
+            result.writeheader()
+            result.writerows(quiz_questions_csv)
 
-    with open(output_path / "quiz_question_contents.csv", "w") as outfile:
-        headers = quiz_question_contents_csv[0].keys()
-        result = csv.DictWriter(outfile, fieldnames=headers)
-        result.writeheader()
-        result.writerows(quiz_question_contents_csv)
+    if (len(quiz_question_contents_csv) != 0):
+        with open(output_path / "quiz_question_contents.csv", "w") as outfile:
+            headers = quiz_question_contents_csv[0].keys()
+            result = csv.DictWriter(outfile, fieldnames=headers)
+            result.writeheader()
+            result.writerows(quiz_question_contents_csv)
 
-    with open(output_path / "quiz_multichoice_answers.csv", "w") as outfile:
-        if len(quiz_multichoice_answers_csv) != 0:
+    if (len(quiz_multichoice_answers_csv) != 0):
+        with open(output_path / "quiz_multichoice_answers.csv", "w") as outfile:
             headers = quiz_multichoice_answers_csv[0].keys()
-        else:
-            headers = ["question_id", "text", "grade", "feedback"]
-        result = csv.DictWriter(outfile, fieldnames=headers)
-        result.writeheader()
-        result.writerows(quiz_multichoice_answers_csv)
+            result = csv.DictWriter(outfile, fieldnames=headers)
+            result.writeheader()
+            result.writerows(quiz_multichoice_answers_csv)
 
 
 def generate_quiz_data(mbz_path, output_path):
