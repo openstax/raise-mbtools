@@ -12,7 +12,7 @@ def write_quiz_csvs(
     quiz_multichoice_answers_csv,
     output_path
 ):
-    if (len(quiz_questions_csv) !=0 ):
+    if (len(quiz_questions_csv) != 0):
         with open(output_path / "quiz_questions.csv", "w") as outfile:
             headers = quiz_questions_csv[0].keys()
             result = csv.DictWriter(outfile, fieldnames=headers)
@@ -27,7 +27,8 @@ def write_quiz_csvs(
             result.writerows(quiz_question_contents_csv)
 
     if (len(quiz_multichoice_answers_csv) != 0):
-        with open(output_path / "quiz_multichoice_answers.csv", "w") as outfile:
+        with open(output_path / "quiz_multichoice_answers.csv", "w") \
+         as outfile:
             headers = quiz_multichoice_answers_csv[0].keys()
             result = csv.DictWriter(outfile, fieldnames=headers)
             result.writeheader()
