@@ -114,5 +114,5 @@ def main():
     generate_quiz_data(mbz_path, output_path)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
