@@ -153,7 +153,7 @@ class MoodleQuestionBank:
 
     def validate_uuid4(self, uuid_string):
         try:
-            val = UUID(uuid_string, version=4)
+            UUID(uuid_string, version=4)
             return True
 
         except ValueError:
@@ -167,11 +167,10 @@ class MoodleQuestionBank:
             )
 
             for question in questions:
-                id_number =  question.findall(
-                './/idnumber'
-            )                
+                id_number = question.findall('.//idnumber')
                 if not self.validate_uuid4(id_number[0].text):
                     id_number[0].text = str(uuid4())
+
 
 class MoodleLessonAnswer:
     def __init__(self, etree, lesson_page):

@@ -10,11 +10,9 @@ def main():
     args = parser.parse_args()
     mbz_path = Path(args.mbz_path).resolve(strict=True)
 
-
     question_bank = models.MoodleQuestionBank(mbz_path)
-
     question_bank.inject_question_uuids()
-    
+
     utils.write_etree(question_bank.questionbank_path, question_bank.etree)
 
 

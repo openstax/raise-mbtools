@@ -1,15 +1,15 @@
 from uuid import UUID
-import pytest
-from lxml import etree
 from mbtools.models import MoodleQuestionBank
+
 
 def validate_uuid4(uuid_string):
     try:
-        val = UUID(uuid_string, version=4)
+        UUID(uuid_string, version=4)
         return True
 
     except ValueError:
         return False
+
 
 def test_inject_uuids(tmp_path):
     questionbank_xml = """
@@ -78,7 +78,5 @@ def test_inject_uuids(tmp_path):
         )
 
         for question in questions:
-            id_number =  question.findall(
-            './/idnumber'
-        )
-            assert(validate_uuid4(id_number[0].text))
+            id_number = question.findall('.//idnumber')
+            assert (validate_uuid4(id_number[0].text))
