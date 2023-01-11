@@ -406,6 +406,8 @@ def test_questionbank_validation_and_optout_flag_mbz(
         questions=[
             {
                 "id": 1,
+                "slot": 1,
+                "page": 1,
                 "questionid": 2
             }
         ]
@@ -416,16 +418,19 @@ def test_questionbank_validation_and_optout_flag_mbz(
         questionbank_questions=[
             {
                 "id": 1,
+                "idnumber": 1234,
                 "html_content": '<img src="@@PLUGINFILE@@">',
                 "answers": [
                     {
                         "id": 11,
+                        "grade": 1,
                         "html_content": "<script></script>"
                     }
                 ]
             },
             {
                 "id": 2,
+                "idnumber": 1235,
                 "html_content": '<iframe src="http://foobaz"></iframe>',
                 "matches": [
                     {

@@ -13,19 +13,6 @@ LESSON_ANSWER_TEXT_TEMPLATE = Template("""
 </answer>
 """)
 
-QUESTION_BANK_ANSWER_TEXT_TEMPLATE = Template("""
-<answer id="$id">
-  <answertext>$content</answertext>
-</answer>
-""")
-
-QUESTION_BANK_MATCH_TEXT_TEMPLATE = Template("""
-<match id="$id">
-  <answertext>$answercontent</answertext>
-  <questiontext>$questioncontent</questiontext>
-</match>
-""")
-
 LESSON_PAGE_TEMPLATE = Template("""
 <page id="$id">
   <title>$title</title>
@@ -74,6 +61,8 @@ QUIZ_TEMPLATE = Template("""
 
 QUIZ_QUESTION_TEMPLATE = Template("""
 <question_instance id="$id">
+  <slot>$slot</slot>
+  <page>$page</page>
   <question_reference>
     <questionbankentryid>$questionid</questionbankentryid>
     <version>$@NULL@$</version>
@@ -112,6 +101,7 @@ MOODLE_BACKUP_TEMPLATE = Template("""
 
 QUESTION_TEMPLATE = Template("""
 <question_bank_entry id="$id">
+  <idnumber>$idnumber</idnumber>
   <question_version>
     <question_versions>
       <version>1</version>
@@ -119,11 +109,11 @@ QUESTION_TEMPLATE = Template("""
         <question id="questionid$id">
           <questiontext>$content</questiontext>
           <qtype>multichoice</qtype>
-          <plugin>
+          <plugin_qtype_multichoice_question>
             <answers>
               $answerdata
             </answers>
-          </plugin>
+          </plugin_qtype_multichoice_question>
           <plugin>
             <matches>
               $matchdata
@@ -145,6 +135,21 @@ QUESTION_BANK_TEMPLATE = Template("""
     </question_bank_entries>
   </question_category>
 </question_categories>
+""")
+
+QUESTION_BANK_ANSWER_TEXT_TEMPLATE = Template("""
+<answer id="$id">
+  <answertext>$content</answertext>
+  <fraction>$grade</fraction>
+  <feedback></feedback>
+</answer>
+""")
+
+QUESTION_BANK_MATCH_TEXT_TEMPLATE = Template("""
+<match id="$id">
+  <answertext>$answercontent</answertext>
+  <questiontext>$questioncontent</questiontext>
+</match>
 """)
 
 
@@ -187,6 +192,7 @@ def mbz_builder():
             for ans in question.get("answers", []):
                 answerdata += QUESTION_BANK_ANSWER_TEXT_TEMPLATE.substitute(
                     id=ans["id"],
+                    grade=ans["grade"],
                     content=html.escape(ans["html_content"])
                 )
             for match in question.get("matches", []):
@@ -197,6 +203,7 @@ def mbz_builder():
                 )
             questiondata += QUESTION_TEMPLATE.substitute(
                 id=question["id"],
+                idnumber=question["idnumber"],
                 content=html.escape(question["html_content"]),
                 answerdata=answerdata,
                 matchdata=matchdata
@@ -309,6 +316,8 @@ def quiz_builder():
         for question in questions:
             questiondata += QUIZ_QUESTION_TEMPLATE.safe_substitute(
                 id=question["id"],
+                slot=question["slot"],
+                page=question["page"],
                 questionid=question["questionid"]
             )
 
