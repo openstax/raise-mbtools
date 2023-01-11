@@ -267,6 +267,7 @@ class MoodleQuiz:
         self.activity_filename = str(self.activity_path / "quiz.xml")
         self.etree = etree.parse(self.activity_filename)
         self.question_bank = question_bank
+        self.name = self.etree.xpath("//activity/quiz/name")[0].text
 
     @property
     def quiz_questions(self):
@@ -322,6 +323,7 @@ class MoodleQuizQuestion:
                 "./question_reference/questionbankentryid"
             )[0].text
         self.version = self.etree.xpath("./question_reference/version")[0].text
+        self.slot = self.etree.xpath("./slot")[0].text
 
 
 class MoodleQuestion:
@@ -332,6 +334,12 @@ class MoodleQuestion:
         self.etree = question_elm
         self.id = self.etree.attrib['id']
         self.version = self.etree.xpath("../../version")[0].text
+        self.id_number = self.etree.xpath('../../../../idnumber')[0].text
+        self.question_type = self.etree.xpath('./qtype')[0].text
+
+    @property
+    def text(self):
+        return self.etree.xpath('./questiontext')[0].text
 
     @property
     def location(self):
@@ -339,15 +347,14 @@ class MoodleQuestion:
 
     def html_elements(self):
         elements = []
-        question_type = self.etree.xpath('./qtype')[0].text
         question_texts = self.etree.xpath('.//questiontext')
         for question_html in question_texts:
-            if question_type not in QUESTION_TEXT_IGNORE_TYPES:
+            if self.question_type not in QUESTION_TEXT_IGNORE_TYPES:
                 elements.append(
                     MoodleHtmlElement(question_html, self.location))
         answer_texts = self.etree.xpath('.//answers/answer/answertext')
         for answer_html in answer_texts:
-            if question_type not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
+            if self.question_type not in QUESTION_ANSWER_TEXT_IGNORE_TYPES:
                 elements.append(
                     MoodleHtmlElement(answer_html, self.location))
         return elements
@@ -360,6 +367,24 @@ class MoodleQuestion:
             return maybe_child_ids[0].text.split(',')
         return []
 
+    def multichoice_answers(self):
+        answers = self.etree.xpath(
+            './/plugin_qtype_multichoice_question/answers/answer')
+        answer_objs = []
+        for answer in answers:
+            answer_objs.append(MoodleMultichoiceAnswer(answer))
+        return answer_objs
+
+
+class MoodleMultichoiceAnswer:
+    """This class models an <answer> from the <answers> under a
+    MoodleQuestion"""
+    def __init__(self, answer):
+        self.etree = answer
+        self.grade = float(self.etree.xpath('./fraction')[0].text)
+        self.text = self.etree.xpath('./answertext')[0].text
+        self.feedback = self.etree.xpath('./feedback')[0].text
+
 
 class MoodleHtmlElement:
     def __init__(self, parent, location):
@@ -367,7 +392,6 @@ class MoodleHtmlElement:
         self.location = location
         self.etree_fragments = []
         self.unnested_content = []
-
         # Catch strings that exist without html tags
         temp = html.fragments_fromstring(self.parent.text)
         for fragment in temp:

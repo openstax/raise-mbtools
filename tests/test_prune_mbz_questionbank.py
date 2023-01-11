@@ -11,10 +11,14 @@ def test_prune_mbz_questionbank(
         questions=[
             {
                 "id": 31,
+                "slot": 1,
+                "page": 1,
                 "questionid": 1
             },
             {
                 "id": 32,
+                "slot": 1,
+                "page": 2,
                 "questionid": 2
             }
         ]
@@ -26,6 +30,8 @@ def test_prune_mbz_questionbank(
         questions=[
             {
                 "id": 31,
+                "slot": 1,
+                "page": 1,
                 "questionid": 3
             }
         ]
@@ -37,18 +43,22 @@ def test_prune_mbz_questionbank(
         questionbank_questions=[
             {
                 "id": 1,
+                "idnumber": 1235,
                 "html_content": "<p>Question 1</p>"
             },
             {
                 "id": 2,
+                "idnumber": 1236,
                 "html_content": "<p>Question 2</p>"
             },
             {
                 "id": 3,
+                "idnumber": 1237,
                 "html_content": "<p>Question 3</p>"
             },
             {
                 "id": 4,
+                "idnumber": 1238,
                 "html_content": "<p>Question 4</p>"
             },
         ]
@@ -77,18 +87,22 @@ def test_prune_mbz_questionbank_no_quizzes(
         questionbank_questions=[
             {
                 "id": 1,
+                "idnumber": 1234,
                 "html_content": "<p>Question 1</p>"
             },
             {
                 "id": 2,
+                "idnumber": 1234,
                 "html_content": "<p>Question 2</p>"
             },
             {
                 "id": 3,
+                "idnumber": 1234,
                 "html_content": "<p>Question 3</p>"
             },
             {
                 "id": 4,
+                "idnumber": 1234,
                 "html_content": "<p>Question 4</p>"
             },
         ]
