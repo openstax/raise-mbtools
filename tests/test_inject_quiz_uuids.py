@@ -31,7 +31,6 @@ def test_inject_uuids(tmp_path, mocker):
           </question_versions>
         </question_version>
      </question_bank_entry>
-      <idnumber>$@NULL@$</idnumber>
       <question_bank_entry id="2">
       <idnumber>$@NULL@$</idnumber>
         <question_version>
@@ -109,7 +108,6 @@ def test_parent_idnumber_unchanged(tmp_path, mocker):
           </question_versions>
         </question_version>
      </question_bank_entry>
-      <idnumber>$@NULL@$</idnumber>
       <question_bank_entry id="2">
       <idnumber>$@NULL@$</idnumber>
         <question_version>
@@ -147,14 +145,15 @@ def test_parent_idnumber_unchanged(tmp_path, mocker):
     main()
 
     questionbank = MoodleQuestionBank(tmp_path)
-    elems = questionbank.etree.xpath('//question_categories/question_category')
+    elems = questionbank.etree.xpath('//question_categories')
+
     for elem in elems:
-        questions = elem.xpath(
-            './question_bank_entries'
+        question_catagories = elem.xpath(
+            './question_category'
         )
 
-        for question in questions:
-            id_number = question.findall('idnumber')
+        for question_catagory in question_catagories:
+            id_number = question_catagory.findall('idnumber')
             assert (id_number[0].text == '$@NULL@$')
 
 
@@ -186,7 +185,6 @@ def test_existing_id_unchanged(tmp_path, mocker):
           </question_versions>
         </question_version>
      </question_bank_entry>
-      <idnumber>$@NULL@$</idnumber>
       <question_bank_entry id="2">
         <idnumber>25754128-6ef7-4f58-ac79-d9538375739d</idnumber>
         <question_version>
