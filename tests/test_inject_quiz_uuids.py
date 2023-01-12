@@ -1,15 +1,6 @@
-from uuid import UUID
 from mbtools.models import MoodleQuestionBank
-from mbtools.inject_uuids import main
-
-
-def validate_uuid4(uuid_string):
-    try:
-        UUID(uuid_string, version=4)
-        return True
-
-    except ValueError:
-        return False
+from mbtools.inject_quiz_uuids import main
+from mbtools import utils
 
 
 def test_inject_uuids(tmp_path, mocker):
@@ -87,7 +78,7 @@ def test_inject_uuids(tmp_path, mocker):
 
         for question in questions:
             id_number = question.findall('.//idnumber')
-            assert (validate_uuid4(id_number[0].text))
+            assert (utils.validate_uuid4(id_number[0].text))
 
 
 def test_parent_idnumber_unchanged(tmp_path, mocker):

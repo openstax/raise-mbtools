@@ -1,5 +1,6 @@
 from pathlib import Path
 from . import models
+from uuid import UUID
 
 
 def write_etree(file_path, etree):
@@ -80,3 +81,12 @@ def find_elements_containing(content_etree, src_content):
     return content_etree.xpath(
         f'//*[contains(@src, "{src_content}")]'
     )
+
+
+def validate_uuid4(uuid_string):
+    try:
+        UUID(uuid_string, version=4)
+        return True
+
+    except ValueError:
+        return False

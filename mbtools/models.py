@@ -1,8 +1,8 @@
-from uuid import UUID, uuid4
+from uuid import uuid4
 from pathlib import Path
 from lxml import etree, html
 from bs4 import BeautifulSoup
-
+from mbtools import utils
 QUESTION_TEXT_IGNORE_TYPES = [
     "shortanswer"
 ]
@@ -151,14 +151,6 @@ class MoodleQuestionBank:
             if (len(questions)) == 0:
                 elem.getparent().remove(elem)
 
-    def validate_uuid4(self, uuid_string):
-        try:
-            UUID(uuid_string, version=4)
-            return True
-
-        except ValueError:
-            return False
-
     def inject_question_uuids(self):
         elems = self.etree.xpath('//question_categories/question_category')
         for elem in elems:
@@ -168,7 +160,7 @@ class MoodleQuestionBank:
 
             for question in questions:
                 id_number = question.findall('.//idnumber')
-                if not self.validate_uuid4(id_number[0].text):
+                if not utils.validate_uuid4(id_number[0].text):
                     id_number[0].text = str(uuid4())
 
 
