@@ -1,8 +1,8 @@
-import uuid
+from uuid import uuid4
 from pathlib import Path
 from lxml import etree, html
 from bs4 import BeautifulSoup
-
+from mbtools import utils
 QUESTION_TEXT_IGNORE_TYPES = [
     "shortanswer"
 ]
@@ -150,6 +150,18 @@ class MoodleQuestionBank:
             )
             if (len(questions)) == 0:
                 elem.getparent().remove(elem)
+
+    def inject_question_uuids(self):
+        elems = self.etree.xpath('//question_categories/question_category')
+        for elem in elems:
+            questions = elem.xpath(
+                './question_bank_entries/question_bank_entry'
+            )
+
+            for question in questions:
+                id_number = question.findall('.//idnumber')
+                if not utils.validate_uuid4(id_number[0].text):
+                    id_number[0].text = str(uuid4())
 
 
 class MoodleLessonAnswer:
@@ -410,7 +422,7 @@ class MoodleHtmlElement:
             if "class" in attrib_dict.keys() and \
                     attrib_dict["class"] == "os-raise-content":
                 return None
-            content_uuid = str(uuid.uuid4())
+            content_uuid = str(uuid4())
             content = self.parent.text
             tag = f'<div class="os-raise-content" ' \
                   f'data-content-id="{ content_uuid }"></div>'
