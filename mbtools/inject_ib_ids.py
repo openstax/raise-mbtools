@@ -38,5 +38,5 @@ def main():
     inject_ib_ids(html_directory)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
