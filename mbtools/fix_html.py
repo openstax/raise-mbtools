@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import argparse
 from pathlib import Path
+from mbtools import utils
 
 
 def fix_html(html_directory):
@@ -17,8 +18,7 @@ def fix_html(html_directory):
                          and len(elem.find_all()) == 0:
                         elem.extract()
 
-        with open(html_file, 'w') as f:
-            f.write(soup.encode(formatter="html5").decode('utf-8'))
+        utils.write_html_soup(html_file, soup)
 
 
 def main():

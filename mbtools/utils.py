@@ -10,6 +10,11 @@ def write_etree(file_path, etree):
                     xml_declaration=True)
 
 
+def write_html_soup(file_path, soup):
+    with open(file_path, 'w') as f:
+        f.write(soup.encode(formatter="html5").decode('utf-8'))
+
+
 def parse_moodle_backup(mbz_dir):
     """
     Given a string with a path to an extracted moodle backup directory,
