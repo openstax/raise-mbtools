@@ -16,7 +16,7 @@ def inject_ib_uuids(html_dir):
         with open(path, 'r') as f:
             soup = BeautifulSoup(f.read(), 'html.parser')
             for tag in CLASSES_TO_INJECT:
-                for elem in soup.find_all(class_=tag):
+                for elem in soup.find_all(name="div", class_=tag):
                     if elem.get('data-content-id') is None:
                         elem['data-content-id'] = uuid4()
 
