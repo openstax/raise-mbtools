@@ -7,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def test_data_path():
-    return Path(__file__).parent / "data/inject_ib_uuid_test_data"
+    return Path(__file__).parent / "data/inject_ib_uuids"
 
 
 @pytest.fixture

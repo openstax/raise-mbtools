@@ -20,7 +20,7 @@ def inject_ib_uuids(html_dir):
                     if elem.get('data-content-id') is None:
                         elem['data-content-id'] = uuid4()
 
-            utils.write_html_soup(path, soup)
+        utils.write_html_soup(path, soup)
 
 
 def main():
