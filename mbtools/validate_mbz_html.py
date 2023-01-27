@@ -14,7 +14,7 @@ IFRAME_VIOLATION = "ERROR: Use of <iframe> with unexpected target"
 HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
 UNNESTED_VIOLATION = "ERROR: Contains content not nested in HTML Element"
 NESTED_IB_VIOLATION = "ERROR: Interactive block nested within HTML"
-DUPLICATE_IB_UUID_VIOLATION = "ERROR: Duplicate interactive Block UUID"
+DUPLICATE_IB_UUID_VIOLATION = "ERROR: Duplicate interactive block UUID"
 MISSING_IB_UUID_VIOLATION = "ERROR: Missing interactive block UUID"
 
 VALID_PREFIXES = [
