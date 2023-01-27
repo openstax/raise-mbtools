@@ -14,6 +14,8 @@ IFRAME_VIOLATION = "ERROR: Use of <iframe> with unexpected target"
 HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
 UNNESTED_VIOLATION = "ERROR: Contains content not nested in HTML Element"
 NESTED_IB_VIOLATION = "ERROR: Interactive block nested within HTML"
+DUPLICATE_IB_UUID_VIOLATION = "ERROR: Duplicate interactive Block UUID"
+MISSING_IB_UUID_VIOLATION = "ERROR: Missing interactive block UUID"
 
 VALID_PREFIXES = [
     "https://s3.amazonaws.com/im-ims-export/",
@@ -111,6 +113,7 @@ def run_validations(html_elements, include_styles):
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
     violations.extend(find_nested_ib_violations(html_elements))
+    violations.extend(find_ib_uuid_violations(html_elements))
 
     return violations
 
@@ -222,6 +225,38 @@ def find_nested_ib_violations(html_elements):
                     ib.attrib["class"]
                 ))
 
+    return violations
+
+
+def find_ib_uuid_violations(html_elements):
+    need_ids = [
+        "os-raise-ib-input",
+        "os-raise-ib-pset",
+        "os-raise-ib-pset-problem"
+    ]
+    violations = []
+    uuid_to_location = {}
+    for elem in html_elements:
+        maybe_ids = elem.get_elements_with_exact_class(need_ids)
+        for ib in maybe_ids:
+            if "data-content-id" not in ib.attrib.keys():
+                violations.append(Violation(
+                    MISSING_IB_UUID_VIOLATION,
+                    elem.location,
+                    None
+                ))
+            else:
+                uuid = ib.attrib["data-content-id"]
+                if uuid in uuid_to_location.keys():
+                    double_location = \
+                        elem.location + " and " + uuid_to_location[uuid]
+                    violations.append(Violation(
+                        DUPLICATE_IB_UUID_VIOLATION,
+                        double_location,
+                        uuid
+                    ))
+                else:
+                    uuid_to_location[uuid] = elem.location
     return violations
 
 
