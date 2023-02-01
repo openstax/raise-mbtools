@@ -958,3 +958,33 @@ data-content-id="9967c78d-298b-40ba-a68d-55d6a93b0055">
     reader = csv.DictReader(open(output_filepath))
     errors = [row for row in reader]
     assert len(errors) == 0
+
+
+def test_inject_ib_uuids_invalid(tmp_path, mocker):
+    html = """
+<div class="os-raise-ib-input"
+data-content-id="7080c78d-298b-40ba-a68d-55d6a93b00fbextra">
+</div>
+    """.strip()
+
+    html_path = str(tmp_path) + "/html"
+    os.mkdir(html_path)
+    file_path = html_path + "/123.html"
+    with open(file_path, 'w') as f:
+        f.write(html)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    assert len(errors) == 1
+
+    assert errors[0]["issue"] == validate_mbz_html.INVALID_IB_UUID_VIOLATION
+
+    assert errors[0]["location"] == file_path

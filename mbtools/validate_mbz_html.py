@@ -16,6 +16,7 @@ UNNESTED_VIOLATION = "ERROR: Contains content not nested in HTML Element"
 NESTED_IB_VIOLATION = "ERROR: Interactive block nested within HTML"
 DUPLICATE_IB_UUID_VIOLATION = "ERROR: Duplicate interactive block UUID"
 MISSING_IB_UUID_VIOLATION = "ERROR: Missing interactive block UUID"
+INVALID_IB_UUID_VIOLATION = "ERROR: Invalid UUID value found"
 
 VALID_PREFIXES = [
     "https://s3.amazonaws.com/im-ims-export/",
@@ -257,6 +258,13 @@ def find_ib_uuid_violations(html_elements):
                     ))
                 else:
                     uuid_to_location[uuid] = elem.location
+                    # Confirm UUID is valid
+                    if not utils.validate_uuid4(uuid):
+                        violations.append(Violation(
+                            INVALID_IB_UUID_VIOLATION,
+                            elem.location,
+                            uuid
+                        ))
     return violations
 
 
