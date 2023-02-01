@@ -764,3 +764,197 @@ def test_nested_html_directory_violations(
                 '/html/subdir/456.html' in location or
                 '/html/subdir/subsubdir/789.html' in location
                 )
+
+
+def test_inject_ib_uuids_duplicates_diff_files(tmp_path, mocker):
+    html_1 = """
+<div class="os-raise-ib-input"
+data-content-id="7080c78d-298b-40ba-a68d-55d6a93b00fb">
+</div>
+"""
+    html_2 = """
+<div class="os-raise-ib-input"
+data-content-id="7080c78d-298b-40ba-a68d-55d6a93b00fb">
+</div>
+    """.strip()
+
+    html_path = str(tmp_path) + "/html"
+    os.mkdir(html_path)
+    file_path_1 = html_path + "/123.html"
+    html_subdir = html_path + "/variant/"
+    os.mkdir(html_subdir)
+    file_path_2 = html_subdir + "456.html"
+
+    with open(file_path_1, 'w') as f:
+        f.write(html_1)
+    with open(file_path_2, 'w') as f:
+        f.write(html_2)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    issues = [row["issue"] for row in errors]
+    locations = [row["location"] for row in errors]
+    assert len(errors) == 1
+    assert len(locations) == 1
+
+    assert validate_mbz_html.DUPLICATE_IB_UUID_VIOLATION in issues
+    assert '/html/123.html' in locations[0]
+    assert '/html/variant/456.html' in locations[0]
+
+
+def test_inject_ib_uuids_duplicates_same_file(tmp_path, mocker):
+    html_1 = """
+<div class="os-raise-ib-input"
+data-content-id="7080c78d-298b-40ba-a68d-55d6a93b00fb">
+</div>
+<div class="os-raise-ib-input"
+data-content-id="7080c78d-298b-40ba-a68d-55d6a93b00fb">
+</div>
+    """.strip()
+
+    html_path = str(tmp_path) + "/html"
+    os.mkdir(html_path)
+    file_path_1 = html_path + "/123.html"
+
+    with open(file_path_1, 'w') as f:
+        f.write(html_1)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    issues = [row["issue"] for row in errors]
+    locations = [row["location"] for row in errors]
+    assert len(errors) == 1
+    assert len(locations) == 1
+
+    assert validate_mbz_html.DUPLICATE_IB_UUID_VIOLATION in issues
+    assert locations[0].count('/html/123.html') == 2
+
+
+def test_inject_ib_uuids_untagged(tmp_path, mocker):
+    html_1 = """
+<div class="os-raise-ib-input">
+</div>
+<div class="os-raise-ib-pset">
+</div>
+<div class="os-raise-ib-pset-problem">
+</div>
+    """.strip()
+
+    html_path = str(tmp_path) + "/html"
+    os.mkdir(html_path)
+    file_path_1 = html_path + "/123.html"
+    with open(file_path_1, 'w') as f:
+        f.write(html_1)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    issues = [row["issue"] for row in errors]
+    locations = [row["location"] for row in errors]
+    assert len(errors) == 3
+    assert len(locations) == 3
+
+    for i in issues:
+        assert i == validate_mbz_html.MISSING_IB_UUID_VIOLATION
+
+    for i in locations:
+        assert '/html/123.html' in i
+
+
+def test_inject_ib_uuids_pass(tmp_path, mocker):
+    html_1 = """
+<div class="os-raise-ib-input"
+data-content-id="7080c78d-298b-40ba-a68d-55d6a93b00fb">
+</div>
+<div class="os-raise-ib-pset"
+data-content-id="4567c78d-298b-40ba-a68d-55d6a93b0066">
+</div>
+<div class="os-raise-ib-pset-problem"
+data-content-id="9967c78d-298b-40ba-a68d-55d6a93b0055">
+</div>
+    """.strip()
+
+    html_path = str(tmp_path) + "/html"
+    os.mkdir(html_path)
+    file_path_1 = html_path + "/123.html"
+    with open(file_path_1, 'w') as f:
+        f.write(html_1)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    assert len(errors) == 0
+
+
+def test_inject_ib_uuids_diff_files_pass(tmp_path, mocker):
+    html_1 = """
+<div class="os-raise-ib-input"
+data-content-id="7080c78d-298b-40ba-a68d-55d6a93b00fb">
+</div>
+    """
+    html_2 = """
+<div class="os-raise-ib-pset"
+data-content-id="4567c78d-298b-40ba-a68d-55d6a93b0066">
+</div>
+    """
+    html_3 = """
+<div class="os-raise-ib-pset-problem"
+data-content-id="9967c78d-298b-40ba-a68d-55d6a93b0055">
+</div>
+    """.strip()
+    html_path = str(tmp_path) + "/html"
+    os.mkdir(html_path)
+    file_path_1 = html_path + "/123.html"
+    html_subdir = html_path + "/variant/"
+    os.mkdir(html_subdir)
+    file_path_2 = html_subdir + "456.html"
+    file_path_3 = html_subdir + "789.html"
+
+    with open(file_path_1, 'w') as f:
+        f.write(html_1)
+    with open(file_path_2, 'w') as f:
+        f.write(html_2)
+    with open(file_path_3, 'w') as f:
+        f.write(html_3)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    assert len(errors) == 0
