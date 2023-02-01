@@ -16,7 +16,7 @@ UNNESTED_VIOLATION = "ERROR: Contains content not nested in HTML Element"
 NESTED_IB_VIOLATION = "ERROR: Interactive block nested within HTML"
 DUPLICATE_IB_UUID_VIOLATION = "ERROR: Duplicate interactive block UUID"
 MISSING_IB_UUID_VIOLATION = "ERROR: Missing interactive block UUID"
-INVALID_IB_UUID_VIOLATION = "ERROR: Invalid UUID value found"
+INVALID_IB_UUID_VIOLATION = "ERROR: Invalid interactive block UUID"
 
 VALID_PREFIXES = [
     "https://s3.amazonaws.com/im-ims-export/",
