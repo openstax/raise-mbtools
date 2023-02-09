@@ -13,14 +13,18 @@ CLASSES_TO_INJECT = [
 
 def inject_ib_uuids(html_dir):
     for path in Path(html_dir).rglob('*.html'):
+        should_write = False
+
         with open(path, 'r') as f:
             soup = BeautifulSoup(f.read(), 'html.parser')
             for tag in CLASSES_TO_INJECT:
                 for elem in soup.find_all(name="div", class_=tag):
                     if elem.get('data-content-id') is None:
+                        should_write = True
                         elem['data-content-id'] = uuid4()
 
-        utils.write_html_soup(path, soup)
+        if should_write:
+            utils.write_html_soup(path, soup)
 
 
 def main():
