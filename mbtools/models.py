@@ -163,6 +163,36 @@ class MoodleQuestionBank:
                 if not utils.validate_uuid4(id_number[0].text):
                     id_number[0].text = str(uuid4())
 
+    def validate_question_uuids(self):
+        elems = self.etree.xpath('//question_categories/question_category')
+        invalid_ids = []
+        frequency_dict = {}
+
+        for elem in elems:
+            questions = elem.xpath(
+                './question_bank_entries/question_bank_entry'
+            )
+
+            for question in questions:
+                id_number = question.findall('.//idnumber')[0].text
+                if id_number in frequency_dict:
+                    frequency_dict[id_number] += 1
+                else:
+                    frequency_dict[id_number] = 1
+                if frequency_dict[id_number] > 1:
+                    invalid_ids.append('Repeated idnumber in '
+                                       'question_bank_entry '
+                                       f'id={ question.get("id")}')
+
+            for question in questions:
+                id_number = question.findall('.//idnumber')[0].text
+                if (not utils.validate_uuid4(id_number)):
+                    invalid_ids.append('Invalid idnumber in '
+                                       'question_bank_entry '
+                                       f'id={ question.get("id")}')
+
+        return invalid_ids
+
 
 class MoodleLessonAnswer:
     def __init__(self, etree, lesson_page):

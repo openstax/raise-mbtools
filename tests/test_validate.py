@@ -3,6 +3,8 @@ import os
 from lxml import etree
 from mbtools import validate_mbz_html
 from mbtools.models import MoodleHtmlElement
+from pathlib import Path
+import pytest
 
 
 def test_validate_mbz_fail_early_for_unnested_violations(
@@ -418,7 +420,7 @@ def test_questionbank_validation_and_optout_flag_mbz(
         questionbank_questions=[
             {
                 "id": 1,
-                "idnumber": 1234,
+                "idnumber": 'f79cdda5-8411-4f8b-8648-47fb0e74ecb1',
                 "html_content": '<img src="@@PLUGINFILE@@">',
                 "answers": [
                     {
@@ -430,7 +432,7 @@ def test_questionbank_validation_and_optout_flag_mbz(
             },
             {
                 "id": 2,
-                "idnumber": 1235,
+                "idnumber": 'f79cdda5-8911-4f8b-8648-47fb0e24ecb1',
                 "html_content": '<iframe src="http://foobaz"></iframe>',
                 "matches": [
                     {
@@ -764,3 +766,42 @@ def test_nested_html_directory_violations(
                 '/html/subdir/456.html' in location or
                 '/html/subdir/subsubdir/789.html' in location
                 )
+
+
+@pytest.fixture
+def test_data_path():
+    return Path(__file__).parent / "data/validate_mbz"
+
+
+@pytest.fixture
+def question_xml(test_data_path):
+    with open(test_data_path / "questions.xml", "r") as f:
+        questions = f.read()
+    return questions
+
+
+def test_questions_uuid_validation(tmp_path, mocker,
+                                   question_xml, mbz_builder):
+
+    mbz_builder(tmp_path / "mbz", [])
+    mbz_dir = f"{tmp_path}/mbz"
+    fp = Path(mbz_dir) / "questions.xml"
+    fp.write_text(question_xml)
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+    assert len(errors) == 3
+    assert errors[0]["issue"] == 'Repeated idnumber in '\
+                                 'question_bank_entry id=3'
+    assert errors[0]["location"] == "questions.xml"
+    assert errors[1]["issue"] == 'Invalid idnumber in question_bank_entry id=2'
+    assert errors[1]["location"] == "questions.xml"
+    assert errors[2]["issue"] == 'Invalid idnumber in question_bank_entry id=4'
+    assert errors[2]["location"] == "questions.xml"

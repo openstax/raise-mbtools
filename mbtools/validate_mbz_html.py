@@ -81,7 +81,8 @@ def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
     if include_questionbank:
         html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
 
-    return run_validations(html_elements, include_styles)
+    return run_validations(html_elements, include_styles,
+                           mbz_path, include_questionbank)
 
 
 def validate_html(html_dir, include_styles=True):
@@ -101,7 +102,8 @@ def validate_html(html_dir, include_styles=True):
     return run_validations(html_elements, include_styles)
 
 
-def run_validations(html_elements, include_styles):
+def run_validations(html_elements, include_styles,
+                    mbz_path=None, include_questionbank=None):
     violations = []
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
@@ -111,7 +113,9 @@ def run_validations(html_elements, include_styles):
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
     violations.extend(find_nested_ib_violations(html_elements))
-
+    if include_questionbank:
+        violations.extend([Violation(violation, 'questions.xml')for violation
+                          in utils.validate_question_uuids(mbz_dir=mbz_path)])
     return violations
 
 

@@ -69,6 +69,15 @@ def parse_question_bank_latest_for_html(mbz_dir):
     return html
 
 
+def validate_question_uuids(mbz_dir):
+    """
+    Given a string with path to a question_bank directory from an extracted
+    moodle backup, return a list of the html elements for each question
+    """
+    mbz_path = Path(mbz_dir).resolve(strict=True)
+    return models.MoodleQuestionBank(mbz_path).validate_question_uuids()
+
+
 def find_references_containing(content_etree, src_content):
     """
     Given a etree object and a prefix for a resource, this function will
