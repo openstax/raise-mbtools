@@ -489,6 +489,15 @@ class MoodleHtmlElement:
         xpath_query = f"//*[contains(@class, '{class_string}')]"
         return self.etree_fragments[0].xpath(xpath_query)
 
+    def get_elements_with_exact_class(self, classes):
+        # NOTE This method returns a serites of elements whose classes match
+        #   exactly one of the classes provided
+        elems = []
+        for item in classes:
+            xpath_query = f"//div[@class='{item}']"
+            elems.extend(self.etree_fragments[0].xpath(xpath_query))
+        return elems
+
     def element_is_fragment(self, elem):
         """Checks if the provided element is a fragment"""
         return elem in self.etree_fragments
