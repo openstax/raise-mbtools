@@ -3,6 +3,20 @@ import os
 from lxml import etree
 from mbtools import validate_mbz_html
 from mbtools.models import MoodleHtmlElement
+from pathlib import Path
+import pytest
+
+
+@pytest.fixture
+def test_data_path():
+    return Path(__file__).parent / "data/validate_mbz_html"
+
+
+@pytest.fixture
+def question_xml(test_data_path):
+    with open(test_data_path / "questions.xml", "r") as f:
+        questions = f.read()
+    return questions
 
 
 def test_validate_mbz_fail_early_for_unnested_violations(
@@ -418,7 +432,7 @@ def test_questionbank_validation_and_optout_flag_mbz(
         questionbank_questions=[
             {
                 "id": 1,
-                "idnumber": 1234,
+                "idnumber": 'f79cdda5-8411-4f8b-8648-47fb0e74ecb1',
                 "html_content": '<img src="@@PLUGINFILE@@">',
                 "answers": [
                     {
@@ -430,7 +444,7 @@ def test_questionbank_validation_and_optout_flag_mbz(
             },
             {
                 "id": 2,
-                "idnumber": 1235,
+                "idnumber": 'f79cdda5-8911-4f8b-8648-47fb0e24ecb1',
                 "html_content": '<iframe src="http://foobaz"></iframe>',
                 "matches": [
                     {
@@ -764,6 +778,40 @@ def test_nested_html_directory_violations(
                 '/html/subdir/456.html' in location or
                 '/html/subdir/subsubdir/789.html' in location
                 )
+
+
+def test_questions_uuid_validation(tmp_path, mocker,
+                                   question_xml, mbz_builder):
+
+    mbz_builder(tmp_path / "mbz", [])
+    mbz_dir = f"{tmp_path}/mbz"
+    fp = Path(mbz_dir) / "questions.xml"
+    fp.write_text(question_xml)
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{tmp_path}/mbz", f"{tmp_path}/test_output.csv", "mbz"]
+    )
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(tmp_path / "test_output.csv"))
+    errors = [row for row in reader]
+
+    assert {
+        "issue": validate_mbz_html.INVALID_QBANK_UUID_VIOLATION,
+        "location": f'{mbz_dir}/questions.xml',
+        "link": "question id: 2 uuid: f79cdda5-8911-4f8b-8648-"
+    } in errors
+    assert {
+        "issue": validate_mbz_html.DUPLICATE_QBANK_UUID_VIOLATION,
+        "location": f'{mbz_dir}/questions.xml',
+        "link": "question id: 3 uuid: f79cdda5-8911-4f8b-8648-47fb0e74ecb1"
+    } in errors
+    assert {
+        "issue": validate_mbz_html.INVALID_QBANK_UUID_VIOLATION,
+        "location": f'{mbz_dir}/questions.xml',
+        "link": "question id: 4 uuid: $@NULL@$"
+    } in errors
 
 
 def test_inject_ib_uuids_duplicates_diff_files(tmp_path, mocker):

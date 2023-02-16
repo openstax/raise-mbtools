@@ -3,7 +3,7 @@ from lxml import etree
 from csv import DictWriter
 from pathlib import Path
 
-from mbtools.models import MoodleHtmlElement
+from mbtools.models import MoodleHtmlElement, MoodleQuestionBank
 from . import utils
 
 STYLE_VIOLATION = "ERROR: Uses In-Line Styles"
@@ -17,6 +17,8 @@ NESTED_IB_VIOLATION = "ERROR: Interactive block nested within HTML"
 DUPLICATE_IB_UUID_VIOLATION = "ERROR: Duplicate interactive block UUID"
 MISSING_IB_UUID_VIOLATION = "ERROR: Missing interactive block UUID"
 INVALID_IB_UUID_VIOLATION = "ERROR: Invalid interactive block UUID"
+DUPLICATE_QBANK_UUID_VIOLATION = "ERROR: Duplicate question bank UUID"
+INVALID_QBANK_UUID_VIOLATION = "ERROR: Invalid question bank UUID"
 
 VALID_PREFIXES = [
     "https://s3.amazonaws.com/im-ims-export/",
@@ -80,11 +82,14 @@ class Violation:
 
 
 def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
+    question_bank = MoodleQuestionBank(mbz_path)
+
     html_elements = utils.parse_backup_elements(mbz_path)
     if include_questionbank:
         html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
-
-    return run_validations(html_elements, include_styles)
+    html_validations = run_html_validations(html_elements, include_styles)
+    qbank_validations = run_qbank_validations(question_bank)
+    return html_validations + qbank_validations
 
 
 def validate_html(html_dir, include_styles=True):
@@ -101,10 +106,10 @@ def validate_html(html_dir, include_styles=True):
             html_elements.append(
                 MoodleHtmlElement(parent_element, str(file_path))
             )
-    return run_validations(html_elements, include_styles)
+    return run_html_validations(html_elements, include_styles)
 
 
-def run_validations(html_elements, include_styles):
+def run_html_validations(html_elements, include_styles):
     violations = []
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
@@ -115,6 +120,37 @@ def run_validations(html_elements, include_styles):
     violations.extend(find_tag_violations(html_elements))
     violations.extend(find_nested_ib_violations(html_elements))
     violations.extend(find_ib_uuid_violations(html_elements))
+
+    return violations
+
+
+def find_qbank_uuid_violations(question_bank):
+    questions = question_bank.latest_questions
+    qbe_to_uuid = {}
+    observed_ids = set()
+    violations_list = []
+    for question in questions:
+        qbe_to_uuid[question.question_bank_entry_id] = question.id_number
+
+    for qbe_id, id_number in qbe_to_uuid.items():
+        if not utils.validate_uuid4(id_number):
+            violations_list.append(Violation(INVALID_QBANK_UUID_VIOLATION,
+                                             question_bank.questionbank_path,
+                                             f'question id: {qbe_id} uuid: '
+                                             f'{id_number}'))
+        if id_number in observed_ids:
+            violations_list.append(Violation(DUPLICATE_QBANK_UUID_VIOLATION,
+                                             question_bank.questionbank_path,
+                                             f'question id: {qbe_id} uuid: '
+                                             f'{id_number}'))
+        observed_ids.add(id_number)
+    return violations_list
+
+
+def run_qbank_validations(question_bank):
+
+    violations = []
+    violations.extend(find_qbank_uuid_violations(question_bank))
 
     return violations
 

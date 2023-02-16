@@ -89,27 +89,32 @@ def test_question_answertext_filter(tmp_path):
     question_bank_xml = """
 <?xml version="1.0" encoding="UTF-8"?>
 <question_categories>
-  <idnumber>1234</idnumber>
   <question_category>
-    <question_versions>
-      <version>1</version>
-      <questions>
-        <question id="1">
-          <qtype>numerical</qtype>
-          <plugin_qtype_numerical_question>
-            <answers>
-              <answer>
-                <answertext>112</answertext>
-              </answer>
-            </answers>
-          </plugin_qtype_numerical_question>
-        </question>
-      </questions>
-    </question_versions>
+    <question_bank_entries>
+      <question_bank_entry id="1">
+      <idnumber>1234</idnumber>
+      <question_version>
+        <question_versions>
+          <version>1</version>
+          <questions>
+            <question id="1">
+              <qtype>numerical</qtype>
+              <plugin_qtype_numerical_question>
+                <answers>
+                  <answer>
+                    <answertext>112</answertext>
+                  </answer>
+                </answers>
+              </plugin_qtype_numerical_question>
+            </question>
+          </questions>
+        </question_versions>
+      </question_version>
+      </question_bank_entry>
+    </question_bank_entries>
   </question_category>
 </question_categories>
     """.strip()
-
     with open(tmp_path / "questions.xml", "w") as qb:
         qb.write(question_bank_xml)
 
@@ -125,23 +130,28 @@ def test_question_answertext_filter(tmp_path):
 
 def test_question_text_filter(tmp_path):
     question_bank_xml = """
-<?xml version="1.0" encoding="UTF-8"?>
-<question_categories>
-  <idnumber>1234</idnumber>
-  <question_category>
-    <question_versions>
-      <version>1</version>
-      <questions>
-        <question id="1">
-          <qtype>shortanswer</qtype>
-          <questiontext>{1:SHORTANSWER:%100%2#Congratulations!}</questiontext>
-        </question>
-      </questions>
-    </question_versions>
-  </question_category>
-</question_categories>
-    """.strip()
-
+    <?xml version="1.0" encoding="UTF-8"?>
+    <question_categories>
+      <question_category>
+        <question_bank_entries>
+          <question_bank_entry id="1">
+            <idnumber>1234</idnumber>
+            <question_version>
+              <question_versions>
+                <version>1</version>
+                <questions>
+                  <question id="1">
+                    <qtype>shortanswer</qtype>
+                    <questiontext>{1:SHORTANSWER:%100%2#Congratulations!}</questiontext>
+                  </question>
+                </questions>
+              </question_versions>
+            </question_version>
+          </question_bank_entry>
+        </question_bank_entries>
+      </question_category>
+    </question_categories>
+        """.strip()
     with open(tmp_path / "questions.xml", "w") as qb:
         qb.write(question_bank_xml)
 

@@ -352,6 +352,8 @@ class MoodleQuestion:
         self.version = self.etree.xpath("../../version")[0].text
         self.id_number = self.etree.xpath('../../../../idnumber')[0].text
         self.question_type = self.etree.xpath('./qtype')[0].text
+        self.question_bank_entry_id =\
+            self.etree.xpath("../../../..")[0].attrib["id"]
 
     @property
     def text(self):
