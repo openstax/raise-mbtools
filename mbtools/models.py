@@ -81,7 +81,11 @@ class MoodleQuestionBank:
 
     @property
     def questions(self):
-        return [MoodleQuestion(q) for q in self.etree.xpath("//question")]
+        return [
+            MoodleQuestion(q) for q in self.etree.xpath(
+                "//questions/question"
+            )
+        ]
 
     @property
     def latest_questions(self):
