@@ -7,6 +7,18 @@ from pathlib import Path
 import pytest
 
 
+@pytest.fixture
+def test_data_path():
+    return Path(__file__).parent / "data/validate_mbz"
+
+
+@pytest.fixture
+def question_xml(test_data_path):
+    with open(test_data_path / "questions.xml", "r") as f:
+        questions = f.read()
+    return questions
+
+
 def test_validate_mbz_fail_early_for_unnested_violations(
     tmp_path, page_builder, mbz_builder
 ):
@@ -768,18 +780,6 @@ def test_nested_html_directory_violations(
                 )
 
 
-@pytest.fixture
-def test_data_path():
-    return Path(__file__).parent / "data/validate_mbz"
-
-
-@pytest.fixture
-def question_xml(test_data_path):
-    with open(test_data_path / "questions.xml", "r") as f:
-        questions = f.read()
-    return questions
-
-
 def test_questions_uuid_validation(tmp_path, mocker,
                                    question_xml, mbz_builder):
 
@@ -796,14 +796,23 @@ def test_questions_uuid_validation(tmp_path, mocker,
 
     reader = csv.DictReader(open(tmp_path / "test_output.csv"))
     errors = [row for row in reader]
+    issues = [row["issue"] for row in errors]
+    locations = [row["location"] for row in errors]
+    links = [row["link"] for row in errors]
+
     assert len(errors) == 3
-    assert errors[0]["issue"] == 'Repeated idnumber in '\
-                                 'question_bank_entry id=3'
-    assert errors[0]["location"] == "questions.xml"
-    assert errors[1]["issue"] == 'Invalid idnumber in question_bank_entry id=2'
-    assert errors[1]["location"] == "questions.xml"
-    assert errors[2]["issue"] == 'Invalid idnumber in question_bank_entry id=4'
-    assert errors[2]["location"] == "questions.xml"
+
+    assert validate_mbz_html.DUPLICATE_QBANK_UUID_VIOLATION in issues
+    assert validate_mbz_html.INVALID_QBANK_UUID_VIOLATION in issues
+    assert links[0] == 'question id: 2 uuid: f79cdda5-8911-4f8b-8648-'
+    assert links[1] == 'question id: 3 uuid: '\
+                       'f79cdda5-8911-4f8b-8648-47fb0e74ecb1'
+    assert links[2] == 'question id: 4 uuid: $@NULL@$'
+
+    assert len(errors) == 3
+    assert locations[0] == f'{mbz_dir}/questions.xml'
+    assert locations[1] == f'{mbz_dir}/questions.xml'
+    assert locations[2] == f'{mbz_dir}/questions.xml'
 
 
 def test_inject_ib_uuids_duplicates_diff_files(tmp_path, mocker):

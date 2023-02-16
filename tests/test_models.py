@@ -88,7 +88,7 @@ def test_html_elements_element_is_fragment():
 def test_question_answertext_filter(tmp_path):
     question_bank_xml = """
 <?xml version="1.0" encoding="UTF-8"?>
-<question_categories>
+<question_categories id="12">
   <idnumber>1234</idnumber>
   <question_category>
     <question_versions>
@@ -124,7 +124,7 @@ def test_question_answertext_filter(tmp_path):
 def test_question_text_filter(tmp_path):
     question_bank_xml = """
 <?xml version="1.0" encoding="UTF-8"?>
-<question_categories>
+<question_categories id="12">
   <idnumber>1234</idnumber>
   <question_category>
     <question_versions>

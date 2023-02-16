@@ -81,7 +81,11 @@ class MoodleQuestionBank:
 
     @property
     def questions(self):
-        return [MoodleQuestion(q) for q in self.etree.xpath("//question")]
+        return [
+            MoodleQuestion(q) for q in self.etree.xpath(
+                "//questions/question"
+            )
+        ]
 
     @property
     def latest_questions(self):
@@ -162,36 +166,6 @@ class MoodleQuestionBank:
                 id_number = question.findall('.//idnumber')
                 if not utils.validate_uuid4(id_number[0].text):
                     id_number[0].text = str(uuid4())
-
-    def validate_question_uuids(self):
-        elems = self.etree.xpath('//question_categories/question_category')
-        invalid_ids = []
-        frequency_dict = {}
-
-        for elem in elems:
-            questions = elem.xpath(
-                './question_bank_entries/question_bank_entry'
-            )
-
-            for question in questions:
-                id_number = question.findall('.//idnumber')[0].text
-                if id_number in frequency_dict:
-                    frequency_dict[id_number] += 1
-                else:
-                    frequency_dict[id_number] = 1
-                if frequency_dict[id_number] > 1:
-                    invalid_ids.append('Repeated idnumber in '
-                                       'question_bank_entry '
-                                       f'id={ question.get("id")}')
-
-            for question in questions:
-                id_number = question.findall('.//idnumber')[0].text
-                if (not utils.validate_uuid4(id_number)):
-                    invalid_ids.append('Invalid idnumber in '
-                                       'question_bank_entry '
-                                       f'id={ question.get("id")}')
-
-        return invalid_ids
 
 
 class MoodleLessonAnswer:
@@ -378,6 +352,7 @@ class MoodleQuestion:
         self.version = self.etree.xpath("../../version")[0].text
         self.id_number = self.etree.xpath('../../../../idnumber')[0].text
         self.question_type = self.etree.xpath('./qtype')[0].text
+        self.question_bank_entry_id = self.etree.xpath("../../../..")[0].attrib["id"]
 
     @property
     def text(self):
