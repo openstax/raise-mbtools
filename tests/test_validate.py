@@ -9,7 +9,7 @@ import pytest
 
 @pytest.fixture
 def test_data_path():
-    return Path(__file__).parent / "data/validate_mbz"
+    return Path(__file__).parent / "data/validate_mbz_html"
 
 
 @pytest.fixture
@@ -801,7 +801,6 @@ def test_questions_uuid_validation(tmp_path, mocker,
     links = [row["link"] for row in errors]
 
     assert len(errors) == 3
-
     assert validate_mbz_html.DUPLICATE_QBANK_UUID_VIOLATION in issues
     assert validate_mbz_html.INVALID_QBANK_UUID_VIOLATION in issues
     assert links[0] == 'question id: 2 uuid: f79cdda5-8911-4f8b-8648-'
@@ -809,7 +808,6 @@ def test_questions_uuid_validation(tmp_path, mocker,
                        'f79cdda5-8911-4f8b-8648-47fb0e74ecb1'
     assert links[2] == 'question id: 4 uuid: $@NULL@$'
 
-    assert len(errors) == 3
     assert locations[0] == f'{mbz_dir}/questions.xml'
     assert locations[1] == f'{mbz_dir}/questions.xml'
     assert locations[2] == f'{mbz_dir}/questions.xml'
