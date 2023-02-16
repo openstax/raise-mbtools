@@ -115,7 +115,9 @@ def test_question_answertext_filter(tmp_path):
 
     question_bank = MoodleQuestionBank(tmp_path)
     question_bank_html = []
-    for question in question_bank.questions:
+    qbank_questions = question_bank.questions
+    assert len(qbank_questions) == 1
+    for question in qbank_questions:
         question_bank_html.extend(question.html_elements())
 
     assert len(question_bank_html) == 0
@@ -145,7 +147,9 @@ def test_question_text_filter(tmp_path):
 
     question_bank = MoodleQuestionBank(tmp_path)
     question_bank_html = []
-    for question in question_bank.questions:
+    qbank_questions = question_bank.questions
+    assert len(qbank_questions) == 1
+    for question in qbank_questions:
         question_bank_html.extend(question.html_elements())
 
     assert len(question_bank_html) == 0
