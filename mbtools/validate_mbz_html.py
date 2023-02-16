@@ -127,7 +127,7 @@ def run_html_validations(html_elements, include_styles):
 def find_qbank_uuid_violations(question_bank):
     questions = question_bank.latest_questions
     qbe_to_uuid = {}
-    frequency_dict = {}
+    observed_ids = set()
     violations_list = []
     for question in questions:
         qbe_to_uuid[question.question_bank_entry_id] = question.id_number
@@ -138,15 +138,12 @@ def find_qbank_uuid_violations(question_bank):
                                              question_bank.questionbank_path,
                                              f'question id: {qbe_id} uuid: '
                                              f'{id_number}'))
-        if id_number in frequency_dict:
-            frequency_dict[id_number] += 1
-        else:
-            frequency_dict[id_number] = 1
-        if frequency_dict[id_number] > 1:
+        if id_number in observed_ids:
             violations_list.append(Violation(DUPLICATE_QBANK_UUID_VIOLATION,
                                              question_bank.questionbank_path,
                                              f'question id: {qbe_id} uuid: '
                                              f'{id_number}'))
+        observed_ids.add(id_number)
     return violations_list
 
 

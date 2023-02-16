@@ -796,21 +796,22 @@ def test_questions_uuid_validation(tmp_path, mocker,
 
     reader = csv.DictReader(open(tmp_path / "test_output.csv"))
     errors = [row for row in reader]
-    issues = [row["issue"] for row in errors]
-    locations = [row["location"] for row in errors]
-    links = [row["link"] for row in errors]
 
-    assert len(errors) == 3
-    assert validate_mbz_html.DUPLICATE_QBANK_UUID_VIOLATION in issues
-    assert validate_mbz_html.INVALID_QBANK_UUID_VIOLATION in issues
-    assert links[0] == 'question id: 2 uuid: f79cdda5-8911-4f8b-8648-'
-    assert links[1] == 'question id: 3 uuid: '\
-                       'f79cdda5-8911-4f8b-8648-47fb0e74ecb1'
-    assert links[2] == 'question id: 4 uuid: $@NULL@$'
-
-    assert locations[0] == f'{mbz_dir}/questions.xml'
-    assert locations[1] == f'{mbz_dir}/questions.xml'
-    assert locations[2] == f'{mbz_dir}/questions.xml'
+    assert {
+        "issue": validate_mbz_html.INVALID_QBANK_UUID_VIOLATION,
+        "location": f'{mbz_dir}/questions.xml',
+        "link": "question id: 2 uuid: f79cdda5-8911-4f8b-8648-"
+    } in errors
+    assert {
+        "issue": validate_mbz_html.DUPLICATE_QBANK_UUID_VIOLATION,
+        "location": f'{mbz_dir}/questions.xml',
+        "link": "question id: 3 uuid: f79cdda5-8911-4f8b-8648-47fb0e74ecb1"
+    } in errors
+    assert {
+        "issue": validate_mbz_html.INVALID_QBANK_UUID_VIOLATION,
+        "location": f'{mbz_dir}/questions.xml',
+        "link": "question id: 4 uuid: $@NULL@$"
+    } in errors
 
 
 def test_inject_ib_uuids_duplicates_diff_files(tmp_path, mocker):
