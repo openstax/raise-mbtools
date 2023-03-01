@@ -1,0 +1,13 @@
+id,content_id,variant,content,pset_id,problem_type,solution,solution_options
+7080c78d-298b-40ba-a68d-55d6a93b00fc,4ca6ab6d-231e-4000-b576-af7f3c021cf5,main,"<div class=""os-raise-ib-pset-problem-content"">
+<p>Here is content for an input problem</p>
+</div>",7080c78d-298b-40ba-a68d-55d6a93b00fc,input,42,
+7080c78d-298b-40ba-a68d-55d6a93b00fc,4ca6ab6d-231e-4000-b576-af7f3c021cf5,main,"<div class=""os-raise-ib-pset-problem-content"">
+<p>Here is content for a dropdown problem</p>
+</div>",7080c78d-298b-40ba-a68d-55d6a93b00fc,dropdown,red,"[""red"", ""blue"", ""green""]"
+7080c78d-298b-40ba-a68d-55d6a93b00fc,4ca6ab6d-231e-4000-b576-af7f3c021cf5,main,"<div class=""os-raise-ib-pset-problem-content"">
+<p>Here is content for a multiple choice problem</p>
+</div>",7080c78d-298b-40ba-a68d-55d6a93b00fc,multiplechoice,red,"[""red"", ""blue"", ""green""]"
+7080c78d-298b-40ba-a68d-55d6a93b00fc,4ca6ab6d-231e-4000-b576-af7f3c021cf5,main,"<div class=""os-raise-ib-pset-problem-content"">
+<p>Here is content for a multiselect problem</p>
+</div>",7080c78d-298b-40ba-a68d-55d6a93b00fc,multiselect,"[""red"", ""blue""]","[""red"", ""blue"", ""green""]"

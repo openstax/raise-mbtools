@@ -1,0 +1,16 @@
+id,content_id,variant,content,prompt
+7080c78d-298b-40ba-a68d-55d6a93b00fc,4ca6ab6d-231e-4000-b576-af7f3c021cf5,main,"<div class=""os-raise-ib-input-content"">
+<p>This is the main VARIANT question for an IB input block (5+6)</p>
+</div>","<div class=""os-raise-ib-input-prompt"">
+<p>Here is the prompt for the submission of the IB Input Block</p>
+</div>"
+7080c78d-298b-40ba-a68d-55d6a93b00fc,4ca6ab6d-231e-4000-b576-af7f3c021cf5,main,"<div class=""os-raise-ib-input-content"">
+<p>This is the main VARIANT question for an IB input block (5+6)</p>
+</div>","<div class=""os-raise-ib-input-prompt"">
+<p>Here is the prompt for the submission of the IB Input Block</p>
+</div>"
+7080c78d-298b-40ba-a68d-55d6a93b00fc,4ca6ab6d-231e-4000-b576-af7f3c021cf5,mm,"<div class=""os-raise-ib-input-content"">
+<p>This is the VARIANT question for an IB input block (5+6)</p>
+</div>","<div class=""os-raise-ib-input-prompt"">
+<p>Here is the prompt for the submission of the IB Input Block</p>
+</div>"
