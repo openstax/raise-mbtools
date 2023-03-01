@@ -51,11 +51,17 @@ def test_generate_html_content(tmp_path, mocker, content):
 
     actual_ib_input = csv.DictReader(open(Path(f"{tmp_path}/output") /
                                      "ib_input_instances.csv"))
-    for line_expected, line_actual in zip(input_expected_csv, actual_ib_input):
-        assert line_expected == line_actual
+    expected_input_rows = list(input_expected_csv)
+    actual_input_rows = list(actual_ib_input)
+    assert len(expected_input_rows) == len(actual_input_rows)
+    for item in expected_input_rows:
+        assert item in actual_input_rows
 
     actual_ib_pset = csv.DictReader(open(Path(f"{tmp_path}/output") /
                                     "ib_pset_problems.csv"))
 
-    for line_expected, line_actual in zip(pset_expected_csv, actual_ib_pset):
-        assert line_expected == line_actual
+    expected_pset_rows = list(pset_expected_csv)
+    actual_pset_rows = list(actual_ib_pset)
+    assert len(expected_pset_rows) == len(actual_pset_rows)
+    for item in expected_pset_rows:
+        assert item in actual_pset_rows
