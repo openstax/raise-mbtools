@@ -22,10 +22,10 @@ def test_toc_creation_single_page(
     html_path.mkdir()
     mbz_builder(mbz_path, activities=[page])
     mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
-    md_filepath = tmp_path
+    md_filepath = tmp_path / "toc.md"
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.md']
+        ["", f"{mbz_path}", str(md_filepath)]
     )
     main()
 
@@ -36,7 +36,7 @@ def test_toc_creation_single_page(
         with open((html_path / html_filename), 'r') as f:
             assert f.read() == page_html
 
-    with open(f'{md_filepath}/toc.md', 'r') as f:
+    with open(md_filepath, 'r') as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 3
         assert lines[0] == "# Table of Contents"
@@ -67,10 +67,10 @@ def test_toc_creation_single_lesson(
     html_path.mkdir()
     mbz_builder(mbz_path, activities=[lesson])
     mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
-    md_filepath = tmp_path
+    md_filepath = tmp_path / "toc.md"
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.md']
+        ["", f"{mbz_path}", str(md_filepath)]
     )
     main()
 
@@ -81,7 +81,7 @@ def test_toc_creation_single_lesson(
         with open((html_path / html_filename), 'r') as f:
             assert f.read() == lesson_html
 
-    with open(f'{md_filepath}/toc.md') as f:
+    with open(md_filepath) as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 4
         assert lines[0] == "# Table of Contents"
@@ -128,10 +128,10 @@ def test_toc_creation_lesson_pages_in_order(
     html_path.mkdir()
     mbz_builder(mbz_path, activities=[lesson])
     mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
-    md_filepath = tmp_path
+    md_filepath = tmp_path / "toc.md"
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.md']
+        ["", f"{mbz_path}", str(md_filepath)]
     )
     main()
 
@@ -148,7 +148,7 @@ def test_toc_creation_lesson_pages_in_order(
                 elif content == lesson_html_3:
                     html_filenames[3] = html_filename
 
-    with open(f'{md_filepath}/toc.md') as f:
+    with open(md_filepath) as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 6
         assert lines[0] == "# Table of Contents"
@@ -200,10 +200,10 @@ def test_toc_creation_multiple_sections(
     html_path.mkdir()
     mbz_builder(mbz_path, activities=[page_1, page_2], sections=sections)
     mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
-    md_filepath = tmp_path
+    md_filepath = tmp_path / "toc.md"
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}",  f'{str(md_filepath)}/toc.md']
+        ["", f"{mbz_path}",  str(md_filepath)]
     )
     main()
 
@@ -218,7 +218,7 @@ def test_toc_creation_multiple_sections(
                 elif content == page_html_2:
                     html_filenames[2] = html_filename
 
-    with open(f'{md_filepath}/toc.md') as f:
+    with open(md_filepath) as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 5
         assert lines[0] == "# Table of Contents"
@@ -258,10 +258,10 @@ def test_toc_creation_page_and_lesson_together(
     html_path.mkdir()
     mbz_builder(mbz_path, activities=[lesson, page])
     mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
-    md_filepath = tmp_path
+    md_filepath = tmp_path / "toc.md"
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.md']
+        ["", f"{mbz_path}", str(md_filepath)]
     )
     main()
 
@@ -276,7 +276,7 @@ def test_toc_creation_page_and_lesson_together(
                 elif content == page_html:
                     html_filenames["P"] = html_filename
 
-    with open(f'{md_filepath}/toc.md') as f:
+    with open(md_filepath) as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 5
         assert lines[0] == "# Table of Contents"
@@ -325,15 +325,15 @@ def test_toc_creation_page_and_lesson_together_csv(
     html_path.mkdir()
     mbz_builder(mbz_path, activities=[lesson, page, page2])
     mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
-    md_filepath = tmp_path
+    csv_filepath = tmp_path / "toc.csv"
 
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.csv', '--csv']
+        ["", f"{mbz_path}", str(csv_filepath), '--csv']
     )
     main()
 
-    toc_csv = csv.DictReader(open(f'{md_filepath}/toc.csv'))
+    toc_csv = csv.DictReader(open(csv_filepath))
     toc_csv_rows = list(toc_csv)
     assert 'Only Lesson' == toc_csv_rows[0]['activity_name']
     assert validate_uuid4(toc_csv_rows[0]['content_id'])

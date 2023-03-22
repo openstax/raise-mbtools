@@ -33,8 +33,7 @@ def parse_toc(mbz_path):
                         2, make_link(act.name, uuid))
                     page_dict = {}
                     page_dict['section'] = section.title
-                    page_dict['content_id'] = html_elem.get_attribute_values(
-                        "data-content-id")[0]
+                    page_dict['content_id'] = uuid
                     page_dict['activity_name'] = act.name
                     page_dict['lesson_page'] = ""
                 activity_list.append(page_dict)
@@ -54,8 +53,7 @@ def parse_toc(mbz_path):
                         3, make_link(current_page.name, uuid))
                     lesson_dict = {}
                     lesson_dict['section'] = section.title
-                    lesson_dict['content_id'] = html_elem.get_attribute_values(
-                        "data-content-id")[0]
+                    lesson_dict['content_id'] = uuid
                     lesson_dict['activity_name'] = act.name
                     lesson_dict['lesson_page'] = current_page.name
                     activity_list.append(lesson_dict)
