@@ -67,7 +67,7 @@ def parse_toc(mbz_path):
     return (md_string, activity_list)
 
 
-def creat_toc_md(output_path, parsed_toc):
+def create_toc_md(output_path, parsed_toc):
     with open(output_path, 'w') as f:
         f.write(parsed_toc)
 
@@ -99,7 +99,7 @@ def main():
     if csv:
         create_toc_csv(output_path, activity_list)
     else:
-        creat_toc_md(output_path, md_string)
+        create_toc_md(output_path, md_string)
 
 
 if __name__ == "__main__":  # pragma: no cover
