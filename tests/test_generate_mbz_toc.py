@@ -81,7 +81,7 @@ def test_toc_creation_single_lesson(
         with open((html_path / html_filename), 'r') as f:
             assert f.read() == lesson_html
 
-    with open(md_filepath) as f:
+    with open(md_filepath, 'r') as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 4
         assert lines[0] == "# Table of Contents"
@@ -148,7 +148,7 @@ def test_toc_creation_lesson_pages_in_order(
                 elif content == lesson_html_3:
                     html_filenames[3] = html_filename
 
-    with open(md_filepath) as f:
+    with open(md_filepath, 'r') as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 6
         assert lines[0] == "# Table of Contents"
@@ -203,7 +203,7 @@ def test_toc_creation_multiple_sections(
     md_filepath = tmp_path / "toc.md"
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}",  str(md_filepath)]
+        ["", f"{mbz_path}", str(md_filepath)]
     )
     main()
 
@@ -218,7 +218,7 @@ def test_toc_creation_multiple_sections(
                 elif content == page_html_2:
                     html_filenames[2] = html_filename
 
-    with open(md_filepath) as f:
+    with open(md_filepath, 'r') as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 5
         assert lines[0] == "# Table of Contents"
@@ -276,7 +276,7 @@ def test_toc_creation_page_and_lesson_together(
                 elif content == page_html:
                     html_filenames["P"] = html_filename
 
-    with open(md_filepath) as f:
+    with open(md_filepath, 'r') as f:
         lines = [line.rstrip() for line in f]
         assert len(lines) == 5
         assert lines[0] == "# Table of Contents"
