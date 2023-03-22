@@ -25,7 +25,7 @@ def test_toc_creation_single_page(
     md_filepath = tmp_path
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", str(md_filepath)]
+        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.md']
     )
     main()
 
@@ -70,7 +70,7 @@ def test_toc_creation_single_lesson(
     md_filepath = tmp_path
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", str(md_filepath)]
+        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.md']
     )
     main()
 
@@ -131,7 +131,7 @@ def test_toc_creation_lesson_pages_in_order(
     md_filepath = tmp_path
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", str(md_filepath)]
+        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.md']
     )
     main()
 
@@ -203,7 +203,7 @@ def test_toc_creation_multiple_sections(
     md_filepath = tmp_path
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", str(md_filepath)]
+        ["", f"{mbz_path}",  f'{str(md_filepath)}/toc.md']
     )
     main()
 
@@ -261,7 +261,7 @@ def test_toc_creation_page_and_lesson_together(
     md_filepath = tmp_path
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", str(md_filepath)]
+        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.md']
     )
     main()
 
@@ -305,46 +305,47 @@ def test_toc_creation_page_and_lesson_together_csv(
             ]
     )
     page_html = "<p>Page Content</p>"
-    page_name = "Only Page"
+    page_name = "Page 1"
     page = page_builder(
             id=1,
             name=page_name,
             html_content=page_html
         )
 
+    page2_html = "<p>Page Content</p>"
+    page2_name = "Page 2"
+    page2 = page_builder(
+            id=2,
+            name=page2_name,
+            html_content=page2_html
+        )
+
     mbz_path = tmp_path / "mbz"
     html_path = tmp_path / "html"
     html_path.mkdir()
-    mbz_builder(mbz_path, activities=[lesson, page])
+    mbz_builder(mbz_path, activities=[lesson, page, page2])
     mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
     md_filepath = tmp_path
 
     mocker.patch(
         "sys.argv",
-        ["", f"{mbz_path}", str(md_filepath), '--csv']
+        ["", f"{mbz_path}", f'{str(md_filepath)}/toc.csv', '--csv']
     )
     main()
 
-    html_filenames = {}
-    for path, dirs, files in os.walk(html_path):
-        assert len(files) == 2
-        for html_filename in files:
-            with open((html_path / html_filename), 'r') as f:
-                content = f.read()
-                if content == lesson_html:
-                    html_filenames["L"] = html_filename
-                elif content == page_html:
-                    html_filenames["P"] = html_filename
-
     toc_csv = csv.DictReader(open(f'{md_filepath}/toc.csv'))
     toc_csv_rows = list(toc_csv)
-
     assert 'Only Lesson' == toc_csv_rows[0]['activity_name']
     assert validate_uuid4(toc_csv_rows[0]['content_id'])
     assert 'Lesson Page 1' == toc_csv_rows[0]['lesson_page']
     assert 'Default Section' == toc_csv_rows[0]['section']
 
-    assert 'Only Page' == toc_csv_rows[1]['activity_name']
+    assert 'Page 1' == toc_csv_rows[1]['activity_name']
     assert validate_uuid4(toc_csv_rows[1]['content_id'])
     assert '' == toc_csv_rows[1]['lesson_page']
     assert 'Default Section' == toc_csv_rows[1]['section']
+
+    assert 'Page 2' == toc_csv_rows[2]['activity_name']
+    assert validate_uuid4(toc_csv_rows[2]['content_id'])
+    assert '' == toc_csv_rows[2]['lesson_page']
+    assert 'Default Section' == toc_csv_rows[2]['section']
