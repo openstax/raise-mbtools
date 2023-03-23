@@ -1,6 +1,8 @@
 import os
 import mbtools.extract_html_content
 from mbtools.generate_mbz_toc import main
+import csv
+from mbtools.utils import validate_uuid4
 
 
 def test_toc_creation_single_page(
@@ -283,3 +285,67 @@ def test_toc_creation_page_and_lesson_together(
         assert lines[3] == \
             f'        * [{lesson_page_name}](./html/{html_filenames["L"]})'
         assert lines[4] == f'    * [{page_name}](./html/{html_filenames["P"]})'
+
+
+def test_toc_creation_page_and_lesson_together_csv(
+    mocker, tmp_path, mbz_builder, lesson_builder, page_builder
+):
+    lesson_html = "<p>Lesson Content</p>"
+    lesson_name = "Only Lesson"
+    lesson_page_name = "Lesson Page 1"
+    lesson = lesson_builder(
+            id=1,
+            name=lesson_name,
+            pages=[
+                {
+                    "id": "1",
+                    "title": lesson_page_name,
+                    "html_content": lesson_html
+                }
+            ]
+    )
+    page_html = "<p>Page Content</p>"
+    page_name = "Page 1"
+    page = page_builder(
+            id=1,
+            name=page_name,
+            html_content=page_html
+        )
+
+    page2_html = "<p>Page Content</p>"
+    page2_name = "Page 2"
+    page2 = page_builder(
+            id=2,
+            name=page2_name,
+            html_content=page2_html
+        )
+
+    mbz_path = tmp_path / "mbz"
+    html_path = tmp_path / "html"
+    html_path.mkdir()
+    mbz_builder(mbz_path, activities=[lesson, page, page2])
+    mbtools.extract_html_content.replace_content_tags(mbz_path, html_path)
+    csv_filepath = tmp_path / "toc.csv"
+
+    mocker.patch(
+        "sys.argv",
+        ["", f"{mbz_path}", str(csv_filepath), '--csv']
+    )
+    main()
+
+    toc_csv = csv.DictReader(open(csv_filepath))
+    toc_csv_rows = list(toc_csv)
+    assert 'Only Lesson' == toc_csv_rows[0]['activity_name']
+    assert validate_uuid4(toc_csv_rows[0]['content_id'])
+    assert 'Lesson Page 1' == toc_csv_rows[0]['lesson_page']
+    assert 'Default Section' == toc_csv_rows[0]['section']
+
+    assert 'Page 1' == toc_csv_rows[1]['activity_name']
+    assert validate_uuid4(toc_csv_rows[1]['content_id'])
+    assert '' == toc_csv_rows[1]['lesson_page']
+    assert 'Default Section' == toc_csv_rows[1]['section']
+
+    assert 'Page 2' == toc_csv_rows[2]['activity_name']
+    assert validate_uuid4(toc_csv_rows[2]['content_id'])
+    assert '' == toc_csv_rows[2]['lesson_page']
+    assert 'Default Section' == toc_csv_rows[2]['section']
