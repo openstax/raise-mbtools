@@ -48,7 +48,9 @@ VALID_HREF_PREFIXES = [
     "https://www.engageny.org",
     "https://www.khanacademy.org",
     "https://teacher.desmos.com",
-    "https://help.desmos.com"
+    "https://help.desmos.com",
+    "https://www.geogebra.org",
+    "https://geogebra.org"
 ]
 
 VALID_HREF_VALUES = [
@@ -58,7 +60,6 @@ VALID_HREF_VALUES = [
     "https://student.desmos.com",
     "https://desmos.com/calculator",
     "https://www.desmos.com/calculator",
-    "https://geogebra.org/graphing",
     "https://student.desmos.com/"
 ]
 
