@@ -11,7 +11,7 @@ from pathlib import Path
 IGNORED_FILES = [".DS_Store"]
 
 
-def upload_resources(resource_dir, bucket, s3_dir, index_file, url_prefix):
+def upload_resources(resource_dir, bucket, s3_dir):
     """Uploads resources to s3 if they dont already exist there"""
 
     hash_to_filedata_map = resource_hashes(resource_dir)
@@ -29,11 +29,12 @@ def output_index_file(hash_to_filedata_map, url_prefix, index_file):
     template_path = Path(__file__).parent / 'index_template.html'
     data = []
     for key, value in hash_to_filedata_map.items():
-        data = {
+        item = {
             'filepath': value['path'],
-            'mimetype': value['mimetype'],
+            'mimetype': value['mime_type'],
             'url': f'{url_prefix}/{key}'
         }
+        data.append(item)
 
     with open(template_path) as template_file:
         template = environment.from_string(template_file.read())
@@ -83,7 +84,7 @@ def get_mime_type(filepath):
 
 
 def add_new_resources_to_s3(bucket, s3_dir, hashes, hash_to_filedata_map):
-    """Add the files specified in filename_map to s3 iff they their
+    """Add the files specified in filename_map to s3 if they their
     corresponding sha1 key exists in hashes"""
 
     s3_client = boto3.client("s3")
@@ -137,7 +138,7 @@ def main():
     new_resource_dir = Path(args.resource_path).resolve(strict=True)
 
     hash_to_filedata_map = upload_resources(new_resource_dir, args.bucket_name,
-                                            args.s3_prefix, args.url_prefix)
+                                            args.s3_prefix)
 
     output_index_file(hash_to_filedata_map, args.url_prefix, args.index_path)
 

@@ -22,7 +22,7 @@
           <tr>
             <td>{{file['filepath']}}</td>
             <td>{{file['mimetype']}}</td>
-            <td><a href="{{item['url']}}" target="_blank">{{file['url']}}</a></td>
+            <td><a href={{file['url']}} target="_blank">{{file['url']}}</a></td>
           </tr>
           {% endfor %}
         </tbody>
