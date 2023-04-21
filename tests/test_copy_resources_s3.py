@@ -49,7 +49,10 @@ def practice_filesystem(tmp_path):
 
 def test_resource_hashes(practice_filesystem):
     assert (len(copy_resources_s3.resource_hashes(
-               practice_filesystem[test_dir])) == 3
+               practice_filesystem[test_dir])[0]) == 3
+            )
+    assert (len(copy_resources_s3.resource_hashes(
+               practice_filesystem[test_dir])[1]) == 1
             )
 
 
@@ -62,7 +65,7 @@ def test_get_mime_type(practice_filesystem):
 def test_upload_resources(practice_filesystem, mocker):
     s3_dir = 'resources'
     bucket_name = 'test-bucket'
-    sha1_map = copy_resources_s3.resource_hashes(
+    sha1_map, duplicates = copy_resources_s3.resource_hashes(
                practice_filesystem[test_dir])
     hash_keys = list(sha1_map)
     s3_client = boto3.client('s3')
@@ -102,24 +105,16 @@ def test_upload_resources(practice_filesystem, mocker):
                             'ContentType': 'application/json'
                             }
                          )
-    stubber.add_client_error('head_object',
-                             service_error_meta={'Code': '404'},
-                             expected_params={
+    stubber.add_response('head_object', {},
+                         expected_params={
                                 'Bucket': bucket_name,
                                 'Key': full_key3
                                 }
-                             )
-    stubber.add_response('put_object', {},
-                         expected_params={
-                            'Body': botocore.stub.ANY,
-                            'Bucket': bucket_name,
-                            'Key': full_key3,
-                            'ContentType': 'application/json'
-                            }
                          )
+
     stubber.activate()
     mocker.patch('boto3.client', lambda service: s3_client)
-    url_prefix = 'prefix/s3'
+    url_prefix = 'https://domain.org/prefix/s3'
     resource_dir = practice_filesystem[test_dir]
     index_path = practice_filesystem[index_file]
     mocker.patch(
@@ -134,7 +129,7 @@ def test_upload_resources(practice_filesystem, mocker):
     soup = BeautifulSoup(file_data, "html.parser")
     table = soup.find("table", class_="table table-striped table-bordered")
     rows = table.find_all("tr")
-    sha_data_map_from_index = {}
+    sha_data_from_index = []
 
     for row in rows:
         cells = row.find_all("td")
@@ -146,13 +141,28 @@ def test_upload_resources(practice_filesystem, mocker):
         # test prefix
         assert os.path.dirname(data[2].text.strip()) == url_prefix
 
-        sha_data_map_from_index[data[2].text.strip().split("/")[-1]] = {
+        sha_data_from_index.append({
+            'path': data[0].text.strip(),
             'mime_type': data[1].text.strip(),
-            'path': data[2].text.strip()
-        }
+            'sha1': data[2].text.strip().split("/")[-1]
+        })
 
+    sha_map_data = []
+    for key, value in sha1_map.items():
+        sha_map_data.append({
+            'path': os.path.relpath(value['path'],
+                                    practice_filesystem[test_dir]),
+            'mime_type': value['mime_type'],
+            'sha1': key
+        })
+    for duplicate in duplicates:
+        duplicate['path'] = os.path.relpath(duplicate['path'],
+                                            practice_filesystem[test_dir])
+
+    sha_map_data.extend(duplicates)
     # Make sure each table row corresponds with the correct key, path, and
     # mime_type in sha_map
-    for key, value in sha1_map.items():
-        sha_data_map_from_index[key].get('path') == value['path']
-        sha_data_map_from_index[key].get('mime_type') == value['mime_type']
+    assert len(sha_map_data) == len(sha_data_from_index)
+
+    for value in sha_map_data:
+        assert value in sha_data_from_index

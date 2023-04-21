@@ -14,18 +14,18 @@ IGNORED_FILES = [".DS_Store"]
 def upload_resources(resource_dir, bucket, s3_dir):
     """Uploads resources to s3 if they dont already exist there"""
 
-    hash_to_filedata_map = resource_hashes(resource_dir)
+    hash_to_filedata_map, duplicates = resource_hashes(resource_dir)
     hashes_to_update = list(hash_to_filedata_map.keys())
 
     add_new_resources_to_s3(
         bucket, s3_dir, hashes_to_update, hash_to_filedata_map
     )
 
-    return hash_to_filedata_map
+    return hash_to_filedata_map, duplicates
 
 
-def output_index_file(resource_path, hash_to_filedata_map, url_prefix,
-                      index_file):
+def output_index_file(resource_path, hash_to_filedata_map, duplicates,
+                      url_prefix, index_file):
     environment = jinja2.Environment()
     template_path = Path(__file__).parent / 'index_template.html'
     data = []
@@ -38,6 +38,13 @@ def output_index_file(resource_path, hash_to_filedata_map, url_prefix,
         }
         data.append(item)
 
+    for duplicate in duplicates:
+        item = {
+            'filepath': os.path.relpath(duplicate['path'], resource_path),
+            'mimetype': duplicate['mime_type'],
+            'url': f'{url_prefix}/{duplicate["sha1"]}'
+        }
+        data.append(item)
     with open(template_path) as template_file:
         template = environment.from_string(template_file.read())
         with open(f'{index_file}', mode='w') as workflow_file:
@@ -48,6 +55,7 @@ def resource_hashes(resource_dir):
     """Generates sha1 hashes for all the resources in a local directory"""
 
     sha1_map = {}
+    duplicates = []
     buff_size = io.DEFAULT_BUFFER_SIZE
     path_to_files = []
     for (dir_path, dir_names, file_names) in os.walk(resource_dir):
@@ -68,12 +76,20 @@ def resource_hashes(resource_dir):
                 if not data:
                     break
                 sha1.update(data)
-            sha1_map[sha1.hexdigest()] = {
-                'path': full_path,
-                'mime_type': mime_type
-            }
+            sha1_key = sha1.hexdigest()
+            if sha1_key in sha1_map:
+                duplicates.append({
+                    'path': full_path,
+                    'mime_type': mime_type,
+                    'sha1': sha1_key
+                })
+            else:
+                sha1_map[sha1_key] = {
+                    'path': full_path,
+                    'mime_type': mime_type
+                }
 
-    return sha1_map
+    return sha1_map, duplicates
 
 
 def get_mime_type(filepath):
@@ -139,11 +155,12 @@ def main():
 
     resource_dir = Path(args.resource_path).resolve(strict=True)
 
-    hash_to_filedata_map = upload_resources(resource_dir, args.bucket_name,
-                                            args.s3_prefix)
+    hash_to_filedata_map, duplicates = upload_resources(resource_dir,
+                                                        args.bucket_name,
+                                                        args.s3_prefix)
 
-    output_index_file(resource_dir, hash_to_filedata_map, args.url_prefix,
-                      args.index_path)
+    output_index_file(resource_dir, hash_to_filedata_map, duplicates,
+                      args.url_prefix, args.index_path)
 
 
 if __name__ == "__main__":
