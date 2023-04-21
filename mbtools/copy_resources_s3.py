@@ -24,13 +24,15 @@ def upload_resources(resource_dir, bucket, s3_dir):
     return hash_to_filedata_map
 
 
-def output_index_file(hash_to_filedata_map, url_prefix, index_file):
+def output_index_file(resource_path, hash_to_filedata_map, url_prefix,
+                      index_file):
     environment = jinja2.Environment()
     template_path = Path(__file__).parent / 'index_template.html'
     data = []
+
     for key, value in hash_to_filedata_map.items():
         item = {
-            'filepath': value['path'],
+            'filepath': os.path.relpath(value['path'], resource_path),
             'mimetype': value['mime_type'],
             'url': f'{url_prefix}/{key}'
         }
@@ -44,7 +46,7 @@ def output_index_file(hash_to_filedata_map, url_prefix, index_file):
 
 def resource_hashes(resource_dir):
     """Generates sha1 hashes for all the resources in a local directory"""
-    # get mime type in sha1_map
+
     sha1_map = {}
     buff_size = io.DEFAULT_BUFFER_SIZE
     path_to_files = []
@@ -56,7 +58,7 @@ def resource_hashes(resource_dir):
         lambda x: Path(x).stem not in IGNORED_FILES,
         path_to_files
     )
-    # maybe return key being the filename and values being the mimetype sha.
+
     for full_path in resource_files:
         mime_type = get_mime_type(full_path)
         sha1 = hashlib.sha1()
@@ -83,13 +85,14 @@ def get_mime_type(filepath):
         return mime_type
 
 
-def add_new_resources_to_s3(bucket, s3_dir, hashes, hash_to_filedata_map):
-    """Add the files specified in filename_map to s3 if they their
+def add_new_resources_to_s3(bucket, s3_dir, hashes_to_update,
+                            hash_to_filedata_map):
+    """Add the files specified in hashes_to_update to s3 if they their
     corresponding sha1 key exists in hashes"""
 
     s3_client = boto3.client("s3")
     metadata = []
-    for hash_key in hashes:
+    for hash_key in hashes_to_update:
         full_keypath = s3_dir + '/' + hash_key
 
         try:
@@ -98,7 +101,6 @@ def add_new_resources_to_s3(bucket, s3_dir, hashes, hash_to_filedata_map):
             filename = os.path.basename(hash_to_filedata_map[hash_key]['path'])
             print(f"File {filename} with sha {hash_key} already exists in S3!")
         except botocore.exceptions.ClientError:
-            # if file does not exist.
             mime_type = hash_to_filedata_map[hash_key]['mime_type']
             s3_client.upload_file(hash_to_filedata_map[hash_key]['path'],
                                   Bucket=bucket,
@@ -131,16 +133,17 @@ def main():
     parser.add_argument('url_prefix', type=str,
                         help='url prefix for s3 files')
     parser.add_argument('index_path', type=str,
-                        help='file path to repository')
+                        help='file path to index file')
 
     args = parser.parse_args()
 
-    new_resource_dir = Path(args.resource_path).resolve(strict=True)
+    resource_dir = Path(args.resource_path).resolve(strict=True)
 
-    hash_to_filedata_map = upload_resources(new_resource_dir, args.bucket_name,
+    hash_to_filedata_map = upload_resources(resource_dir, args.bucket_name,
                                             args.s3_prefix)
 
-    output_index_file(hash_to_filedata_map, args.url_prefix, args.index_path)
+    output_index_file(resource_dir, hash_to_filedata_map, args.url_prefix,
+                      args.index_path)
 
 
 if __name__ == "__main__":

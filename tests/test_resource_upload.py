@@ -4,7 +4,7 @@ import boto3
 import os
 import json
 from mbtools import copy_resources_s3
-
+from bs4 import BeautifulSoup
 
 test_dir = 'test_content/'
 nested_dir = 'test_content/nested'
@@ -47,7 +47,7 @@ def practice_filesystem(tmp_path):
     return path_dict
 
 
-def test_new_resource_hashes(practice_filesystem):
+def test_resource_hashes(practice_filesystem):
     assert (len(copy_resources_s3.resource_hashes(
                practice_filesystem[test_dir])) == 3
             )
@@ -121,7 +121,6 @@ def test_upload_resources(practice_filesystem, mocker):
     mocker.patch('boto3.client', lambda service: s3_client)
     url_prefix = 'prefix/s3'
     resource_dir = practice_filesystem[test_dir]
-    print(resource_dir)
     index_path = practice_filesystem[index_file]
     mocker.patch(
         "sys.argv",
@@ -131,8 +130,29 @@ def test_upload_resources(practice_filesystem, mocker):
     stubber.assert_no_pending_responses()
 
     with open(index_path, 'r') as f:
-        data = f.read()
+        file_data = f.read()
+    soup = BeautifulSoup(file_data, "html.parser")
+    table = soup.find("table", class_="table table-striped table-bordered")
+    rows = table.find_all("tr")
+    sha_data_map_from_index = {}
+
+    for row in rows:
+        cells = row.find_all("td")
+        data = [cell for cell in cells]
+        # first element is empty because <tr> uses <th> instead of <td>.
+        if data == []:
+            continue
+
+        # test prefix
+        assert os.path.dirname(data[2].text.strip()) == url_prefix
+
+        sha_data_map_from_index[data[2].text.strip().split("/")[-1]] = {
+            'mime_type': data[1].text.strip(),
+            'path': data[2].text.strip()
+        }
+
+    # Make sure each table row corresponds with the correct key, path, and
+    # mime_type in sha_map
     for key, value in sha1_map.items():
-        assert key in data
-        assert value['mime_type'] in data
-        assert value['path'] in data
+        sha_data_map_from_index[key].get('path') == value['path']
+        sha_data_map_from_index[key].get('mime_type') == value['mime_type']
