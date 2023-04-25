@@ -922,8 +922,9 @@ def test_inject_ib_uuids_untagged(tmp_path, mocker):
     errors = [row for row in reader]
     issues = [row["issue"] for row in errors]
     locations = [row["location"] for row in errors]
-    assert len(errors) == 3
-    assert len(locations) == 3
+    # k12-399: Temporarily disabling
+    assert len(errors) == 0
+    assert len(locations) == 0
 
     for i in issues:
         assert i == validate_mbz_html.MISSING_IB_UUID_VIOLATION

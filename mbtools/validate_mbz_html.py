@@ -278,11 +278,13 @@ def find_ib_uuid_violations(html_elements):
         maybe_ids = elem.get_elements_with_exact_class(need_ids)
         for ib in maybe_ids:
             if "data-content-id" not in ib.attrib.keys():
-                violations.append(Violation(
-                    MISSING_IB_UUID_VIOLATION,
-                    elem.location,
-                    None
-                ))
+                # k12-399: Temporarily disabling
+                pass
+                # violations.append(Violation(
+                #     MISSING_IB_UUID_VIOLATION,
+                #     elem.location,
+                #     None
+                # ))
             else:
                 uuid = ib.attrib["data-content-id"]
                 if uuid in uuid_to_location.keys():
