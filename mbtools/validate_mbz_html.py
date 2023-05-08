@@ -21,7 +21,6 @@ DUPLICATE_QBANK_UUID_VIOLATION = "ERROR: Duplicate question bank UUID"
 INVALID_QBANK_UUID_VIOLATION = "ERROR: Invalid question bank UUID"
 
 VALID_PREFIXES = [
-    "https://s3.amazonaws.com/im-ims-export/",
     "https://k12.openstax.org/contents/raise",
     "https://www.youtube.com/",
     "https://digitalpromise.org"
