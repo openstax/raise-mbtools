@@ -92,11 +92,10 @@ def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
     return html_validations + qbank_validations
 
 
-def validate_html(html_dir, include_styles=True):
+def validate_html(html_dir, include_styles=True, include_tables =False):
     all_files = []
     for path in Path(html_dir).rglob('*.html'):
         all_files.append(path)
-
     html_elements = []
     for file_path in all_files:
         with open(file_path, 'r') as f:
@@ -106,21 +105,22 @@ def validate_html(html_dir, include_styles=True):
             html_elements.append(
                 MoodleHtmlElement(parent_element, str(file_path))
             )
-    return run_html_validations(html_elements, include_styles)
+    return run_html_validations(html_elements, include_styles, include_tables)
 
 
-def run_html_validations(html_elements, include_styles):
+def run_html_validations(html_elements, include_styles, include_tables):
     violations = []
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
         return violations
     if include_styles:
         violations.extend(find_style_violations(html_elements))
+    if include_tables:
+        violations.extend(find_table_violations(html_elements))
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
     violations.extend(find_nested_ib_violations(html_elements))
     violations.extend(find_ib_uuid_violations(html_elements))
-
     return violations
 
 
@@ -306,6 +306,16 @@ def find_ib_uuid_violations(html_elements):
     return violations
 
 
+def find_table_violations(html_elements):
+    violations = []
+    print(html_elements)
+    tables = None
+    for elem in html_elements:
+        print('elem')
+        print(elem)
+    return violations
+
+
 def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('mbz_path', type=str,
@@ -323,6 +333,13 @@ def main():
         action='store_false',
         help="Exclude style violations"
     )
+
+    parser.add_argument(
+        '--tables',
+        action='store_true',
+        help="Include table validations"
+    )
+
     args = parser.parse_args()
 
     mbz_path = Path(args.mbz_path).resolve(strict=True)
@@ -330,13 +347,14 @@ def main():
     mode = args.mode
     include_questionbank = not args.no_qb
     include_styles = args.no_style
+    include_tables = args.tables
 
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
     violations = []
     if mode == "html":
-        violations = validate_html(mbz_path, include_styles)
+        violations = validate_html(mbz_path, include_styles, include_tables)
     elif mode == "mbz":
         violations = validate_mbz(mbz_path, include_styles,
                                   include_questionbank)
