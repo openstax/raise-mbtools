@@ -1185,16 +1185,12 @@ def test_table_invalid_doubleheadertable(tmp_path, mocker):
 
 def test_table_invalid_elements(tmp_path, mocker):
     html = r"""
-<table class="os-raise-doubleheadertable">
+<table class="os-raise-textheavytable">
   <thead>
   <invalid_thead></invalid_thead>
     <tr>
-      <th scope="col"></th>
-      <th scope="col">\(x\)</th>
-      <th scope="col">\(+7\)</th>
     </tr>
   </thead>
-  <tbody>
   <invalid_tr></invalid_tr>
     <tr>
       <invalid_td></invalid_td>
@@ -1207,7 +1203,6 @@ def test_table_invalid_elements(tmp_path, mocker):
       <td>\(9x\)</td>
       <td>\(63\)</td>
     </tr>
-  </tbody>
 </table>
     """.strip()
 
@@ -1227,14 +1222,20 @@ def test_table_invalid_elements(tmp_path, mocker):
 
     reader = csv.DictReader(open(output_filepath))
     errors = [row for row in reader]
-    assert len(errors) == 3
+    assert len(errors) == 5
 
     assert errors[0]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "invalid_thead is not allowed"
+        "invalid_tr is not allowed in table"
     assert errors[0]["location"] == file_path
     assert errors[1]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "invalid_tr is not allowed"
+        "tbody missing in table"
     assert errors[1]["location"] == file_path
     assert errors[2]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "invalid_td is not allowed"
+        "th is required in either thead or tbody"
     assert errors[2]["location"] == file_path
+    assert errors[3]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_thead is not allowed"
+    assert errors[3]["location"] == file_path
+    assert errors[4]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_td is not allowed"
+    assert errors[4]["location"] == file_path
