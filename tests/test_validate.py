@@ -1244,4 +1244,3 @@ def test_table_invalid_elements(tmp_path, mocker):
     assert errors[5]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
         "invalid_td is not allowed"
     assert errors[5]["location"] == file_path
-    
