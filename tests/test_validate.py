@@ -1181,3 +1181,60 @@ def test_table_invalid_doubleheadertable(tmp_path, mocker):
     assert errors[1]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
         "must include scope attribute in thead th with value col"
     assert errors[1]["location"] == file_path
+
+
+def test_table_invalid_elements(tmp_path, mocker):
+    html = r"""
+<table class="os-raise-doubleheadertable">
+  <thead>
+  <invalid_thead></invalid_thead>
+    <tr>
+      <th scope="col"></th>
+      <th scope="col">\(x\)</th>
+      <th scope="col">\(+7\)</th>
+    </tr>
+  </thead>
+  <tbody>
+  <invalid_tr></invalid_tr>
+    <tr>
+      <invalid_td></invalid_td>
+      <th scope="row">\(x\)</th>
+      <td>\(x^2\)</td>
+      <td>\(7x\)</td>
+    </tr>
+    <tr>
+      <th scope="row">\(+9\)</th>
+      <td>\(9x\)</td>
+      <td>\(63\)</td>
+    </tr>
+  </tbody>
+</table>
+    """.strip()
+
+    html_path = str(tmp_path) + "/html"
+    os.mkdir(html_path)
+    file_path = html_path + "/123.html"
+    with open(file_path, 'w') as f:
+        f.write(html)
+
+    output_filepath = f"{tmp_path}/test_output.csv"
+    mocker.patch(
+        "sys.argv",
+        ["", html_path, output_filepath, "html", "--tables"]
+    )
+
+    validate_mbz_html.main()
+
+    reader = csv.DictReader(open(output_filepath))
+    errors = [row for row in reader]
+    assert len(errors) == 3
+
+    assert errors[0]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_thead is not allowed"
+    assert errors[0]["location"] == file_path
+    assert errors[1]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_tr is not allowed"
+    assert errors[1]["location"] == file_path
+    assert errors[2]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_td is not allowed"
+    assert errors[2]["location"] == file_path
