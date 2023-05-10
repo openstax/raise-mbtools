@@ -81,9 +81,6 @@ class Violation:
                 "link": self.link}
         return dict
 
-    def __repr__(self):
-        return f"Issue {self.issue} in {self.location}"
-
 
 def validate_mbz(mbz_path, include_styles=True, include_questionbank=False,
                  include_tables=False):
