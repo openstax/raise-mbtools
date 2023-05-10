@@ -1189,6 +1189,8 @@ def test_table_invalid_elements(tmp_path, mocker):
   <thead>
   <invalid_thead></invalid_thead>
     <tr>
+      <invalid_th></invalid_td>
+
     </tr>
   </thead>
   <invalid_tr></invalid_tr>
@@ -1222,7 +1224,7 @@ def test_table_invalid_elements(tmp_path, mocker):
 
     reader = csv.DictReader(open(output_filepath))
     errors = [row for row in reader]
-    assert len(errors) == 5
+    assert len(errors) == 6
 
     assert errors[0]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
         "invalid_tr is not allowed in table"
@@ -1237,5 +1239,9 @@ def test_table_invalid_elements(tmp_path, mocker):
         "invalid_thead is not allowed"
     assert errors[3]["location"] == file_path
     assert errors[4]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "invalid_td is not allowed"
+        "invalid_th is not allowed"
     assert errors[4]["location"] == file_path
+    assert errors[5]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_td is not allowed"
+    assert errors[5]["location"] == file_path
+    
