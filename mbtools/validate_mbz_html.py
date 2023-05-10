@@ -19,6 +19,7 @@ MISSING_IB_UUID_VIOLATION = "ERROR: Missing interactive block UUID"
 INVALID_IB_UUID_VIOLATION = "ERROR: Invalid interactive block UUID"
 DUPLICATE_QBANK_UUID_VIOLATION = "ERROR: Duplicate question bank UUID"
 INVALID_QBANK_UUID_VIOLATION = "ERROR: Invalid question bank UUID"
+TABLE_VIOLATION = "ERROR: Table violation: "
 
 VALID_PREFIXES = [
     "https://k12.openstax.org/contents/raise",
@@ -80,19 +81,25 @@ class Violation:
                 "link": self.link}
         return dict
 
+    def __repr__(self):
+        return f"Issue {self.issue} in {self.location}"
 
-def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
+
+def validate_mbz(mbz_path, include_styles=True, include_questionbank=False,
+                 include_tables=False):
     question_bank = MoodleQuestionBank(mbz_path)
 
     html_elements = utils.parse_backup_elements(mbz_path)
     if include_questionbank:
         html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
-    html_validations = run_html_validations(html_elements, include_styles)
+    html_validations = run_html_validations(html_elements, include_styles,
+                                            include_tables)
     qbank_validations = run_qbank_validations(question_bank)
     return html_validations + qbank_validations
 
 
-def validate_html(html_dir, include_styles=True, include_tables =False):
+def validate_html(html_dir, include_styles=True,
+                  include_tables=False):
     all_files = []
     for path in Path(html_dir).rglob('*.html'):
         all_files.append(path)
@@ -306,13 +313,126 @@ def find_ib_uuid_violations(html_elements):
     return violations
 
 
+def is_table_child_allowed(child_tag):
+    ALLOWED_CHILDREN = [
+        'table', 'caption', 'thead', 'tbody', 'th', 'tr', 'td', 'caption'
+    ]
+    return child_tag in ALLOWED_CHILDREN
+
+
+def find_missing_class_violations(table, elem_location):
+    if 'class' not in table.keys():
+        msg = "class attribute is missing in <table>"
+        return [Violation(TABLE_VIOLATION + msg, elem_location)]
+    return []
+
+
+def find_invalid_children_violations(table, elem_location):
+    violations = []
+    table_children = [elem.tag for elem in table.getchildren()]
+
+    for child in table_children:
+        if not is_table_child_allowed(child):
+            msg = f"{child} is not allowed in table"
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+    return violations
+
+
+def find_missing_thead_tbody_violations(table, elem_location):
+    violations = []
+    table_children = [elem.tag for elem in table.getchildren()]
+
+    if 'thead' not in table_children:
+        msg = 'thead missing in table'
+        violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+    if 'tbody' not in table_children:
+        msg = 'tbody missing in table'
+        violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+    return violations
+
+
+def find_invalid_element_violations(element, elem_location):
+    violations = []
+
+    for tr in element:
+        if not is_table_child_allowed(tr.tag):
+            msg = f"{tr.tag} is not allowed"
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+
+        for td_or_th in tr:
+            if not is_table_child_allowed(td_or_th.tag):
+                msg = f"{td_or_th.tag} is not allowed"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+
+            if td_or_th.tag == 'th':
+                violations += find_th_violations(td_or_th, element.tag,
+                                                 elem_location)
+    return violations
+
+
+def find_th_violations(td_or_th, element_tag, elem_location):
+    violations = []
+
+    if element_tag == 'thead':
+        scope = td_or_th.get('scope')
+        if scope != 'col':
+            msg = 'must include scope attribute in thead th with value col'
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+
+    elif element_tag == 'tbody':
+        scope = td_or_th.get('scope')
+        if scope != 'row':
+            msg = 'must include scope attribute in tbody th with value row'
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+
+    return violations
+
+
+def find_table_no_th_violation(table, elem_location):
+    violations = []
+
+    has_th_in_tbody = False
+    has_th_in_thead = False
+
+    for thead_or_tbody in table.getchildren():
+        for tr in thead_or_tbody:
+            for th_or_td in tr:
+                if th_or_td.tag == 'th' and thead_or_tbody.tag == 'tbody':
+                    has_th_in_tbody = True
+
+                if th_or_td.tag == 'th' and thead_or_tbody.tag == 'thead':
+                    has_th_in_thead = True
+
+    if table.get('class') == 'os-raise-doubleheadertable':
+        if not (has_th_in_tbody and has_th_in_thead):
+            msg = "doubleheadertable requires th in both thead and tbody"
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+    else:
+        if not (has_th_in_thead or has_th_in_tbody):
+            msg = "th is required in either thead or tbody"
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+
+    return violations
+
+
 def find_table_violations(html_elements):
     violations = []
-    print(html_elements)
-    tables = None
+
     for elem in html_elements:
-        print('elem')
-        print(elem)
+        tables = elem.get_elements_by_name('table')
+        for table in tables:
+            elem_location = elem.location
+
+            violations += find_missing_class_violations(table, elem_location)
+            violations += find_invalid_children_violations(table,
+                                                           elem_location)
+            violations += find_missing_thead_tbody_violations(table,
+                                                              elem_location)
+            violations += find_table_no_th_violation(table, elem_location)
+            for element in table.getchildren():
+                violations += find_invalid_element_violations(element,
+                                                              elem_location)
     return violations
 
 
@@ -357,7 +477,7 @@ def main():
         violations = validate_html(mbz_path, include_styles, include_tables)
     elif mode == "mbz":
         violations = validate_mbz(mbz_path, include_styles,
-                                  include_questionbank)
+                                  include_questionbank, include_tables)
     with open(output_file, 'w') as f:
         w = DictWriter(f, ['issue', 'location', 'link'])
         w.writeheader()
