@@ -1040,29 +1040,29 @@ data-content-id="7080c78d-298b-40ba-a68d-55d6a93b00fbextra">
 
 
 def test_table_valid(tmp_path, mocker):
-    html = r"""
+    html = """
 <table class="os-raise-doubleheadertable">
   <thead>
     <tr>
       <th scope="col"></th>
-      <th scope="col">\(x\)</th>
-      <th scope="col">\(+7\)</th>
+      <th scope="col">\\({x}\\)</th>
+      <th scope="col">\\(+7\\)</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th scope="row">\(x\)</th>
-      <td>\(x^2\)</td>
-      <td>\(7x\)</td>
+      <th scope="row">\\({x}\\)</th>
+      <td>\\({x^2}\\)</td>
+      <td>\\(7x\\)</td>
     </tr>
     <tr>
-      <th scope="row">\(+9\)</th>
-      <td>\(9x\)</td>
-      <td>\(63\)</td>
+      <th scope="row">\\(+9\\)</th>
+      <td>\\(9x\\)</td>
+      <td>\\(63\\)</td>
     </tr>
   </tbody>
 </table>
-    """.strip()
+""".strip()
 
     html_path = str(tmp_path) + "/html"
     os.mkdir(html_path)
@@ -1084,7 +1084,7 @@ def test_table_valid(tmp_path, mocker):
 
 
 def test_table_invalid(tmp_path, mocker):
-    html = r"""
+    html = """
 <table>
     <tr>
       <th>Time (years)</th>
@@ -1136,23 +1136,23 @@ def test_table_invalid(tmp_path, mocker):
 
 
 def test_table_invalid_doubleheadertable(tmp_path, mocker):
-    html = r"""
+    html = """
         <table class="os-raise-doubleheadertable">
         <thead>
             <tr>
             <th ></th>
-            <th scope="col">\(x\)</th>
-            <th scope="col">\(+7\)</th>
+            <th scope="col">\\(x\\)</th>
+            <th scope="col">\\(+7\\)</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-            <td>\(x^2\)</td>
-            <td>\(7x\)</td>
+            <td>\\(x^2\\)</td>
+            <td>\\(7x\\)</td>
             </tr>
             <tr>
-            <td>\(9x\)</td>
-            <td>\(63\)</td>
+            <td>\\(9x\\)</td>
+            <td>\\(63\\)</td>
             </tr>
         </tbody>
         </table>
@@ -1184,7 +1184,7 @@ def test_table_invalid_doubleheadertable(tmp_path, mocker):
 
 
 def test_table_invalid_elements(tmp_path, mocker):
-    html = r"""
+    html = """
 <table class="os-raise-textheavytable">
   <thead>
   <invalid_thead></invalid_thead>
@@ -1196,14 +1196,14 @@ def test_table_invalid_elements(tmp_path, mocker):
   <invalid_tr></invalid_tr>
     <tr>
       <invalid_td></invalid_td>
-      <th scope="row">\(x\)</th>
-      <td>\(x^2\)</td>
-      <td>\(7x\)</td>
+      <th scope="row">\\(x\\)</th>
+      <td>\\(x^2\\)</td>
+      <td>\\(7x\\)</td>
     </tr>
     <tr>
-      <th scope="row">\(+9\)</th>
-      <td>\(9x\)</td>
-      <td>\(63\)</td>
+      <th scope="row">\\(+9\\)</th>
+      <td>\\(9x\\)</td>
+      <td>\\(63\\)</td>
     </tr>
 </table>
     """.strip()

@@ -312,7 +312,7 @@ def find_ib_uuid_violations(html_elements):
 
 def is_table_child_allowed(child_tag):
     ALLOWED_CHILDREN = [
-        'table', 'caption', 'thead', 'tbody', 'th', 'tr', 'td', 'caption'
+        'caption', 'thead', 'tbody', 'th', 'tr', 'td'
     ]
     return child_tag in ALLOWED_CHILDREN
 
