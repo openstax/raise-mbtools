@@ -1124,7 +1124,7 @@ def test_table_invalid(tmp_path, mocker):
 
     reader = csv.DictReader(open(output_filepath))
     errors = [row for row in reader]
-    assert len(errors) == 4
+    assert len(errors) == 5
     assert errors[0]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
         "table is missing a class attribute"
 
@@ -1136,7 +1136,7 @@ def test_table_invalid(tmp_path, mocker):
         "thead missing in table"
     assert errors[2]["location"] == file_path
     assert errors[3]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "must include scope attribute in tbody th with value row"
+        "tr is not allowed as direct child of table"
     assert errors[3]["location"] == file_path
 
 
@@ -1188,7 +1188,7 @@ def test_table_invalid_doubleheadertable(tmp_path, mocker):
         "must include scope attribute in thead th with value col"
     assert errors[1]["location"] == file_path
     assert errors[2]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "invalid_tr is not allowed"
+        "invalid_tr is not allowed as child of tbody"
     assert errors[2]["location"] == file_path
 
 
@@ -1233,7 +1233,7 @@ def test_table_invalid_elements(tmp_path, mocker):
 
     reader = csv.DictReader(open(output_filepath))
     errors = [row for row in reader]
-    assert len(errors) == 5
+    assert len(errors) == 7
 
     assert errors[0]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
         "tbody missing in table"
@@ -1242,11 +1242,17 @@ def test_table_invalid_elements(tmp_path, mocker):
         "invalid_tr is not allowed as direct child of table"
     assert errors[1]["location"] == file_path
     assert errors[2]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "th is required in either thead or tbody"
+        "tr is not allowed as direct child of table"
     assert errors[2]["location"] == file_path
     assert errors[3]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "invalid_thead is not allowed"
+        "tr is not allowed as direct child of table"
     assert errors[3]["location"] == file_path
     assert errors[4]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
-        "invalid_th is not allowed"
+        "th is required in either thead or tbody"
     assert errors[4]["location"] == file_path
+    assert errors[5]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_thead is not allowed as child of thead"
+    assert errors[5]["location"] == file_path
+    assert errors[6]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_th is not allowed as child of tr"
+    assert errors[6]["location"] == file_path

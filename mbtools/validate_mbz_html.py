@@ -335,7 +335,7 @@ def find_table_violations(html_elements):
         violations = []
         table_children = [elem.tag for elem in table.getchildren()]
         ALLOWED_CHILDREN = [
-            'caption', 'thead', 'tbody', 'th', 'tr', 'td'
+            'caption', 'thead', 'tbody'
         ]
         if 'thead' not in table_children:
             msg = 'thead missing in table'
@@ -355,19 +355,19 @@ def find_table_violations(html_elements):
         violations = []
         for elem in table.xpath('./tbody/*'):
             if elem.tag not in ['tr']:
-                msg = f"{elem.tag} is not allowed"
+                msg = f"{elem.tag} is not allowed as child of tbody"
                 violations.append(Violation(TABLE_VIOLATION + msg,
                                             elem_location))
 
         for elem in table.xpath('./thead/*'):
             if elem.tag not in ['tr']:
-                msg = f"{elem.tag} is not allowed"
+                msg = f"{elem.tag} is not allowed as child of thead"
                 violations.append(Violation(TABLE_VIOLATION + msg,
                                             elem_location))
 
         for elem in table.xpath('./thead/tr/*') + table.xpath('./tbody/tr/*'):
             if elem.tag not in ['td', 'th']:
-                msg = f"{elem.tag} is not allowed"
+                msg = f"{elem.tag} is not allowed as child of tr"
                 violations.append(Violation(TABLE_VIOLATION + msg,
                                             elem_location))
 
