@@ -1151,6 +1151,7 @@ def test_table_invalid_doubleheadertable(tmp_path, mocker):
             </tr>
         </thead>
         <tbody>
+            <invalid_tr></invalid_tr>
             <tr>
             <td>\\(x^2\\)</td>
             <td>\\(7x\\)</td>
@@ -1179,14 +1180,16 @@ def test_table_invalid_doubleheadertable(tmp_path, mocker):
 
     reader = csv.DictReader(open(output_filepath))
     errors = [row for row in reader]
-    assert len(errors) == 2
+    assert len(errors) == 3
     assert errors[0]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
         "doubleheadertable requires th in both thead and tbody"
     assert errors[0]["location"] == file_path
     assert errors[1]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
         "must include scope attribute in thead th with value col"
     assert errors[1]["location"] == file_path
-
+    assert errors[2]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
+        "invalid_tr is not allowed"
+    assert errors[2]["location"] == file_path
 
 def test_table_invalid_elements(tmp_path, mocker):
     html = """
