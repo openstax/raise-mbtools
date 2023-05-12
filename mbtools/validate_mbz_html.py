@@ -19,6 +19,7 @@ MISSING_IB_UUID_VIOLATION = "ERROR: Missing interactive block UUID"
 INVALID_IB_UUID_VIOLATION = "ERROR: Invalid interactive block UUID"
 DUPLICATE_QBANK_UUID_VIOLATION = "ERROR: Duplicate question bank UUID"
 INVALID_QBANK_UUID_VIOLATION = "ERROR: Invalid question bank UUID"
+TABLE_VIOLATION = "ERROR: Table violation: "
 
 VALID_PREFIXES = [
     "https://k12.openstax.org/contents/raise",
@@ -81,22 +82,24 @@ class Violation:
         return dict
 
 
-def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
+def validate_mbz(mbz_path, include_styles=True, include_questionbank=False,
+                 include_tables=False):
     question_bank = MoodleQuestionBank(mbz_path)
 
     html_elements = utils.parse_backup_elements(mbz_path)
     if include_questionbank:
         html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
-    html_validations = run_html_validations(html_elements, include_styles)
+    html_validations = run_html_validations(html_elements, include_styles,
+                                            include_tables)
     qbank_validations = run_qbank_validations(question_bank)
     return html_validations + qbank_validations
 
 
-def validate_html(html_dir, include_styles=True):
+def validate_html(html_dir, include_styles=True,
+                  include_tables=False):
     all_files = []
     for path in Path(html_dir).rglob('*.html'):
         all_files.append(path)
-
     html_elements = []
     for file_path in all_files:
         with open(file_path, 'r') as f:
@@ -106,21 +109,22 @@ def validate_html(html_dir, include_styles=True):
             html_elements.append(
                 MoodleHtmlElement(parent_element, str(file_path))
             )
-    return run_html_validations(html_elements, include_styles)
+    return run_html_validations(html_elements, include_styles, include_tables)
 
 
-def run_html_validations(html_elements, include_styles):
+def run_html_validations(html_elements, include_styles, include_tables):
     violations = []
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
         return violations
     if include_styles:
         violations.extend(find_style_violations(html_elements))
+    if include_tables:
+        violations.extend(find_table_violations(html_elements))
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
     violations.extend(find_nested_ib_violations(html_elements))
     violations.extend(find_ib_uuid_violations(html_elements))
-
     return violations
 
 
@@ -306,6 +310,117 @@ def find_ib_uuid_violations(html_elements):
     return violations
 
 
+def find_table_violations(html_elements):
+    def find_invalid_table_attributes(table, elem_location):
+        violations = []
+
+        ALLOWED_ELEM_ATTRS = [('table', 'class'), ('th', 'scope')]
+
+        for elem in table.xpath('self::table | .//caption |'
+                                './/thead | .//tbody | .//th | .//td | .//tr'):
+            if elem.tag == 'table' and 'class' not in elem.attrib.keys():
+                msg = f"{elem.tag} is missing a class attribute"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+
+            for attrib in elem.attrib.keys():
+                if (elem.tag, attrib) not in ALLOWED_ELEM_ATTRS:
+                    msg = f"{elem.tag} has invalid attribute {attrib}"
+                    violations.append(Violation(TABLE_VIOLATION + msg,
+                                                elem_location))
+
+        return violations
+
+    def find_invalid_table_children_violations(table, elem_location):
+        violations = []
+        table_children = [elem.tag for elem in table.getchildren()]
+        ALLOWED_CHILDREN = [
+            'caption', 'thead', 'tbody'
+        ]
+        if 'thead' not in table_children:
+            msg = 'thead missing in table'
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+        if 'tbody' not in table_children:
+            msg = 'tbody missing in table'
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+
+        for child in table_children:
+            if child not in ALLOWED_CHILDREN:
+                msg = f"{child} is not allowed as direct child of table"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+        return violations
+
+    def find_invalid_table_element_violations(table, elem_location):
+        violations = []
+        for elem in table.xpath('./tbody/*'):
+            if elem.tag not in ['tr']:
+                msg = f"{elem.tag} is not allowed as child of tbody"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+
+        for elem in table.xpath('./thead/*'):
+            if elem.tag not in ['tr']:
+                msg = f"{elem.tag} is not allowed as child of thead"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+
+        for elem in table.xpath('./thead/tr/*') + table.xpath('./tbody/tr/*'):
+            if elem.tag not in ['td', 'th']:
+                msg = f"{elem.tag} is not allowed as child of tr"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+
+        return violations
+
+    def find_table_th_violations(table, elem_location):
+        violations = []
+
+        th_in_tbody = table.xpath('./tbody/tr/th')
+        th_in_thead = table.xpath('./thead/tr/th')
+
+        if table.get('class') == 'os-raise-doubleheadertable':
+            if not (len(th_in_tbody) > 0 and len(th_in_thead) > 0):
+                msg = "doubleheadertable requires th in both thead and tbody"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+        else:
+            if not (len(th_in_tbody) > 0 or len(th_in_thead) > 0):
+                msg = "th is required in either thead or tbody"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+
+        for th in th_in_tbody:
+            scope = th.get('scope')
+            if scope != 'row':
+                msg = 'must include scope attribute in tbody th with value row'
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+
+        for th in th_in_thead:
+            scope = th.get('scope')
+            if scope != 'col':
+                msg = 'must include scope attribute in thead th with value col'
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+        return violations
+
+    violations = []
+
+    for elem in html_elements:
+        tables = elem.get_elements_by_name('table')
+        for table in tables:
+            elem_location = elem.location
+
+            violations += find_invalid_table_attributes(table, elem_location)
+            violations += find_invalid_table_children_violations(table,
+                                                                 elem_location)
+            violations += find_table_th_violations(table, elem_location)
+            violations += find_invalid_table_element_violations(table,
+                                                                elem_location)
+    return violations
+
+
 def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('mbz_path', type=str,
@@ -323,6 +438,13 @@ def main():
         action='store_false',
         help="Exclude style violations"
     )
+
+    parser.add_argument(
+        '--tables',
+        action='store_true',
+        help="Include table validations"
+    )
+
     args = parser.parse_args()
 
     mbz_path = Path(args.mbz_path).resolve(strict=True)
@@ -330,16 +452,17 @@ def main():
     mode = args.mode
     include_questionbank = not args.no_qb
     include_styles = args.no_style
+    include_tables = args.tables
 
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
     violations = []
     if mode == "html":
-        violations = validate_html(mbz_path, include_styles)
+        violations = validate_html(mbz_path, include_styles, include_tables)
     elif mode == "mbz":
         violations = validate_mbz(mbz_path, include_styles,
-                                  include_questionbank)
+                                  include_questionbank, include_tables)
     with open(output_file, 'w') as f:
         w = DictWriter(f, ['issue', 'location', 'link'])
         w.writeheader()
