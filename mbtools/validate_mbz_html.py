@@ -310,110 +310,101 @@ def find_ib_uuid_violations(html_elements):
     return violations
 
 
-def is_table_child_allowed(child_tag):
-    ALLOWED_CHILDREN = [
-        'caption', 'thead', 'tbody', 'th', 'tr', 'td'
-    ]
-    return child_tag in ALLOWED_CHILDREN
+def find_table_violations(html_elements):
+    def find_invalid_table_attributes(table, elem_location):
+        violations = []
 
+        ALLOWED_ELEM_ATTRS = [('table', 'class'), ('th', 'scope')]
 
-def find_missing_class_violations(table, elem_location):
-    if 'class' not in table.keys():
-        msg = "class attribute is missing in <table>"
-        return [Violation(TABLE_VIOLATION + msg, elem_location)]
-    return []
-
-
-def find_invalid_children_violations(table, elem_location):
-    violations = []
-    table_children = [elem.tag for elem in table.getchildren()]
-
-    for child in table_children:
-        if not is_table_child_allowed(child):
-            msg = f"{child} is not allowed in table"
-            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
-    return violations
-
-
-def find_missing_thead_tbody_violations(table, elem_location):
-    violations = []
-    table_children = [elem.tag for elem in table.getchildren()]
-
-    if 'thead' not in table_children:
-        msg = 'thead missing in table'
-        violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
-    if 'tbody' not in table_children:
-        msg = 'tbody missing in table'
-        violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
-    return violations
-
-
-def find_invalid_element_violations(element, elem_location):
-    violations = []
-
-    for tr in element:
-        if not is_table_child_allowed(tr.tag):
-            msg = f"{tr.tag} is not allowed"
-            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
-
-        for td_or_th in tr:
-            if not is_table_child_allowed(td_or_th.tag):
-                msg = f"{td_or_th.tag} is not allowed"
+        for elem in table.xpath('self::table | .//caption |'
+                                './/thead | .//tbody | .//th | .//td | .//tr'):
+            if elem.tag == 'table' and 'class' not in elem.attrib.keys():
+                msg = f"{elem.tag} is missing a class attribute"
                 violations.append(Violation(TABLE_VIOLATION + msg,
                                             elem_location))
 
-            if td_or_th.tag == 'th':
-                violations += find_th_violations(td_or_th, element.tag,
-                                                 elem_location)
-    return violations
+            for attrib in elem.attrib.keys():
+                if (elem.tag, attrib) not in ALLOWED_ELEM_ATTRS:
+                    msg = f"{elem.tag} has invalid attribute {attrib}"
+                    violations.append(Violation(TABLE_VIOLATION + msg,
+                                                elem_location))
 
+        return violations
 
-def find_th_violations(td_or_th, element_tag, elem_location):
-    violations = []
-
-    if element_tag == 'thead':
-        scope = td_or_th.get('scope')
-        if scope != 'col':
-            msg = 'must include scope attribute in thead th with value col'
+    def find_invalid_table_children_violations(table, elem_location):
+        violations = []
+        table_children = [elem.tag for elem in table.getchildren()]
+        ALLOWED_CHILDREN = [
+            'caption', 'thead', 'tbody', 'th', 'tr', 'td'
+        ]
+        if 'thead' not in table_children:
+            msg = 'thead missing in table'
+            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+        if 'tbody' not in table_children:
+            msg = 'tbody missing in table'
             violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
 
-    elif element_tag == 'tbody':
-        scope = td_or_th.get('scope')
-        if scope != 'row':
-            msg = 'must include scope attribute in tbody th with value row'
-            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+        for child in table_children:
+            if child not in ALLOWED_CHILDREN:
+                msg = f"{child} is not allowed as direct child of table"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+        return violations
 
-    return violations
+    def find_invalid_table_element_violations(table, elem_location):
+        violations = []
+        for elem in table.xpath('./tbody/*'):
+            if elem.tag not in ['tr']:
+                msg = f"{elem.tag} is not allowed"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
 
+        for elem in table.xpath('./thead/*'):
+            if elem.tag not in ['tr']:
+                msg = f"{elem.tag} is not allowed"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
 
-def find_table_no_th_violation(table, elem_location):
-    violations = []
+        for elem in table.xpath('./thead/tr/*') + table.xpath('./tbody/tr/*'):
+            if elem.tag not in ['td', 'th']:
+                msg = f"{elem.tag} is not allowed"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
 
-    has_th_in_tbody = False
-    has_th_in_thead = False
+        return violations
 
-    for thead_or_tbody in table.getchildren():
-        for tr in thead_or_tbody:
-            for th_or_td in tr:
-                if th_or_td.tag == 'th' and thead_or_tbody.tag == 'tbody':
-                    has_th_in_tbody = True
+    def find_table_th_violations(table, elem_location):
+        violations = []
 
-                if th_or_td.tag == 'th' and thead_or_tbody.tag == 'thead':
-                    has_th_in_thead = True
+        th_in_tbody = table.xpath('./tbody/tr/th')
+        th_in_thead = table.xpath('./thead/tr/th')
 
-    if table.get('class') == 'os-raise-doubleheadertable':
-        if not (has_th_in_tbody and has_th_in_thead):
-            msg = "doubleheadertable requires th in both thead and tbody"
-            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
-    else:
-        if not (has_th_in_thead or has_th_in_tbody):
-            msg = "th is required in either thead or tbody"
-            violations.append(Violation(TABLE_VIOLATION + msg, elem_location))
+        if table.get('class') == 'os-raise-doubleheadertable':
+            if not (len(th_in_tbody) > 0 and len(th_in_thead) > 0):
+                msg = "doubleheadertable requires th in both thead and tbody"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+        else:
+            if not (len(th_in_tbody) > 0 or len(th_in_thead) > 0):
+                msg = "th is required in either thead or tbody"
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
 
-    return violations
+        for th in th_in_tbody:
+            scope = th.get('scope')
+            if scope != 'row':
+                msg = 'must include scope attribute in tbody th with value row'
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
 
+        for th in th_in_thead:
+            scope = th.get('scope')
+            if scope != 'col':
+                msg = 'must include scope attribute in thead th with value col'
+                violations.append(Violation(TABLE_VIOLATION + msg,
+                                            elem_location))
+        return violations
 
-def find_table_violations(html_elements):
     violations = []
 
     for elem in html_elements:
@@ -421,15 +412,12 @@ def find_table_violations(html_elements):
         for table in tables:
             elem_location = elem.location
 
-            violations += find_missing_class_violations(table, elem_location)
-            violations += find_invalid_children_violations(table,
-                                                           elem_location)
-            violations += find_missing_thead_tbody_violations(table,
-                                                              elem_location)
-            violations += find_table_no_th_violation(table, elem_location)
-            for element in table.getchildren():
-                violations += find_invalid_element_violations(element,
-                                                              elem_location)
+            violations += find_invalid_table_attributes(table, elem_location)
+            violations += find_invalid_table_children_violations(table,
+                                                                 elem_location)
+            violations += find_table_th_violations(table, elem_location)
+            violations += find_invalid_table_element_violations(table,
+                                                                elem_location)
     return violations
 
 
