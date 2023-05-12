@@ -1191,6 +1191,7 @@ def test_table_invalid_doubleheadertable(tmp_path, mocker):
         "invalid_tr is not allowed"
     assert errors[2]["location"] == file_path
 
+
 def test_table_invalid_elements(tmp_path, mocker):
     html = """
 <table class="os-raise-textheavytable">
