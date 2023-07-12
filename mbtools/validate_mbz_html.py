@@ -50,7 +50,8 @@ VALID_HREF_PREFIXES = [
     "https://teacher.desmos.com",
     "https://help.desmos.com",
     "https://www.geogebra.org",
-    "https://geogebra.org"
+    "https://geogebra.org",
+    "https://my.amplify.com"
 ]
 
 VALID_HREF_VALUES = [
