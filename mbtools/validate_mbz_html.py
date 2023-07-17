@@ -35,6 +35,7 @@ VALID_IFRAME_PREFIXES = [
 
 VALID_HREF_PREFIXES = [
     "https://k12.openstax.org/contents/raise",
+    "https://openstax.org/books/prealgebra-2e",
     "https://vimeo.com",
     "https://player.vimeo.com",
     "https://youtube.com",
@@ -57,6 +58,7 @@ VALID_HREF_PREFIXES = [
 VALID_HREF_VALUES = [
     "https://illustrativemathematics.org/",
     "https://openstax.org/",
+    "https://openstax.org/details/books/prealgebra-2e",
     "https://www.wisewire.com/",
     "https://student.desmos.com",
     "https://desmos.com/calculator",
