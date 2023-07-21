@@ -1256,3 +1256,60 @@ def test_table_invalid_elements(tmp_path, mocker):
     assert errors[6]["issue"] == validate_mbz_html.TABLE_VIOLATION + \
         "invalid_th is not allowed as child of tr"
     assert errors[6]["location"] == file_path
+
+
+def test_duplicate_content_uuids(
+    tmp_path, page_builder, lesson_builder, mbz_builder
+):
+    html_content_with_id = """
+    <div
+      class="os-raise-content"
+      data-content-id="26d5d10b-1ce2-4dcc-960f-43c424c93629">
+    </div>
+    """
+
+    lesson1 = lesson_builder(
+        id=1,
+        name="Lesson 1",
+        pages=[
+            {
+                "id": 11,
+                "title": "Lesson 1 Page 1",
+                "html_content": html_content_with_id
+            },
+            {
+                "id": 12,
+                "title": "Lesson 1 Page 2",
+                "html_content": "<p>Some unextracted content</p>",
+                "answers": [
+                    {
+                        "id": 111,
+                        "html_content": "<p>Foobar</p>",
+                        "response": "<p>Foobar</p>"
+                    },
+                    {
+                        "id": 112,
+                        "html_content": "<p>Foobar</p>",
+                        "response": "<p>Foobar</p>"
+                    }
+                ]
+            }
+        ]
+    )
+    page2 = page_builder(
+        id=2, name="Page 2", html_content=html_content_with_id
+    )
+    mbz_path = tmp_path / "mbz"
+    html_path = tmp_path / "html"
+    html_path.mkdir()
+
+    mbz_builder(mbz_path, activities=[lesson1, page2])
+
+    violations = validate_mbz_html.validate_mbz(mbz_path)
+
+    assert len(violations) == 1
+    violation = violations[0]
+    assert violation.issue == \
+        validate_mbz_html.DUPLICATE_CONTENT_UUID_VIOLATION
+    assert violation.location == "Page 2"
+    assert violation.link == "26d5d10b-1ce2-4dcc-960f-43c424c93629"
