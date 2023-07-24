@@ -3,7 +3,8 @@ from lxml import etree
 from csv import DictWriter
 from pathlib import Path
 
-from mbtools.models import MoodleHtmlElement, MoodleQuestionBank
+from mbtools.models import MoodleHtmlElement, MoodleQuestionBank, \
+    MoodleLesson, MoodlePage
 from . import utils
 
 STYLE_VIOLATION = "ERROR: Uses In-Line Styles"
@@ -20,6 +21,7 @@ INVALID_IB_UUID_VIOLATION = "ERROR: Invalid interactive block UUID"
 DUPLICATE_QBANK_UUID_VIOLATION = "ERROR: Duplicate question bank UUID"
 INVALID_QBANK_UUID_VIOLATION = "ERROR: Invalid question bank UUID"
 TABLE_VIOLATION = "ERROR: Table violation: "
+DUPLICATE_CONTENT_UUID_VIOLATION = "ERROR: Duplicate content UUID"
 
 VALID_PREFIXES = [
     "https://k12.openstax.org/contents/raise",
@@ -95,7 +97,10 @@ def validate_mbz(mbz_path, include_styles=True, include_questionbank=False,
     html_validations = run_html_validations(html_elements, include_styles,
                                             include_tables)
     qbank_validations = run_qbank_validations(question_bank)
-    return html_validations + qbank_validations
+    activities = utils.parse_backup_activities(mbz_path)
+    extracted_html_validations = run_extracted_html_validations(activities)
+
+    return html_validations + qbank_validations + extracted_html_validations
 
 
 def validate_html(html_dir, include_styles=True,
@@ -158,6 +163,39 @@ def run_qbank_validations(question_bank):
 
     violations = []
     violations.extend(find_qbank_uuid_violations(question_bank))
+
+    return violations
+
+
+def run_extracted_html_validations(activities):
+    violations = []
+    observed_uuids = set()
+
+    def check_duplicate_uuid(html_elem):
+        # If there is unnested content we can't parse further so bail out
+        if html_elem.unnested_content:
+            return
+        maybe_uuid = html_elem.get_attribute_values("data-content-id")
+        if not maybe_uuid:
+            return
+        uuid_value = maybe_uuid[0]
+        if uuid_value in observed_uuids:
+            violations.append(
+                Violation(
+                    DUPLICATE_CONTENT_UUID_VIOLATION,
+                    html_elem.location,
+                    uuid_value
+                )
+            )
+        observed_uuids.add(uuid_value)
+
+    for act in activities:
+        if isinstance(act, MoodlePage):
+            for html_elem in act.html_elements():
+                check_duplicate_uuid(html_elem)
+        elif isinstance(act, MoodleLesson):
+            for page in act.lesson_pages():
+                check_duplicate_uuid(page.html_element())
 
     return violations
 
