@@ -1313,3 +1313,68 @@ def test_duplicate_content_uuids(
         validate_mbz_html.DUPLICATE_CONTENT_UUID_VIOLATION
     assert violation.location == "Page 2"
     assert violation.link == "26d5d10b-1ce2-4dcc-960f-43c424c93629"
+
+
+def test_extracted_corruption(
+    tmp_path, page_builder, mbz_builder
+):
+    multiple_fragments = """
+    <div
+      class="os-raise-content"
+      data-content-id="26d5d10b-1ce2-4dcc-960f-43c424c93629">
+    </div>
+    <p>I shouldn't be here</p>
+    """
+
+    inner_text = """
+    <div
+      class="os-raise-content"
+      data-content-id="26d5d10b-1ce2-4dcc-960f-43c424c93628">
+      I shouldn't be here
+    </div>
+    """
+
+    inner_element = """
+    <div
+      class="os-raise-content"
+      data-content-id="26d5d10b-1ce2-4dcc-960f-43c424c93627">
+      <p>I shouldn't be here</p>
+    </div>
+    """
+
+    valid_extracted = """
+    <div
+      class="os-raise-content"
+      data-content-id="26d5d10b-1ce2-4dcc-960f-43c424c93626"></div>
+    """
+
+    page1 = page_builder(
+        id=1, name="Page 1", html_content=multiple_fragments
+    )
+    page2 = page_builder(
+        id=2, name="Page 2", html_content=inner_text
+    )
+    page3 = page_builder(
+        id=3, name="Page 3", html_content=inner_element
+    )
+    page4 = page_builder(
+        id=4, name="Page 4", html_content=valid_extracted
+    )
+    mbz_path = tmp_path / "mbz"
+    html_path = tmp_path / "html"
+    html_path.mkdir()
+
+    mbz_builder(mbz_path, activities=[page1, page2, page3, page4])
+
+    violations = validate_mbz_html.validate_mbz(mbz_path)
+
+    assert len(violations) == 3
+    for violation in violations:
+        assert violation.issue == \
+            validate_mbz_html.EXTRACTED_HTML_CORRUPTION_VIOLATION
+    assert violations[0].location == "Page 1"
+    assert violations[0].link == "26d5d10b-1ce2-4dcc-960f-43c424c93629"
+    assert violations[1].location == "Page 2"
+    assert violations[1].link == "26d5d10b-1ce2-4dcc-960f-43c424c93628"
+    assert violations[2].location == "Page 3"
+    assert violations[2].link == "26d5d10b-1ce2-4dcc-960f-43c424c93627"
