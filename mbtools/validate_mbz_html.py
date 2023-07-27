@@ -22,6 +22,7 @@ DUPLICATE_QBANK_UUID_VIOLATION = "ERROR: Duplicate question bank UUID"
 INVALID_QBANK_UUID_VIOLATION = "ERROR: Invalid question bank UUID"
 TABLE_VIOLATION = "ERROR: Table violation: "
 DUPLICATE_CONTENT_UUID_VIOLATION = "ERROR: Duplicate content UUID"
+EXTRACTED_HTML_CORRUPTION_VIOLATION = "ERROR: Extracted HTML corruption"
 
 VALID_PREFIXES = [
     "https://k12.openstax.org/contents/raise",
@@ -171,11 +172,14 @@ def run_extracted_html_validations(activities):
     violations = []
     observed_uuids = set()
 
-    def check_duplicate_uuid(html_elem):
+    def get_extracted_elem_uuids(html_elem):
         # If there is unnested content we can't parse further so bail out
         if html_elem.unnested_content:
             return
-        maybe_uuid = html_elem.get_attribute_values("data-content-id")
+        return html_elem.get_attribute_values("data-content-id")
+
+    def check_duplicate_uuid(html_elem):
+        maybe_uuid = get_extracted_elem_uuids(html_elem)
         if not maybe_uuid:
             return
         uuid_value = maybe_uuid[0]
@@ -189,13 +193,40 @@ def run_extracted_html_validations(activities):
             )
         observed_uuids.add(uuid_value)
 
+    def check_extracted_corruption(html_elem):
+        maybe_uuid = get_extracted_elem_uuids(html_elem)
+        if not maybe_uuid:
+            return
+
+        # Extracted content should have only one element, no children, and
+        # no inner text.
+        #
+        # Note: Reaching into the model abstraction to access etree_fragments
+        # is probably not the "cleanest" approach and might be worth improving
+        # up in the future.
+        multiple_fragments = len(html_elem.etree_fragments) > 1
+        inner_text = html_elem.etree_fragments[0].text and \
+            html_elem.etree_fragments[0].text.strip() != ''
+        inner_elements = len(html_elem.etree_fragments[0].getchildren()) > 0
+
+        if multiple_fragments or inner_text or inner_elements:
+            violations.append(
+                Violation(
+                    EXTRACTED_HTML_CORRUPTION_VIOLATION,
+                    html_elem.location,
+                    maybe_uuid[0]
+                )
+            )
+
     for act in activities:
         if isinstance(act, MoodlePage):
             for html_elem in act.html_elements():
                 check_duplicate_uuid(html_elem)
+                check_extracted_corruption(html_elem)
         elif isinstance(act, MoodleLesson):
             for page in act.lesson_pages():
                 check_duplicate_uuid(page.html_element())
+                check_extracted_corruption(page.html_element())
 
     return violations
 
