@@ -194,7 +194,7 @@ def run_extracted_html_validations(activities):
         observed_uuids.add(uuid_value)
 
     def check_extracted_corruption(html_elem):
-        maybe_uuid = maybe_uuid = get_extracted_elem_uuids(html_elem)
+        maybe_uuid = get_extracted_elem_uuids(html_elem)
         if not maybe_uuid:
             return
 
