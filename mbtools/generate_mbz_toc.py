@@ -64,7 +64,6 @@ def parse_toc(mbz_path):
                         break
                     else:
                         current_page = id2page[current_page.next]
-    print(activity_list[0:10])
     return (md_string, activity_list)
 
 
