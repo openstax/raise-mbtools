@@ -339,13 +339,16 @@ def test_toc_creation_page_and_lesson_together_csv(
     assert validate_uuid4(toc_csv_rows[0]['content_id'])
     assert 'Lesson Page 1' == toc_csv_rows[0]['lesson_page']
     assert 'Default Section' == toc_csv_rows[0]['section']
+    assert '1' == toc_csv_rows[0]['visible']
 
     assert 'Page 1' == toc_csv_rows[1]['activity_name']
     assert validate_uuid4(toc_csv_rows[1]['content_id'])
     assert '' == toc_csv_rows[1]['lesson_page']
     assert 'Default Section' == toc_csv_rows[1]['section']
+    assert '1' == toc_csv_rows[1]['visible']
 
     assert 'Page 2' == toc_csv_rows[2]['activity_name']
     assert validate_uuid4(toc_csv_rows[2]['content_id'])
     assert '' == toc_csv_rows[2]['lesson_page']
     assert 'Default Section' == toc_csv_rows[2]['section']
+    assert '1' == toc_csv_rows[2]['visible']

@@ -152,6 +152,12 @@ QUESTION_BANK_MATCH_TEXT_TEMPLATE = Template("""
 </match>
 """)
 
+MODULE_TEMPLATE = Template("""<?xml version="1.0" encoding="UTF-8"?>
+<module>
+  <visible>$visible</visible>
+</module>
+""")
+
 
 @pytest.fixture
 def mbz_builder():
@@ -174,9 +180,13 @@ def mbz_builder():
             activity_dir = \
                 tmp_path / f"activities/{activity_type}_{activity_id}"
             activity_path = activity_dir / f"{activity_type}.xml"
+            module_path = activity_dir / "module.xml"
             activity_dir.mkdir(parents=True)
             activity_path.write_text(act["xml_content"].strip())
-
+            module_data = MODULE_TEMPLATE.substitute(
+              visible='1'
+            )
+            module_path.write_text(module_data)
         for sect in sections:
             section_id = sect["id"]
             section_title = sect["title"]

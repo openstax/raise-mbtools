@@ -246,8 +246,10 @@ class MoodleLesson:
         self.mbz_path = Path(mbz_path)
         self.activity_path = activity_path
         self.activity_filename = str(self.activity_path / "lesson.xml")
+        self.module_filename = str(self.activity_path / "module.xml")
         self.etree = etree.parse(self.activity_filename)
         self.name = self.etree.xpath("//name")[0].text
+        self.module_etree = etree.parse(self.module_filename)
 
     def lesson_pages(self):
         page_objs = []
@@ -261,19 +263,27 @@ class MoodleLesson:
             elems.extend(page.html_elements())
         return elems
 
+    def is_visible(self):
+        return self.module_etree.xpath("//visible")[0].text
+
 
 class MoodlePage:
     def __init__(self, activity_path, mbz_path):
         self.mbz_path = Path(mbz_path)
         self.activity_path = activity_path
         self.activity_filename = str(self.activity_path / "page.xml")
+        self.module_filename = str(self.activity_path / "module.xml")
         self.etree = etree.parse(self.activity_filename)
         self.name = self.etree.xpath("//page/name")[0].text
+        self.module_etree = etree.parse(self.module_filename)
 
     def html_elements(self):
         xpath_query = "//page/content"
         elements = self.etree.xpath(xpath_query)
         return [MoodleHtmlElement(el, self.name) for el in elements]
+
+    def is_visible(self):
+        return self.module_etree.xpath("//visible")[0].text
 
 
 class MoodleQuiz:
