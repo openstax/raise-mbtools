@@ -304,7 +304,8 @@ def lesson_builder(lesson_page_builder):
 
 @pytest.fixture
 def page_builder():
-    def _builder(id, name, html_content, section_id=DEFAULT_SECTION["id"], visible='1'):
+    def _builder(id, name, html_content, section_id=DEFAULT_SECTION["id"],
+                 visible='1'):
         page_content = PAGE_TEMPLATE.substitute(
             id=id,
             name=name,
