@@ -264,7 +264,11 @@ class MoodleLesson:
         return elems
 
     def is_visible(self):
-        return self.module_etree.xpath("//visible")[0].text
+        if self.module_etree.xpath("//visible")[0].text == '1':
+            return '1'
+        if self.module_etree.xpath("//visible")[0].text == '0':
+            return '0'
+        raise Exception(f"Visible attribute value error in lesson {self.name}")
 
 
 class MoodlePage:
@@ -283,7 +287,11 @@ class MoodlePage:
         return [MoodleHtmlElement(el, self.name) for el in elements]
 
     def is_visible(self):
-        return self.module_etree.xpath("//visible")[0].text
+        if self.module_etree.xpath("//visible")[0].text == '1':
+            return '1'
+        if self.module_etree.xpath("//visible")[0].text == '0':
+            return '0'
+        raise Exception(f"Visible attribute value error in page {self.name} ")
 
 
 class MoodleQuiz:
