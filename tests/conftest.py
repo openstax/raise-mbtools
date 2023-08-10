@@ -152,6 +152,12 @@ QUESTION_BANK_MATCH_TEXT_TEMPLATE = Template("""
 </match>
 """)
 
+MODULE_TEMPLATE = Template("""<?xml version="1.0" encoding="UTF-8"?>
+<module>
+  <visible>$visible</visible>
+</module>
+""")
+
 
 @pytest.fixture
 def mbz_builder():
@@ -174,9 +180,13 @@ def mbz_builder():
             activity_dir = \
                 tmp_path / f"activities/{activity_type}_{activity_id}"
             activity_path = activity_dir / f"{activity_type}.xml"
+            module_path = activity_dir / "module.xml"
             activity_dir.mkdir(parents=True)
             activity_path.write_text(act["xml_content"].strip())
-
+            module_data = MODULE_TEMPLATE.substitute(
+              visible=act.get("visible", "1")
+            )
+            module_path.write_text(module_data)
         for sect in sections:
             section_id = sect["id"]
             section_title = sect["title"]
@@ -248,7 +258,8 @@ def lesson_page_builder():
 
 @pytest.fixture
 def lesson_builder(lesson_page_builder):
-    def _builder(id, name, pages=[], section_id=DEFAULT_SECTION["id"]):
+    def _builder(id, name, pages=[], section_id=DEFAULT_SECTION["id"],
+                 visible='1'):
         pagedata = ""
 
         llist = {}
@@ -285,14 +296,16 @@ def lesson_builder(lesson_page_builder):
             "section_id": section_id,
             "id": id,
             "activity_type": "lesson",
-            "xml_content": lesson_content
+            "xml_content": lesson_content,
+            "visible": visible
         }
     return _builder
 
 
 @pytest.fixture
 def page_builder():
-    def _builder(id, name, html_content, section_id=DEFAULT_SECTION["id"]):
+    def _builder(id, name, html_content, section_id=DEFAULT_SECTION["id"],
+                 visible='1'):
         page_content = PAGE_TEMPLATE.substitute(
             id=id,
             name=name,
@@ -303,7 +316,8 @@ def page_builder():
             "section_id": section_id,
             "id": id,
             "activity_type": "page",
-            "xml_content": page_content
+            "xml_content": page_content,
+            "visible": visible
         }
 
     return _builder

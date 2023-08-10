@@ -52,7 +52,7 @@ def generate_html_content_data(html_dir, output_path):
                             }
                         )
 
-    with open(f"{output_path}/ib_input_instances.csv", "w") as input_outfile,\
+    with open(f"{output_path}/ib_input_instances.csv", "w") as input_outfile, \
          open(f"{output_path}/ib_pset_problems.csv", "w") as pset_outfile:
         input_instance_headers = ib_input_instances_list[0].keys()
         input_result = csv.DictWriter(
