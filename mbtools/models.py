@@ -268,7 +268,8 @@ class MoodleLesson:
             return '1'
         if self.module_etree.xpath("//visible")[0].text == '0':
             return '0'
-        raise Exception(f"Visible attribute value error in lesson {self.name}")
+        raise Exception("Visible attribute value error in lesson "
+                        f"{self.name}")  # pragma: no cover
 
 
 class MoodlePage:
@@ -291,7 +292,8 @@ class MoodlePage:
             return '1'
         if self.module_etree.xpath("//visible")[0].text == '0':
             return '0'
-        raise Exception(f"Visible attribute value error in page {self.name} ")
+        raise Exception("Visible attribute value error in page "
+                        f"{self.name}")  # pragma: no cover
 
 
 class MoodleQuiz:
