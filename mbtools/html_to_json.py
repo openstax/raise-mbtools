@@ -1,6 +1,5 @@
 import argparse
 import json
-import shutil
 from pathlib import Path
 
 
@@ -15,8 +14,6 @@ def create_json_content(uuid, content, json_path):
 
 
 def html_to_json(html_directory, json_directory):
-    shutil.rmtree(json_directory)
-    Path(json_directory).mkdir()
 
     for file in Path(html_directory).iterdir():
         if Path(f"{html_directory}/{file.name}").is_file():
