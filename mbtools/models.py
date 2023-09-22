@@ -220,7 +220,6 @@ class MoodleLessonPage:
             return 'multichoice'
         if qtype == '20':
             return 'content'
-        return ''
 
     def answers(self):
         answer_objs = []

@@ -359,7 +359,7 @@ def test_toc_creation_page_and_lesson_together_csv(
     assert 'Lesson Page 2' == toc_csv_rows[1]['lesson_page']
     assert 'Default Section' == toc_csv_rows[1]['section']
     assert '0' == toc_csv_rows[1]['visible']
-    assert 'multichoice' == toc_csv_rows[1]['lesson_page_type']
+    assert 'content' == toc_csv_rows[1]['lesson_page_type']
 
     assert 'Page 1' == toc_csv_rows[2]['activity_name']
     assert validate_uuid4(toc_csv_rows[2]['content_id'])
