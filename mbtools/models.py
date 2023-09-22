@@ -214,6 +214,14 @@ class MoodleLessonPage:
         lesson_name = self.etree.xpath("../../name")[0].text
         return f"{lesson_name} (page: {self.name})"
 
+    def page_type(self):
+        qtype = self.etree.xpath("qtype")[0].text
+        if qtype == '3':
+            return 'multichoice'
+        if qtype == '20':
+            return 'content'
+        return ''
+
     def answers(self):
         answer_objs = []
         for answer in self.etree.xpath("answers/answer"):
