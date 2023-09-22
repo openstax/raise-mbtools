@@ -313,7 +313,7 @@ def page_builder():
         page_content = PAGE_TEMPLATE.substitute(
             id=id,
             name=name,
-            content=html.escape(html_content),
+            content=html.escape(html_content)
         )
 
         return {

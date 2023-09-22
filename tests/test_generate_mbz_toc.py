@@ -320,7 +320,7 @@ def test_toc_creation_page_and_lesson_together_csv(
             id=1,
             name=page_name,
             html_content=page_html,
-            visible='0',
+            visible='0'
         )
 
     page2_html = "<p>Page Content</p>"
@@ -329,7 +329,7 @@ def test_toc_creation_page_and_lesson_together_csv(
             id=2,
             name=page2_name,
             html_content=page2_html,
-            visible='1',
+            visible='1'
         )
 
     mbz_path = tmp_path / "mbz"
