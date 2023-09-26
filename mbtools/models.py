@@ -220,6 +220,8 @@ class MoodleLessonPage:
             return 'multichoice'
         if qtype == '20':
             return 'content'
+        raise Exception("qtype attribute value error in "
+                        f"{self.name}")  # pragma: no cover
 
     def answers(self):
         answer_objs = []
