@@ -37,6 +37,8 @@ def parse_toc(mbz_path):
                     page_dict['activity_name'] = act.name
                     page_dict['lesson_page'] = ""
                     page_dict['visible'] = act.is_visible()
+                    page_dict['lesson_page_type'] = ''
+
                 activity_list.append(page_dict)
             elif isinstance(act, MoodleLesson):
                 md_string += make_nested_bullet(2, act.name)
@@ -58,6 +60,7 @@ def parse_toc(mbz_path):
                     lesson_dict['activity_name'] = act.name
                     lesson_dict['lesson_page'] = current_page.name
                     lesson_dict['visible'] = act.is_visible()
+                    lesson_dict['lesson_page_type'] = current_page.page_type()
                     activity_list.append(lesson_dict)
 
                     if (current_page.next == "0"):

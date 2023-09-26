@@ -19,6 +19,7 @@ LESSON_PAGE_TEMPLATE = Template("""
   <prevpageid>$prevpageid</prevpageid>
   <nextpageid>$nextpageid</nextpageid>
   <contents>$content</contents>
+  <qtype>$qtype</qtype>
   <answers>
     $answerdata
   </answers>
@@ -236,7 +237,8 @@ def mbz_builder():
 @pytest.fixture
 def lesson_page_builder():
     def _builder(
-      id, title, html_content, prevpageid=1, nextpageid=1, answers=[]
+      id, title, html_content, qtype, prevpageid=1, nextpageid=1,
+      answers=[]
     ):
         answerdata = ""
         for ans in answers:
@@ -251,7 +253,8 @@ def lesson_page_builder():
             content=html.escape(html_content),
             prevpageid=prevpageid,
             nextpageid=nextpageid,
-            answerdata=answerdata
+            answerdata=answerdata,
+            qtype=qtype
         )
     return _builder
 
@@ -283,6 +286,7 @@ def lesson_builder(lesson_page_builder):
                 html_content=page["html_content"],
                 prevpageid=llist[page["id"]]["prev"],
                 nextpageid=llist[page["id"]]["next"],
+                qtype=page.get('qtype', 20),
                 answers=page.get("answers", [])
             )
 

@@ -293,6 +293,7 @@ def test_toc_creation_page_and_lesson_together_csv(
     lesson_html = "<p>Lesson Content</p>"
     lesson_name = "Only Lesson"
     lesson_page_name = "Lesson Page 1"
+    lesson_page_two_name = "Lesson Page 2"
     lesson = lesson_builder(
             id=1,
             name=lesson_name,
@@ -300,7 +301,14 @@ def test_toc_creation_page_and_lesson_together_csv(
                 {
                     "id": "1",
                     "title": lesson_page_name,
-                    "html_content": lesson_html
+                    "html_content": lesson_html,
+                    "qtype": '3'
+                },
+                {
+                    "id": "2",
+                    "title": lesson_page_two_name,
+                    "html_content": lesson_html,
+                    "qtype": '20'
                 }
             ],
             visible='0'
@@ -322,7 +330,6 @@ def test_toc_creation_page_and_lesson_together_csv(
             name=page2_name,
             html_content=page2_html,
             visible='1'
-
         )
 
     mbz_path = tmp_path / "mbz"
@@ -345,15 +352,25 @@ def test_toc_creation_page_and_lesson_together_csv(
     assert 'Lesson Page 1' == toc_csv_rows[0]['lesson_page']
     assert 'Default Section' == toc_csv_rows[0]['section']
     assert '0' == toc_csv_rows[0]['visible']
+    assert 'multichoice' == toc_csv_rows[0]['lesson_page_type']
 
-    assert 'Page 1' == toc_csv_rows[1]['activity_name']
+    assert 'Only Lesson' == toc_csv_rows[1]['activity_name']
     assert validate_uuid4(toc_csv_rows[1]['content_id'])
-    assert '' == toc_csv_rows[1]['lesson_page']
+    assert 'Lesson Page 2' == toc_csv_rows[1]['lesson_page']
     assert 'Default Section' == toc_csv_rows[1]['section']
     assert '0' == toc_csv_rows[1]['visible']
+    assert 'content' == toc_csv_rows[1]['lesson_page_type']
 
-    assert 'Page 2' == toc_csv_rows[2]['activity_name']
+    assert 'Page 1' == toc_csv_rows[2]['activity_name']
     assert validate_uuid4(toc_csv_rows[2]['content_id'])
     assert '' == toc_csv_rows[2]['lesson_page']
     assert 'Default Section' == toc_csv_rows[2]['section']
-    assert '1' == toc_csv_rows[2]['visible']
+    assert '0' == toc_csv_rows[2]['visible']
+    assert '' == toc_csv_rows[2]['lesson_page_type']
+
+    assert 'Page 2' == toc_csv_rows[3]['activity_name']
+    assert validate_uuid4(toc_csv_rows[3]['content_id'])
+    assert '' == toc_csv_rows[3]['lesson_page']
+    assert 'Default Section' == toc_csv_rows[3]['section']
+    assert '1' == toc_csv_rows[3]['visible']
+    assert '' == toc_csv_rows[3]['lesson_page_type']
