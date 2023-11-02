@@ -89,15 +89,13 @@ class Violation:
         return dict
 
 
-def validate_mbz(mbz_path, include_styles=True, include_questionbank=False,
-                 include_tables=False):
+def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
     question_bank = MoodleQuestionBank(mbz_path)
 
     html_elements = utils.parse_backup_elements(mbz_path)
     if include_questionbank:
         html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
-    html_validations = run_html_validations(html_elements, include_styles,
-                                            include_tables)
+    html_validations = run_html_validations(html_elements, include_styles)
     qbank_validations = run_qbank_validations(question_bank)
     activities = utils.parse_backup_activities(mbz_path)
     extracted_html_validations = run_extracted_html_validations(activities)
@@ -105,8 +103,7 @@ def validate_mbz(mbz_path, include_styles=True, include_questionbank=False,
     return html_validations + qbank_validations + extracted_html_validations
 
 
-def validate_html(html_dir, include_styles=True,
-                  include_tables=False):
+def validate_html(html_dir, include_styles=True):
     all_files = []
     for path in Path(html_dir).rglob('*.html'):
         all_files.append(path)
@@ -119,18 +116,17 @@ def validate_html(html_dir, include_styles=True,
             html_elements.append(
                 MoodleHtmlElement(parent_element, str(file_path))
             )
-    return run_html_validations(html_elements, include_styles, include_tables)
+    return run_html_validations(html_elements, include_styles)
 
 
-def run_html_validations(html_elements, include_styles, include_tables):
+def run_html_validations(html_elements, include_styles):
     violations = []
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
         return violations
     if include_styles:
         violations.extend(find_style_violations(html_elements))
-    if include_tables:
-        violations.extend(find_table_violations(html_elements))
+    violations.extend(find_table_violations(html_elements))
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
     violations.extend(find_nested_ib_violations(html_elements))
@@ -525,17 +521,16 @@ def main():
     mode = args.mode
     include_questionbank = not args.no_qb
     include_styles = args.no_style
-    include_tables = args.tables
 
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
     violations = []
     if mode == "html":
-        violations = validate_html(mbz_path, include_styles, include_tables)
+        violations = validate_html(mbz_path, include_styles)
     elif mode == "mbz":
         violations = validate_mbz(mbz_path, include_styles,
-                                  include_questionbank, include_tables)
+                                  include_questionbank)
     with open(output_file, 'w') as f:
         w = DictWriter(f, ['issue', 'location', 'link'])
         w.writeheader()
