@@ -1073,7 +1073,7 @@ def test_table_valid(tmp_path, mocker):
     output_filepath = f"{tmp_path}/test_output.csv"
     mocker.patch(
         "sys.argv",
-        ["", html_path, output_filepath, "html", "--tables"]
+        ["", html_path, output_filepath, "html"]
     )
 
     validate_mbz_html.main()
@@ -1117,7 +1117,7 @@ def test_table_invalid(tmp_path, mocker):
     output_filepath = f"{tmp_path}/test_output.csv"
     mocker.patch(
         "sys.argv",
-        ["", html_path, output_filepath, "html", "--tables"]
+        ["", html_path, output_filepath, "html"]
     )
 
     validate_mbz_html.main()
@@ -1173,7 +1173,7 @@ def test_table_invalid_doubleheadertable(tmp_path, mocker):
     output_filepath = f"{tmp_path}/test_output.csv"
     mocker.patch(
         "sys.argv",
-        ["", html_path, output_filepath, "html", "--tables"]
+        ["", html_path, output_filepath, "html"]
     )
 
     validate_mbz_html.main()
@@ -1226,7 +1226,7 @@ def test_table_invalid_elements(tmp_path, mocker):
     output_filepath = f"{tmp_path}/test_output.csv"
     mocker.patch(
         "sys.argv",
-        ["", html_path, output_filepath, "html", "--tables"]
+        ["", html_path, output_filepath, "html"]
     )
 
     validate_mbz_html.main()
