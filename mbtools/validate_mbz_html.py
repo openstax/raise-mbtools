@@ -508,12 +508,6 @@ def main():
         help="Exclude style violations"
     )
 
-    parser.add_argument(
-        '--tables',
-        action='store_true',
-        help="Include table validations"
-    )
-
     args = parser.parse_args()
 
     mbz_path = Path(args.mbz_path).resolve(strict=True)
