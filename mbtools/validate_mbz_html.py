@@ -89,13 +89,15 @@ class Violation:
         return dict
 
 
-def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
+def validate_mbz(mbz_path, include_styles=True, include_questionbank=False,
+                 uuids_populated=False):
     question_bank = MoodleQuestionBank(mbz_path)
 
     html_elements = utils.parse_backup_elements(mbz_path)
     if include_questionbank:
         html_elements += utils.parse_question_bank_latest_for_html(mbz_path)
-    html_validations = run_html_validations(html_elements, include_styles)
+    html_validations = run_html_validations(html_elements, include_styles,
+                                            uuids_populated)
     qbank_validations = run_qbank_validations(question_bank)
     activities = utils.parse_backup_activities(mbz_path)
     extracted_html_validations = run_extracted_html_validations(activities)
@@ -103,7 +105,7 @@ def validate_mbz(mbz_path, include_styles=True, include_questionbank=False):
     return html_validations + qbank_validations + extracted_html_validations
 
 
-def validate_html(html_dir, include_styles=True):
+def validate_html(html_dir, include_styles=True, uuids_populated=False):
     all_files = []
     for path in Path(html_dir).rglob('*.html'):
         all_files.append(path)
@@ -116,10 +118,10 @@ def validate_html(html_dir, include_styles=True):
             html_elements.append(
                 MoodleHtmlElement(parent_element, str(file_path))
             )
-    return run_html_validations(html_elements, include_styles)
+    return run_html_validations(html_elements, include_styles, uuids_populated)
 
 
-def run_html_validations(html_elements, include_styles):
+def run_html_validations(html_elements, include_styles, uuids_populated):
     violations = []
     violations.extend(find_unnested_violations(html_elements))
     if len(violations) > 0:
@@ -130,7 +132,7 @@ def run_html_validations(html_elements, include_styles):
     violations.extend(find_source_violations(html_elements))
     violations.extend(find_tag_violations(html_elements))
     violations.extend(find_nested_ib_violations(html_elements))
-    violations.extend(find_ib_uuid_violations(html_elements))
+    violations.extend(find_ib_uuid_violations(html_elements, uuids_populated))
     return violations
 
 
@@ -338,7 +340,8 @@ def find_nested_ib_violations(html_elements):
     return violations
 
 
-def find_ib_uuid_violations(html_elements):
+def find_ib_uuid_violations(html_elements, uuids_populated):
+
     need_ids = [
         "os-raise-ib-input",
         "os-raise-ib-pset",
@@ -350,13 +353,12 @@ def find_ib_uuid_violations(html_elements):
         maybe_ids = elem.get_elements_with_exact_class(need_ids)
         for ib in maybe_ids:
             if "data-content-id" not in ib.attrib.keys():
-                # k12-399: Temporarily disabling
-                pass
-                # violations.append(Violation(
-                #     MISSING_IB_UUID_VIOLATION,
-                #     elem.location,
-                #     None
-                # ))
+                if uuids_populated:
+                    violations.append(Violation(
+                        MISSING_IB_UUID_VIOLATION,
+                        elem.location,
+                        None
+                    ))
             else:
                 uuid = ib.attrib["data-content-id"]
                 if uuid in uuid_to_location.keys():
@@ -508,6 +510,12 @@ def main():
         help="Exclude style violations"
     )
 
+    parser.add_argument(
+        '--uuids-populated',
+        action='store_true',
+        help="Include uuids violations"
+    )
+
     args = parser.parse_args()
 
     mbz_path = Path(args.mbz_path).resolve(strict=True)
@@ -515,16 +523,17 @@ def main():
     mode = args.mode
     include_questionbank = not args.no_qb
     include_styles = args.no_style
+    uuids_populated = args.uuids_populated
 
     if not output_file.exists():
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
     violations = []
     if mode == "html":
-        violations = validate_html(mbz_path, include_styles)
+        violations = validate_html(mbz_path, include_styles, uuids_populated)
     elif mode == "mbz":
         violations = validate_mbz(mbz_path, include_styles,
-                                  include_questionbank)
+                                  include_questionbank, uuids_populated)
     with open(output_file, 'w') as f:
         w = DictWriter(f, ['issue', 'location', 'link'])
         w.writeheader()
