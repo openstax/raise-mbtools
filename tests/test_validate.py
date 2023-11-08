@@ -913,7 +913,7 @@ def test_inject_ib_uuids_untagged(tmp_path, mocker):
     output_filepath = f"{tmp_path}/test_output.csv"
     mocker.patch(
         "sys.argv",
-        ["", html_path, output_filepath, "html"]
+        ["", html_path, output_filepath, "html", "--uuids-populated"]
     )
 
     validate_mbz_html.main()
@@ -922,9 +922,8 @@ def test_inject_ib_uuids_untagged(tmp_path, mocker):
     errors = [row for row in reader]
     issues = [row["issue"] for row in errors]
     locations = [row["location"] for row in errors]
-    # k12-399: Temporarily disabling
-    assert len(errors) == 0
-    assert len(locations) == 0
+    assert len(errors) == 3
+    assert len(locations) == 3
 
     for i in issues:
         assert i == validate_mbz_html.MISSING_IB_UUID_VIOLATION
