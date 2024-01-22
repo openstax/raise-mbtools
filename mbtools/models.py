@@ -460,7 +460,7 @@ class MoodleHtmlElement:
             content_uuid = str(uuid4())
             content = self.parent.text
             tag = f'<div class="os-raise-content" ' \
-                  f'data-content-id="{ content_uuid }"></div>'
+                  f'data-content-id="{content_uuid}"></div>'
 
             self.parent.text = tag
             return {"uuid": content_uuid,
