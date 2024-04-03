@@ -6,8 +6,6 @@ import re
 import os
 import json
 
-CLASSES_TO_INJECT = ["os-raise-ib-pset"]
-
 
 def get_lesson_pages(toc_path):
     filename_set = set()
@@ -21,7 +19,7 @@ def get_lesson_pages(toc_path):
 
 
 def patch_pset(html_dir, practice_lesson_set):
-    for path in Path(html_dir).rglob('*.html'):
+    for path in Path(html_dir).glob('*.html'):
         should_write = False
 
         with open(path, 'r') as f:
