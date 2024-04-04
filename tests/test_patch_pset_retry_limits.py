@@ -1,5 +1,6 @@
 import os
 from mbtools.patch_pset_retry_limits import main
+from bs4 import BeautifulSoup
 import mbtools
 import mbtools.extract_html_content
 
@@ -78,12 +79,18 @@ def test_toc_creation_lesson_pages_in_order(
         for file in files:
             with open(f'{path}/{file}') as f:
                 content = f.read()
+                soup = BeautifulSoup(content, 'html.parser')
                 if "Lesson 1" in content:
-                    assert 'data-retry-limit="2"' in content
-                    assert 'data-retry-limit="3"' in content
+                    pset = soup.find('div', class_='os-raise-ib-pset')
+                    assert pset['data-retry-limit'] == '2'
+                    problem = soup.find('div',
+                                        class_='os-raise-ib-pset-problem')
+                    assert problem['data-retry-limit'] == '3'
 
                 elif "Lesson 2" in content:
-                    assert 'data-retry-limit="2"' in content
+                    div = soup.find('div', class_='os-raise-ib-pset')
+                    assert div['data-retry-limit'] == '2'
 
                 elif "Lesson 3" in content:
-                    assert 'data-retry-limit="0"' in content
+                    div = soup.find('div', class_='os-raise-ib-pset')
+                    assert div['data-retry-limit'] == '0'
