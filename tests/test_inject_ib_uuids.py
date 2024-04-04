@@ -82,7 +82,6 @@ def test_inject_ib_ids_input_and_cta(
 
     with open(fp2, 'r') as f:
         result = f.read()
-        print(result)
         assert mix_out == result
 
 
