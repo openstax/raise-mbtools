@@ -11,8 +11,7 @@ def test_toc_creation_lesson_pages_in_order(
     lesson_name = "Only Lesson"
     # Lesson 1 is practice page with a multiple choice question
     lesson_html_1 = '''<div class="os-raise-ib-pset"
-                        data-content-id="c05a82e9-1fb8-42d7-8613-a48a62ab66a0">
-                        <!--Lesson 1-->
+                        data-content-id="Lesson 1">
                         <div class="os-raise-ib-pset-problem"
                         data-content-id="c05a82e9-1fb8-42d7-8613-a48a62ab66a0"
                         data-problem-type="multiplechoice" data-retry-limit="7"
@@ -25,18 +24,15 @@ def test_toc_creation_lesson_pages_in_order(
     lesson_html_2 = '''<div class="os-raise-ib-pset"
                         data-button-text="Check"
                         data-retry-limit="5"
-                        data-content-id="c05a82e9-1fb8-42d7-8613-a48a62ab66a0"
+                        data-content-id="Lesson 2"
                         data-schema-version="1.0">
-                        <!-- Lesson 2 -->
                         </div>
                         '''
     # lesson 3 is not a practice page, data-retry-limit will be set to 0
     lesson_html_3 = '''<div class="os-raise-ib-pset"
                         data-button-text="Check"
-                        data-content-id="c05a82e9-1fb8-42d7-8613-a48a62ab66a0"
+                        data-content-id="Lesson 3"
                         data-schema-version="1.0">
-                        <!--Lesson 3-->
-
                         </div>
                         '''
     lesson_page_name_1 = "Practice Page 1"

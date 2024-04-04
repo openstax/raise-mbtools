@@ -7,7 +7,7 @@ import os
 import json
 
 
-def get_lesson_pages(mbz_path):
+def get_lesson_practice_pages(mbz_path):
     (md_string, activity_list) = parse_toc(mbz_path)
     filename_set = set()
 
@@ -60,8 +60,8 @@ def main():
     )
     args = parser.parse_args()
     html_directory = Path(args.html_directory).resolve(strict=True)
-    mbz_path = args.mbz_path
-    practice_lesson_set = get_lesson_pages(mbz_path)
+    mbz_path = Path(args.mbz_path).resolve(strict=True)
+    practice_lesson_set = get_lesson_practice_pages(mbz_path)
     patch_pset(html_directory, practice_lesson_set)
 
 
