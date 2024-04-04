@@ -2,19 +2,18 @@ import argparse
 from pathlib import Path
 from mbtools import utils
 from bs4 import BeautifulSoup
-import re
+from mbtools.generate_mbz_toc import parse_toc
 import os
 import json
 
 
-def get_lesson_pages(toc_path):
+def get_lesson_pages(mbz_path):
+    (md_string, activity_list) = parse_toc(mbz_path)
     filename_set = set()
-    with open(toc_path, 'r') as file:
-        toc_content = file.read()
-        practice_links = re.findall(r'\[(.*?)\]\((.*?)\)', toc_content)
-        for title, link in practice_links:
-            if "practice" in title.lower():
-                filename_set.add(os.path.basename(link))
+
+    for activity in activity_list:
+        if 'practice' in activity['lesson_page'].lower():
+            filename_set.add(activity['content_id'])
     return filename_set
 
 
@@ -23,13 +22,15 @@ def patch_pset(html_dir, practice_lesson_set):
         should_write = False
 
         with open(path, 'r') as f:
+            filename = os.path.basename(path)
+            file_uuid = os.path.splitext(filename)[0]
             soup = BeautifulSoup(f.read(), 'html.parser')
             for elem in soup.find_all(name="div", class_="os-raise-ib-pset"):
 
-                if os.path.basename(path) in practice_lesson_set:
+                if file_uuid in practice_lesson_set:
                     should_write = True
                     elem['data-retry-limit'] = '2'
-                    set_pset_problem(elem)
+                    set_pset_problems(elem)
                 else:
                     should_write = True
                     elem['data-retry-limit'] = '0'
@@ -37,7 +38,7 @@ def patch_pset(html_dir, practice_lesson_set):
             utils.write_html_soup(path, soup)
 
 
-def set_pset_problem(elem):
+def set_pset_problems(elem):
     for problem_elem in elem.find_all(name="div",
                                       class_="os-raise-ib-pset-problem"):
         problem_type = problem_elem.get('data-problem-type')
@@ -54,13 +55,13 @@ def main():
         "html_directory", type=str,
         help="relative path to HTML files")
     parser.add_argument(
-        "toc_path", type=str,
-        help="path to toc"
+        "mbz_path", type=str,
+        help="path to mbz"
     )
     args = parser.parse_args()
     html_directory = Path(args.html_directory).resolve(strict=True)
-    toc_path = args.toc_path
-    practice_lesson_set = get_lesson_pages(toc_path)
+    mbz_path = args.mbz_path
+    practice_lesson_set = get_lesson_pages(mbz_path)
     patch_pset(html_directory, practice_lesson_set)
 
 
