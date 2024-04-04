@@ -39,6 +39,7 @@ VALID_IFRAME_PREFIXES = [
 VALID_HREF_PREFIXES = [
     "https://k12.openstax.org/contents/raise",
     "https://openstax.org/books/prealgebra-2e",
+    "https://openstax.org/k12",
     "https://vimeo.com",
     "https://player.vimeo.com",
     "https://youtube.com",
