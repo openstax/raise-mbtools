@@ -57,7 +57,8 @@ VALID_HREF_PREFIXES = [
     "https://www.geogebra.org",
     "https://geogebra.org",
     "https://my.amplify.com",
-    "https://phet.colorado.edu/sims"
+    "https://phet.colorado.edu/sims",
+    "https://quizlet.com/"
 ]
 
 VALID_HREF_VALUES = [
