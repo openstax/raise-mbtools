@@ -58,7 +58,10 @@ VALID_HREF_PREFIXES = [
     "https://geogebra.org",
     "https://my.amplify.com",
     "https://phet.colorado.edu/sims",
-    "https://quizlet.com/"
+    "https://quizlet.com/",
+    "https://help.desmos.com",
+    "https://www.purplemath.com/modules"
+
 ]
 
 VALID_HREF_VALUES = [
@@ -66,10 +69,11 @@ VALID_HREF_VALUES = [
     "https://openstax.org/",
     "https://openstax.org/details/books/prealgebra-2e",
     "https://www.wisewire.com/",
-    "https://student.desmos.com",
     "https://desmos.com/calculator",
+    "https://desmos.com/testing",
     "https://www.desmos.com/calculator",
-    "https://student.desmos.com/"
+    "https://teacher.desmos.com",
+    "https://student.desmos.com"
 ]
 
 VALID_STYLES = []
