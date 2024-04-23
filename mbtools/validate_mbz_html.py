@@ -68,8 +68,12 @@ VALID_HREF_VALUES = [
     "https://www.wisewire.com/",
     "https://student.desmos.com",
     "https://desmos.com/calculator",
+    "https://desmos.com/testing",
     "https://www.desmos.com/calculator",
-    "https://student.desmos.com/"
+    "https://teacher.desmos.com",
+    "https://student.desmos.com",
+    "https://help.desmos.com",
+    "https://www.purplemath.com/modules"
 ]
 
 VALID_STYLES = []
