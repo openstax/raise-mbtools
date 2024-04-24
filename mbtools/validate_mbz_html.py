@@ -13,6 +13,7 @@ MOODLE_VIOLATION = "ERROR: References to Uploaded Files in Moodle DB"
 SCRIPT_VIOLATION = "ERROR: Use of <script> element"
 IFRAME_VIOLATION = "ERROR: Use of <iframe> with unexpected target"
 HREF_VIOLATION = "ERROR: Uses invalid 'href' value in <a> tag"
+LINK_TARGET_VIOLATION = "ERROR: Link does not set target attribute to _blank"
 UNNESTED_VIOLATION = "ERROR: Contains content not nested in HTML Element"
 NESTED_IB_VIOLATION = "ERROR: Interactive block nested within HTML"
 DUPLICATE_IB_UUID_VIOLATION = "ERROR: Duplicate interactive block UUID"
@@ -285,6 +286,13 @@ def find_tag_violations(html_elements):
                     violations.append(Violation(HREF_VIOLATION,
                                                 elem.location,
                                                 link))
+
+            if hit.attrib.get("target") != "_blank":
+                violations.append(Violation(
+                    LINK_TARGET_VIOLATION,
+                    elem.location,
+                    link
+                ))
     return violations
 
 

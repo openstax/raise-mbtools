@@ -148,14 +148,17 @@ def test_style_violation():
 def test_href_violation():
     location = "here"
     parent = etree.fromstring("<content></content>")
-    parent.text = '<a href="https://openstax.org/apps/archive">html</a>'
-    parent.text += '<a href="https://openstax.org/">html</a>'
+    parent.text = '<a href="https://openstax.org/apps/archive" >html</a>'
+    parent.text += '<a href="https://openstax.org/" target="_blank">html</a>'
     elem = MoodleHtmlElement(parent, location)
     style_violations = validate_mbz_html.find_tag_violations([elem])
-    assert len(style_violations) == 1
+    assert len(style_violations) == 2
     assert style_violations[0].issue == validate_mbz_html.HREF_VIOLATION
     assert style_violations[0].link == "https://openstax.org/apps/archive"
     assert style_violations[0].location == "here"
+    assert style_violations[1].issue == validate_mbz_html.LINK_TARGET_VIOLATION
+    assert style_violations[1].link == "https://openstax.org/apps/archive"
+    assert style_violations[1].location == "here"
 
 
 def test_script_violation():
@@ -638,7 +641,7 @@ def test_single_html_file_each_violation(
   <iframe src="link"></iframe>
   <script>javascript</script>
   <img src="@@PLUGINFILE@@"></img>
-  <a href="link"></a>
+  <a href="link" target="_blank"></a>
 </div>'''
 
     html_path = str(tmp_path) + "/html/"
