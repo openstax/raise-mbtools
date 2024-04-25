@@ -280,6 +280,10 @@ class MoodleLesson:
         raise Exception("Visible attribute value error in lesson "
                         f"{self.name}")  # pragma: no cover
 
+    @property
+    def module_id(self):
+        return self.etree.xpath("//activity")[0].attrib["moduleid"]
+
 
 class MoodlePage:
     def __init__(self, activity_path, mbz_path):
@@ -303,6 +307,10 @@ class MoodlePage:
             return '0'
         raise Exception("Visible attribute value error in page "
                         f"{self.name}")  # pragma: no cover
+
+    @property
+    def module_id(self):
+        return self.etree.xpath("//activity")[0].attrib["moduleid"]
 
 
 class MoodleQuiz:
@@ -357,6 +365,10 @@ class MoodleQuiz:
                 )
 
         return entry_ids
+
+    @property
+    def module_id(self):
+        return self.etree.xpath("//activity")[0].attrib["moduleid"]
 
 
 class MoodleQuizQuestion:
