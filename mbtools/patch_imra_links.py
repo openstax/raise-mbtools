@@ -11,17 +11,22 @@ URL_COLUMN_NAME = "URL"
 def create_url_indexes(toc_data):
     teacher_lesson_by_name = {}
     student_lesson_by_name = {}
+    quiz_by_name = {}
 
     for item in toc_data:
         if item["lesson_page"] != "" and item["visible"] == "1":
             student_lesson_by_name[item["lesson_page"]] = item["url"]
         if item["lesson_page"] != "" and item["visible"] == "0":
             teacher_lesson_by_name[item["lesson_page"]] = item["url"]
+        if item["lesson_page"] == "" and ("quiz" in item["activity_name"].lower() or "STAAR" in item["activity_name"]):
+            quiz_by_name[item["activity_name"].replace(":", "").replace(",", "")] = item["url"]
 
     return {
         "teacher_lesson_by_name": teacher_lesson_by_name,
-        "student_lesson_by_name": student_lesson_by_name
+        "student_lesson_by_name": student_lesson_by_name,
+        "quiz_by_name": quiz_by_name
     }
+
 
 def main():
     parser = argparse.ArgumentParser(description='')
@@ -60,10 +65,19 @@ def main():
 
         is_lesson = False
         is_teacher_content = False
+        is_quiz = False
         maybe_lesson_page_name = ""
+        maybe_quiz_name = ""
 
         if "teacher" in location.lower():
             is_teacher_content = True
+
+        if "quiz" in location.lower():
+            is_quiz = True
+            for location_item in location.split("\n"):
+                location_item = location_item.strip()
+                if "Quiz" in location_item:
+                    maybe_quiz_name = location_item
 
         for location_item in location.split("\n"):
             location_item = location_item.strip()
@@ -83,6 +97,14 @@ def main():
         if is_lesson and is_teacher_content:
             # Attempt to lookup by maybe_lesson_page_name
             maybe_url = url_indexes["teacher_lesson_by_name"].get(maybe_lesson_page_name)
+            if maybe_url:
+                row[URL_COLUMN_NAME] = maybe_url
+
+        if is_quiz:
+            # Get rid of ',' and ':'
+            patched_quiz_name = maybe_quiz_name.replace(":", "").replace(",", "")
+            patched_quiz_name = ''.join([patched_quiz_name.split("Quiz")[0], "Quiz"])
+            maybe_url = url_indexes["quiz_by_name"].get(patched_quiz_name)
             if maybe_url:
                 row[URL_COLUMN_NAME] = maybe_url
 
