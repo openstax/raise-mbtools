@@ -16,10 +16,10 @@ def parse_toc(mbz_path, base_url):
                 page_dict['section'] = section.title
                 page_dict['activity_name'] = act.name
                 page_dict['lesson_page'] = ""
+                page_dict['visible'] = act.is_visible()
                 page_dict['url'] = f"{base_url}/mod/page/view.php?id={act.module_id}"
 
-                if act.is_visible() == "1":
-                    activity_list.append(page_dict)
+                activity_list.append(page_dict)
             elif isinstance(act, MoodleLesson):
                 id2page = {}
                 current_page = None
@@ -32,14 +32,15 @@ def parse_toc(mbz_path, base_url):
                     lesson_dict['section'] = section.title
                     lesson_dict['activity_name'] = act.name
                     lesson_dict['lesson_page'] = current_page.name
+                    lesson_dict['visible'] = act.is_visible()
 
                     if current_page.prev == "0":
                         # First page of a lesson doesn't need pageid
                         lesson_dict['url'] = f"{base_url}/mod/lesson/view.php?id={act.module_id}"
                     else:
                         lesson_dict['url'] = f"{base_url}/mod/lesson/view.php?id={act.module_id}&pageid={current_page.id}"
-                    if act.is_visible() == "1":
-                        activity_list.append(lesson_dict)
+
+                    activity_list.append(lesson_dict)
 
                     if (current_page.next == "0"):
                         break
@@ -51,6 +52,7 @@ def parse_toc(mbz_path, base_url):
                 quiz_dict['activity_name'] = act.name
                 quiz_dict['lesson_page'] = ""
                 quiz_dict['url'] = f"{base_url}/mod/quiz/view.php?id={act.module_id}"
+                quiz_dict['visible'] = "1"
 
                 activity_list.append(quiz_dict)
     return activity_list
