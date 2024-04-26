@@ -83,7 +83,7 @@ def main():
             location_item = location_item.strip()
             # Try to match #.#.# to determine if it is referencing a lesson
 
-            if re.search(r'\d+.\d+.\d+:', location_item):
+            if re.search(r'\d+.\d+.\d+', location_item):
                 is_lesson = True
                 maybe_lesson_page_name = location_item
 
