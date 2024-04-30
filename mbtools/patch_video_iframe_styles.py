@@ -13,7 +13,7 @@ def wrap_elements_in_div(html_file):
 
             for element in elements:
 
-                if not element.find_parent(class_='os-raise-video-container'):
+                if not element.find_parent(class_="os-raise-video-container"):
                     div_wrapper = soup.new_tag(
                         "div", **{"class": "os-raise-video-container"}
                     )
@@ -21,8 +21,10 @@ def wrap_elements_in_div(html_file):
                     center_wrapper = soup.new_tag(
                         "div",
                         **{
-                            "class": ("os-raise-d-flex-nowrap "
-                                      "os-raise-justify-content-center ")
+                            "class": (
+                                "os-raise-d-flex-nowrap "
+                                "os-raise-justify-content-center "
+                            )
                         }
                     )
                     div_wrapper.wrap(center_wrapper)
@@ -45,8 +47,7 @@ def update_media_styles(html_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("html_directory", type=str,
-                        help="path to HTML files")
+    parser.add_argument("html_directory", type=str, help="path to HTML files")
 
     args = parser.parse_args()
     html_directory = Path(args.html_directory).resolve(strict=True)
