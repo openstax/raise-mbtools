@@ -87,6 +87,10 @@ def main():
                 is_lesson = True
                 maybe_lesson_page_name = location_item
 
+            if re.search(r'Activity P\d', location_item) or re.search(r'Activity IP\d', location_item) or re.search(r'Activity: P\d', location_item) or re.search(r'Activity P.\d', location_item):
+                is_lesson = True
+                maybe_lesson_page_name = location_item
+
         # Try to populate links
         if is_lesson and not is_teacher_content:
             # Attempt to lookup by maybe_lesson_page_name
