@@ -15,11 +15,11 @@ def create_url_indexes(toc_data):
 
     for item in toc_data:
         if item["lesson_page"] != "" and item["visible"] == "1":
-            student_lesson_by_name[item["lesson_page"]] = item["url"]
+            student_lesson_by_name[item["lesson_page"].strip()] = item["url"]
         if item["lesson_page"] != "" and item["visible"] == "0":
-            teacher_lesson_by_name[item["lesson_page"]] = item["url"]
+            teacher_lesson_by_name[item["lesson_page"].strip()] = item["url"]
         if item["lesson_page"] == "" and ("quiz" in item["activity_name"].lower() or "STAAR" in item["activity_name"]):
-            quiz_by_name[item["activity_name"].replace(":", "").replace(",", "")] = item["url"]
+            quiz_by_name[item["activity_name"].replace(":", "").replace(",", "").strip()] = item["url"]
 
     return {
         "teacher_lesson_by_name": teacher_lesson_by_name,
