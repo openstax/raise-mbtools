@@ -68,6 +68,7 @@ VALID_HREF_VALUES = [
     "https://illustrativemathematics.org/",
     "https://openstax.org/",
     "https://openstax.org/details/books/prealgebra-2e",
+    "https://openstax.org/details/books/preparing-for-college-success",
     "https://www.wisewire.com/",
     "https://desmos.com/calculator",
     "https://www.desmos.com/testing",
