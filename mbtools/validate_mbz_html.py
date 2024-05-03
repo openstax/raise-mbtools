@@ -32,7 +32,7 @@ VALID_PREFIXES = [
 ]
 
 VALID_IFRAME_PREFIXES = [
-    "https://www.youtube.com",
+    "https://www.youtube-nocookie.com",
     "https://player.vimeo.com",
     "https://www.geogebra.org/material/iframe/id"
 ]
