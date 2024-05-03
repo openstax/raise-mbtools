@@ -5,7 +5,7 @@ import mbtools
 import mbtools.extract_html_content
 
 
-def test_toc_creation_lesson_pages_in_order(
+def test_patch_retry_limit(
     mocker, tmp_path, mbz_builder, lesson_builder
 ):
     lesson_name = "Only Lesson"
