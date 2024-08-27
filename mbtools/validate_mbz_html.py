@@ -61,7 +61,8 @@ VALID_HREF_PREFIXES = [
     "https://phet.colorado.edu/sims",
     "https://quizlet.com/",
     "https://help.desmos.com",
-    "https://www.purplemath.com/modules"
+    "https://www.purplemath.com/modules",
+    "https://polypad.amplify.com/p"
 ]
 
 VALID_HREF_VALUES = [
