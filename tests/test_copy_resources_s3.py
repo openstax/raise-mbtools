@@ -5,6 +5,7 @@ import os
 import json
 from mbtools import copy_resources_s3
 from bs4 import BeautifulSoup
+import datetime
 
 test_dir = 'test_content/'
 nested_dir = 'test_content/nested'
@@ -63,6 +64,19 @@ def test_get_mime_type(practice_filesystem):
 
 
 def test_upload_resources(practice_filesystem, mocker):
+    fixed_time = datetime.datetime(2023, 9, 1, 12, 0, 0)
+
+    class FixedDateTime(datetime.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed_time
+
+        @classmethod
+        def fromisoformat(cls, date_string):
+            return datetime.datetime.fromisoformat(date_string)
+
+    mocker.patch('mbtools.copy_resources_s3.datetime', FixedDateTime)
+
     s3_dir = 'resources'
     bucket_name = 'test-bucket'
     sha1_map, duplicates = copy_resources_s3.resource_hashes(
@@ -105,7 +119,8 @@ def test_upload_resources(practice_filesystem, mocker):
                             'ContentType': 'application/json'
                             }
                          )
-    stubber.add_response('head_object', {},
+    stubber.add_response('head_object',
+                         {'LastModified': fixed_time},
                          expected_params={
                                 'Bucket': bucket_name,
                                 'Key': full_key3
@@ -144,7 +159,8 @@ def test_upload_resources(practice_filesystem, mocker):
         sha_data_from_index.append({
             'path': data[0].text.strip(),
             'mime_type': data[1].text.strip(),
-            'sha1': data[2].text.strip().split("/")[-1]
+            'sha1': data[2].text.strip().split("/")[-1],
+            'timestamp': data[3].text.strip()
         })
 
     sha_map_data = []
@@ -153,15 +169,20 @@ def test_upload_resources(practice_filesystem, mocker):
             'path': os.path.relpath(value['path'],
                                     practice_filesystem[test_dir]),
             'mime_type': value['mime_type'],
-            'sha1': key
+            'sha1': key,
+            'timestamp': value['timestamp']
         })
     for duplicate in duplicates:
         duplicate['path'] = os.path.relpath(duplicate['path'],
                                             practice_filesystem[test_dir])
 
     sha_map_data.extend(duplicates)
-    # Make sure each table row corresponds with the correct key, path, and
-    # mime_type in sha_map
+    for item in sha_map_data:
+        timestamp = fixed_time.fromisoformat(item['timestamp'])
+        item['timestamp'] = timestamp.strftime('%B %d, %Y %I:%M %p')
+
+    # Make sure each table row corresponds with the correct key, path,
+    # mime_type, and timestamp in sha_map
     assert len(sha_map_data) == len(sha_data_from_index)
 
     for value in sha_map_data:
