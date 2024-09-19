@@ -105,13 +105,13 @@ def resource_hashes(resource_dir):
                     'path': full_path,
                     'mime_type': mime_type,
                     'sha1': sha1_key,
-                    'timestamp': datetime.now(timezone.utc).isoformat()
+                    'timestamp': None
                 })
             else:
                 sha1_map[sha1_key] = {
                     'path': full_path,
                     'mime_type': mime_type,
-                    'timestamp': datetime.now(timezone.utc).isoformat()
+                    'timestamp': None
                 }
 
     return sha1_map, duplicates
@@ -152,6 +152,9 @@ def add_new_resources_to_s3(bucket, s3_dir, hashes_to_update,
                                     "ContentType": mime_type
                                     }
                                   )
+
+        # This timestamp in metadata will be slightly off because the time
+        # at which s3 will upload will be different than the time here
             metadata.append({
                 "mime_type": mime_type,
                 "sha1": hash_key,
