@@ -7,6 +7,7 @@ import argparse
 import botocore
 import jinja2
 from pathlib import Path
+from datetime import datetime, timezone
 
 IGNORED_FILES = [".DS_Store"]
 
@@ -17,9 +18,21 @@ def upload_resources(resource_dir, bucket, s3_dir):
     hash_to_filedata_map, duplicates = resource_hashes(resource_dir)
     hashes_to_update = list(hash_to_filedata_map.keys())
 
-    add_new_resources_to_s3(
+    existing_timestamps = add_new_resources_to_s3(
         bucket, s3_dir, hashes_to_update, hash_to_filedata_map
     )
+
+    for hash_key in hash_to_filedata_map:
+        if hash_key in existing_timestamps:
+            timestamp_str = existing_timestamps[hash_key].isoformat()
+            hash_to_filedata_map[hash_key]['timestamp'] = timestamp_str
+
+    for item in duplicates:
+        sha1_hash = item['sha1']
+        if sha1_hash in existing_timestamps:
+            existing_timestamp = existing_timestamps[sha1_hash]
+            timestamp_str = existing_timestamp.isoformat()
+            item['timestamp'] = timestamp_str
 
     return hash_to_filedata_map, duplicates
 
@@ -34,7 +47,8 @@ def output_index_file(resource_path, hash_to_filedata_map, duplicates,
         item = {
             'filepath': os.path.relpath(value['path'], resource_path),
             'mimetype': value['mime_type'],
-            'url': f'{url_prefix}/{key}'
+            'url': f'{url_prefix}/{key}',
+            'timestamp': value['timestamp']
         }
         data.append(item)
 
@@ -42,9 +56,18 @@ def output_index_file(resource_path, hash_to_filedata_map, duplicates,
         item = {
             'filepath': os.path.relpath(duplicate['path'], resource_path),
             'mimetype': duplicate['mime_type'],
-            'url': f'{url_prefix}/{duplicate["sha1"]}'
+            'url': f'{url_prefix}/{duplicate["sha1"]}',
+            'timestamp': duplicate['timestamp']
         }
         data.append(item)
+
+    data.sort(key=lambda x: datetime.fromisoformat(x['timestamp']),
+              reverse=True)
+
+    for item in data:
+        timestamp = datetime.fromisoformat(item['timestamp'])
+        item['timestamp'] = timestamp.strftime('%B %d, %Y %I:%M %p')
+
     with open(template_path) as template_file:
         template = environment.from_string(template_file.read())
         with open(f'{index_file}', mode='w') as workflow_file:
@@ -81,12 +104,14 @@ def resource_hashes(resource_dir):
                 duplicates.append({
                     'path': full_path,
                     'mime_type': mime_type,
-                    'sha1': sha1_key
+                    'sha1': sha1_key,
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 })
             else:
                 sha1_map[sha1_key] = {
                     'path': full_path,
-                    'mime_type': mime_type
+                    'mime_type': mime_type,
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
 
     return sha1_map, duplicates
@@ -107,14 +132,16 @@ def add_new_resources_to_s3(bucket, s3_dir, hashes_to_update,
     corresponding sha1 key exists in hashes"""
 
     s3_client = boto3.client("s3")
+    existing_timestamps = {}
     metadata = []
     for hash_key in hashes_to_update:
         full_keypath = s3_dir + '/' + hash_key
 
         try:
-            s3_client.head_object(Bucket=bucket,
-                                  Key=full_keypath)
+            s3_response = s3_client.head_object(Bucket=bucket,
+                                                Key=full_keypath)
             filename = os.path.basename(hash_to_filedata_map[hash_key]['path'])
+            existing_timestamps[hash_key] = s3_response['LastModified']
             print(f"File {filename} with sha {hash_key} already exists in S3!")
         except botocore.exceptions.ClientError:
             mime_type = hash_to_filedata_map[hash_key]['mime_type']
@@ -131,11 +158,13 @@ def add_new_resources_to_s3(bucket, s3_dir, hashes_to_update,
                 "original_filename": os.path.basename(
                     hash_to_filedata_map[hash_key]['path']
                 ),
-                "s3_key": full_keypath
+                "s3_key": full_keypath,
+                "timestamp": datetime.now(timezone.utc).isoformat()
             })
 
     print("Uploaded " + str(len(metadata)) + " files to " +
           bucket)
+    return existing_timestamps
 
 
 def main():

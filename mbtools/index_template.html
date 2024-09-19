@@ -15,6 +15,7 @@
             <th scope="col">Original filename / path</th>
             <th scope="col">Detected MIME type</th>
             <th scope="col">URL</th>
+            <th scope="col">Timestamp (UTC)</th>
           </tr>
         </thead>
         <tbody>
@@ -23,6 +24,7 @@
             <td>{{file['filepath']}}</td>
             <td>{{file['mimetype']}}</td>
             <td><a href={{file['url']}} target="_blank">{{file['url']}}</a></td>
+            <td>{{file['timestamp']}}</td>
           </tr>
           {% endfor %}
         </tbody>
