@@ -105,13 +105,13 @@ def resource_hashes(resource_dir):
                     'path': full_path,
                     'mime_type': mime_type,
                     'sha1': sha1_key,
-                    'timestamp': None
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 })
             else:
                 sha1_map[sha1_key] = {
                     'path': full_path,
                     'mime_type': mime_type,
-                    'timestamp': None
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
 
     return sha1_map, duplicates
