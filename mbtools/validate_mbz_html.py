@@ -34,7 +34,8 @@ VALID_PREFIXES = [
 VALID_IFRAME_PREFIXES = [
     "https://www.youtube-nocookie.com",
     "https://player.vimeo.com",
-    "https://www.geogebra.org/material/iframe/id"
+    "https://www.geogebra.org/material/iframe/id",
+    "https://ancillaries.openstax.org/ancillaries/resources"
 ]
 
 VALID_HREF_PREFIXES = [
